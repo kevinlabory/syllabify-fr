@@ -4,4 +4,4 @@ Cargo.lock
 .DS_Store
 /tmp
 /wasm/pkg
-.claude/
+.claude/settings.local.json
