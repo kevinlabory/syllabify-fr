@@ -4,9 +4,18 @@
 
 use crate::data::{AUTOMATON, LetterEntry, RuleKind, Special};
 use crate::rules;
-use regex::Regex;
+// Features are additive in Cargo workspaces, so if both are unified we pick
+// regex-full (the native default). Only a WASM build with default-features=false
+// + features=["regex-lite"] actually hits the regex-lite path.
+#[cfg(feature = "regex-full")]
+use regex::{Error as RegexError, Regex};
+#[cfg(all(feature = "regex-lite", not(feature = "regex-full")))]
+use regex_lite::{Error as RegexError, Regex};
 use std::collections::HashMap;
 use std::sync::OnceLock;
+
+#[cfg(not(any(feature = "regex-full", feature = "regex-lite")))]
+compile_error!("one of the features `regex-full` or `regex-lite` must be enabled");
 
 /// Un phonème produit par le parser : (code phonétique, nombre de caractères consommés).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -21,7 +30,7 @@ fn regex_cache() -> &'static std::sync::Mutex<HashMap<String, Regex>> {
     CACHE.get_or_init(|| std::sync::Mutex::new(HashMap::new()))
 }
 
-fn compile_regex(pattern: &str) -> Result<Regex, regex::Error> {
+fn compile_regex(pattern: &str) -> Result<Regex, RegexError> {
     let mut cache = regex_cache().lock().unwrap();
     if let Some(r) = cache.get(pattern) {
         return Ok(r.clone());
