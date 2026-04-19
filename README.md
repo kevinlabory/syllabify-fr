@@ -118,6 +118,25 @@ assert!(!liaison_amont("homard"));         // h aspiré → bloque
 assert!(liaison_possible("les", "hôtels")); // → on lira [le.zo.tɛl]
 ```
 
+### Rendu HTML (coloriage syllabique)
+
+Sortie prête à l'emploi pour un front-end : chaque syllabe dans un `<span class="syl syl-a">` / `<span class="syl syl-b">` alternés, chaque mot dans un `<span class="word">`, et les liaisons possibles entre mots matérialisées par `<span class="liaison" data-with="…">`.
+
+```rust
+use syllabify_fr::{render_word_html, render_html};
+
+// Mot seul
+render_word_html("chocolat");
+// → <span class="word"><span class="syl syl-a">cho</span><span class="syl syl-b">co</span><span class="syl syl-a">lat</span></span>
+
+// Texte complet avec ponctuation, homographes et liaisons
+render_html("les hôtels, le couvent accueille");
+// → <span class="word">…les…</span> <span class="liaison" data-with="z"></span><span class="word">…hôtels…</span>,
+//   <span class="word">…le…</span> <span class="word">…cou…vent…</span> <span class="word">…ac…cue…ille…</span>
+```
+
+À la CSS du consommateur de définir les couleurs via les sélecteurs `.syl-a`, `.syl-b`, `.liaison`. Disponible aussi dans le binding WASM sous les noms `renderHtml` / `renderWordHtml`.
+
 ## Architecture
 
 Pipeline en 5 étapes, fidèle à LireCouleur 6 :
@@ -191,4 +210,4 @@ Site officiel : <https://lirecouleur.forge.apps.education.fr/>
 - [x] WASM (binding JS/Deno)
 - [ ] Python (PyO3)
 - [ ] Java (JNI)
-- [ ] Sortie HTML avec spans pour intégration web (coloriage syllabique)
+- [x] Sortie HTML avec spans pour intégration web (coloriage syllabique)
