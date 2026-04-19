@@ -3,3 +3,5 @@ Cargo.lock
 *.swp
 .DS_Store
 /tmp
+/wasm/pkg
+.claude/settings.local.json

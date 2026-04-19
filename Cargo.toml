@@ -1,6 +1,11 @@
+[workspace]
+members = [".", "wasm"]
+default-members = ["."]
+resolver = "2"
+
 [package]
 name = "syllabify-fr"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "Syllabification française pour l'apprentissage de la lecture — port de LireCouleur"
 license = "GPL-3.0-or-later"
@@ -16,9 +21,16 @@ path = "src/lib.rs"
 [[bin]]
 name = "syllabify"
 path = "src/bin/cli.rs"
+required-features = ["regex-full"]
+
+[features]
+default = ["regex-full"]
+regex-full = ["dep:regex"]
+regex-lite = ["dep:regex-lite"]
 
 [dependencies]
-regex = "1"
+regex = { version = "1", optional = true }
+regex-lite = { version = "0.1", optional = true }
 
 [dev-dependencies]
 serde_json = "1"
@@ -26,3 +38,7 @@ serde_json = "1"
 [profile.release]
 lto = true
 codegen-units = 1
+
+# Dedicated optimization profile for the WASM crate: aggressive size tuning.
+[profile.release.package.syllabify-fr-wasm]
+opt-level = "z"
