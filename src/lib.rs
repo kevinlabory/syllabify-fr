@@ -20,11 +20,13 @@ pub mod cleaner;
 pub mod data;
 pub mod decoder;
 pub mod homographs;
+pub mod liaisons;
 pub mod parser;
 pub mod phoneme;
 pub mod rules;
 
 pub use decoder::{AssembleMode, SyllableMode, TextChunk};
+pub use liaisons::{liaison_amont, liaison_aval, liaison_possible};
 
 /// Syllabifie un mot seul avec les paramètres par défaut
 /// (mode STD comme LireCouleur 6, syllabes écrites).

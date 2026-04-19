@@ -63,7 +63,7 @@ Five-stage pipeline, fidelity to LC6 is the design constraint at every stage:
 
 ## What is explicitly **not** ported
 
-See NOTES-v6.md §"Points non portés". `liaisonAmont`/`liaisonAval`, `regle_en_final`, `dernierTraitement` — don't add these without confirming the scope.
+See NOTES-v6.md §"Points non portés". `regle_en_final` and `dernierTraitement` remain out of scope — don't add these without confirming. `liaisonAmont`/`liaisonAval` are now ported in `src/liaisons.rs` as pure predicates (no syllabic side-effect).
 
 ## Technical debt to be aware of
 

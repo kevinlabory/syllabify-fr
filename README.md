@@ -105,6 +105,19 @@ syllables_with("école", false, AssembleMode::Std, SyllableMode::Oral);
 // → ["é", "cole"]
 ```
 
+### Liaisons inter-mots
+
+Prédicats purs pour décider si une liaison orale est possible entre deux mots (utile pour le coloriage prosodique, pas pour la segmentation syllabique) :
+
+```rust
+use syllabify_fr::{liaison_amont, liaison_aval, liaison_possible};
+
+assert!(liaison_aval("les"));              // déterminant pluriel → déclenche
+assert!(liaison_amont("hôtel"));           // h muet → peut recevoir
+assert!(!liaison_amont("homard"));         // h aspiré → bloque
+assert!(liaison_possible("les", "hôtels")); // → on lira [le.zo.tɛl]
+```
+
 ## Architecture
 
 Pipeline en 5 étapes, fidèle à LireCouleur 6 :
@@ -173,9 +186,9 @@ Site officiel : <https://lirecouleur.forge.apps.education.fr/>
 - [x] Port Rust fidèle à LireCouleur 6 (100% conformité sur 4 830 mots)
 - [x] CLI
 - [x] Homographes contextuels
-- [ ] `liaisonAmont` / `liaisonAval` (liaisons entre mots)
+- [x] `liaisonAmont` / `liaisonAval` (liaisons entre mots)
 - [ ] FFI C (`syllabify-fr-sys`)
-- [ ] WASM (binding JS/Deno)
+- [x] WASM (binding JS/Deno)
 - [ ] Python (PyO3)
 - [ ] Java (JNI)
 - [ ] Sortie HTML avec spans pour intégration web (coloriage syllabique)

@@ -47,9 +47,14 @@ const data = {
 const motsOsseMatch = content.match(/let mots_osse = (\[[^\]]+\])/);
 data.mots_osse = motsOsseMatch ? JSON.parse(motsOsseMatch[1]) : [];
 
+// listeMotsLiaison est défini localement dans liaisonAval ; on l'extrait
+const liaisonAvalMatch = content.match(/let listeMotsLiaison = (\[[\s\S]+?\])/);
+data.liaisons_aval = liaisonAvalMatch ? JSON.parse(liaisonAvalMatch[1]) : [];
+
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, JSON.stringify(data, null, 2), 'utf-8');
 console.log(`Écrit ${OUT}`);
 console.log(`  automate : ${Object.keys(data.automaton).length} lettres`);
 console.log(`  homographes : ${Object.keys(data.homographesNonHomophones).length}`);
 console.log(`  mots_osse : ${data.mots_osse.length}`);
+console.log(`  liaisons_aval : ${data.liaisons_aval.length}`);

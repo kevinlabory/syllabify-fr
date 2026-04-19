@@ -2029,6 +2029,7 @@
     "q": [
       [
         "qu",
+        "qu_apos",
         "k"
       ],
       {
@@ -2043,6 +2044,13 @@
           },
           "k_qu",
           2
+        ],
+        "qu_apos": [
+          {
+            "+": "u['|’]"
+          },
+          "k_qu",
+          3
         ],
         "qu": [
           {
@@ -5375,5 +5383,47 @@
     "écosse",
     "rosse",
     "panosse"
+  ],
+  "liaisons_aval": [
+    "un",
+    "des",
+    "les",
+    "ces",
+    "mon",
+    "ton",
+    "son",
+    "mes",
+    "tes",
+    "ses",
+    "nos",
+    "vos",
+    "leurs",
+    "aux",
+    "aucun",
+    "tout",
+    "quels",
+    "quelles",
+    "quelques",
+    "deux",
+    "trois",
+    "six",
+    "dix",
+    "vingt",
+    "on",
+    "nous",
+    "vous",
+    "ils",
+    "elles",
+    "plus",
+    "très",
+    "bien",
+    "quand",
+    "comment",
+    "dans",
+    "chez",
+    "sans",
+    "en",
+    "sous",
+    "sur"
   ]
 }
