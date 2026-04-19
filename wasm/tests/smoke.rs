@@ -28,6 +28,26 @@ fn syllables_parlent() {
 }
 
 #[wasm_bindgen_test]
+fn render_html_produit_spans_et_liaison() {
+    let html = syllabify_fr_wasm::render_html("les hôtels");
+    assert!(html.contains(r#"class="syl syl-a""#), "got: {}", html);
+    assert!(
+        html.contains(r#"class="liaison" data-with="z""#),
+        "got: {}",
+        html
+    );
+}
+
+#[wasm_bindgen_test]
+fn render_word_html_chocolat() {
+    let html = syllabify_fr_wasm::render_word_html("chocolat");
+    assert_eq!(
+        html,
+        r#"<span class="word"><span class="syl syl-a">cho</span><span class="syl syl-b">co</span><span class="syl syl-a">lat</span></span>"#
+    );
+}
+
+#[wasm_bindgen_test]
 fn syllabify_text_handles_homographs() {
     use js_sys::{Array, Reflect};
     use wasm_bindgen::JsValue;

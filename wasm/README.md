@@ -18,7 +18,13 @@ Other targets: `--target bundler` (Vite/Webpack), `--target nodejs`.
 ## Usage (ESM / browser)
 
 ```js
-import init, { syllables, syllabifyText, phonemes } from './pkg/syllabify_fr_wasm.js';
+import init, {
+  syllables,
+  syllabifyText,
+  phonemes,
+  renderHtml,
+  renderWordHtml,
+} from './pkg/syllabify_fr_wasm.js';
 
 await init();
 
@@ -37,9 +43,15 @@ syllabifyText('le couvent accueille les moines');
 
 phonemes('hier');
 // → [['j', 'i'], ['e^_comp', 'e'], ['r', 'r']]
+
+renderWordHtml('chocolat');
+// → '<span class="word"><span class="syl syl-a">cho</span>…</span>'
+
+renderHtml('les hôtels');
+// → '<span class="word">…les…</span> <span class="liaison" data-with="z"></span><span class="word">…hôtels…</span>'
 ```
 
-`syllabifyText` disambiguates non-homophonic homographs (`couvent`, `est`, `fils`, `violent`, …) from the preceding word. `syllables` works on isolated words only.
+`syllabifyText` disambiguates non-homophonic homographs (`couvent`, `est`, `fils`, `violent`, …) from the preceding word. `syllables` works on isolated words only. `renderHtml` handles text + homographs + liaison markers in one pass; target CSS selectors are `.syl-a`, `.syl-b`, `.word`, `.liaison`.
 
 ## Size
 
