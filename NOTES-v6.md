@@ -56,6 +56,18 @@ Nouvelle fonction `homographs::lookup(word, previous_word)` qui court-circuite l
 
 La v6 utilise `Std` par défaut (dédouble les consonnes : `homme → hom-me`, `abaisse → a-bais-se`), là où pylirecouleur 0.0.5 utilisait `Lc` (consonnes groupées : `ho-mme`, `a-bai-sse`). `Std` correspond à la segmentation pédagogique dominante à l'école.
 
+### 6. Liaisons inter-mots (`liaisonAmont` / `liaisonAval`)
+
+Port fidèle de `module.js` ll. 1041-1057 dans `src/liaisons.rs`, sans modification du pipeline syllabique :
+
+- `liaison_amont(word)` : true si le 1ᵉʳ phonème est une voyelle ou `#_h_muet`.
+- `liaison_aval(word)` : true si le mot appartient à la liste fermée LC6 de 40 mots (déterminants pluriels, pronoms sujets, adverbes, prépositions, numéraux), extraite depuis `let listeMotsLiaison = [...]` via `build/extract_v6_data.js`.
+- `liaison_possible(prev, next)` : helper = conjonction des deux.
+
+**Impact syllabique** : nul. L'oracle 4830 mots et les APIs `syllables` / `syllabify_text` sont inchangées. Ces prédicats sont destinés au coloriage prosodique downstream (dyscolor.com), orthogonal à la segmentation.
+
+**h aspiré vs h muet** : notre check strict `code == "#_h_muet"` n'est vrai que pour l'h muet (ex: `hôtel`). L'h aspiré produit le phonème `#` (même classe `Silent` mais code distinct) et bloque donc correctement la liaison (ex: `les héros` → pas de liaison).
+
 ## Pièges rencontrés et corrections
 
 ### Piège 1 : dédoublement abusif des semi-voyelles
@@ -89,7 +101,6 @@ Le cleaner v5 remplaçait `-` par espace, ce qui tokenisait `grand-père` en tro
 
 Ces fonctionnalités LC6 **ne sont pas** dans le crate :
 
-- `liaisonAmont` / `liaisonAval` — détection des possibilités de liaison entre mots, utile pour le coloriage prosodique (pas pour la simple segmentation syllabique). Faible priorité.
 - `regle_en_final` — méthode présente dans LC6 mais non invoquée par l'automate de base ; probablement utilisée uniquement pour les homographes. Déjà couverte par notre mécanisme d'homographes.
 - `dernierTraitement` — cache d'état interne à LC6, pas nécessaire en Rust.
 

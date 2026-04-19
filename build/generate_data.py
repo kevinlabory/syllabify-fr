@@ -126,6 +126,7 @@ db_blocks.append(emit_str_array("MOTS_OSSE", mots_osse))
 db_blocks.append(emit_str_array("EXCEPTIONS_EN_FINAL", payload["exceptions_en_final"]))
 db_blocks.append(emit_str_array("DETERMINANTS", payload["determinant"]))
 db_blocks.append(emit_str_array("PRONOMS", payload["pronom"]))
+db_blocks.append(emit_str_array("LIAISONS_AVAL", payload.get("liaisons_aval", [])))
 
 homographes = payload.get("homographesNonHomophones", {})
 homo_entries = []
