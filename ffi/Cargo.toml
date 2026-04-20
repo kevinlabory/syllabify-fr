@@ -1,0 +1,15 @@
+[package]
+name = "syllabify-fr-ffi"
+version = "0.1.0"
+edition = "2021"
+description = "C FFI bindings for syllabify-fr — French syllabification library"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/dyscolor/syllabify-fr"
+
+[lib]
+crate-type = ["cdylib", "staticlib", "rlib"]
+name = "syllabify_fr_ffi"
+path = "src/lib.rs"
+
+[dependencies]
+syllabify-fr = { path = ".." }

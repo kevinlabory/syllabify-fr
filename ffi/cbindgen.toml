@@ -1,0 +1,13 @@
+language = "C"
+include_version = false
+no_includes = false
+
+[export]
+include = [
+    "syllabify_free",
+    "syllabify_syllables",
+    "syllabify_text_json",
+    "syllabify_phonemes",
+    "syllabify_render_word_html",
+    "syllabify_render_html",
+]
