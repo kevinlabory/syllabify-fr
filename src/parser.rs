@@ -8,9 +8,9 @@ use crate::rules;
 // regex-full (the native default). Only a WASM build with default-features=false
 // + features=["regex-lite"] actually hits the regex-lite path.
 #[cfg(feature = "regex-full")]
-use regex::{Error as RegexError, Regex};
+use regex::Regex;
 #[cfg(all(feature = "regex-lite", not(feature = "regex-full")))]
-use regex_lite::{Error as RegexError, Regex};
+use regex_lite::Regex;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
@@ -24,20 +24,33 @@ pub struct Phoneme {
     pub step: usize,
 }
 
-/// Cache de regex compilées. Les patterns de l'automate sont réutilisés très souvent.
-fn regex_cache() -> &'static std::sync::Mutex<HashMap<String, Regex>> {
-    static CACHE: OnceLock<std::sync::Mutex<HashMap<String, Regex>>> = OnceLock::new();
-    CACHE.get_or_init(|| std::sync::Mutex::new(HashMap::new()))
+// Compile every regex pattern that appears in AUTOMATON exactly once, at first parse.
+// The resulting HashMap is immutable: concurrent reads need no lock.
+fn regex_cache() -> &'static HashMap<&'static str, Regex> {
+    use crate::data::RuleKind;
+    static CACHE: OnceLock<HashMap<&'static str, Regex>> = OnceLock::new();
+    CACHE.get_or_init(|| {
+        let mut map = HashMap::new();
+        for (_, entry) in AUTOMATON {
+            for rule in entry.rules {
+                if let RuleKind::Context { plus, minus, has_plus, has_minus } = rule.kind {
+                    if has_plus && !plus.is_empty() {
+                        map.entry(plus)
+                            .or_insert_with(|| Regex::new(plus).expect("invalid regex in data.rs"));
+                    }
+                    if has_minus && !minus.is_empty() {
+                        map.entry(minus)
+                            .or_insert_with(|| Regex::new(minus).expect("invalid regex in data.rs"));
+                    }
+                }
+            }
+        }
+        map
+    })
 }
 
-fn compile_regex(pattern: &str) -> Result<Regex, RegexError> {
-    let mut cache = regex_cache().lock().unwrap();
-    if let Some(r) = cache.get(pattern) {
-        return Ok(r.clone());
-    }
-    let r = Regex::new(pattern)?;
-    cache.insert(pattern.to_string(), r.clone());
-    Ok(r)
+fn get_regex(pattern: &str) -> Option<&'static Regex> {
+    regex_cache().get(pattern)
 }
 
 /// Lookup dans l'automate pour une lettre donnée.
@@ -74,15 +87,11 @@ fn check_context(
     let suffix: String = word[pos_mot..].iter().collect();
 
     if has_plus {
-        if let Ok(re) = compile_regex(plus) {
-            let m = re.find(&suffix);
-            // Doit matcher AU DÉBUT du suffixe
-            found_s = match m {
-                Some(mat) => mat.start() == 0,
-                None => false,
-            };
-        } else {
-            found_s = false;
+        match get_regex(plus) {
+            Some(re) => {
+                found_s = re.find(&suffix).is_some_and(|m| m.start() == 0);
+            }
+            None => found_s = false,
         }
     }
 
@@ -96,7 +105,7 @@ fn check_context(
                 found_p = pos_mot == 1;
             } else {
                 // minus == "^...": le début du mot doit matcher tout le préfixe
-                if let Ok(re) = compile_regex(minus) {
+                if let Some(re) = get_regex(minus) {
                     if let Some(mat) = re.find(&prefix) {
                         // IMPORTANT : mat.start()/end() sont en BYTES, comparer à prefix.len() (bytes).
                         found_p = mat.start() == 0 && mat.end() == prefix.len();
@@ -107,7 +116,7 @@ fn check_context(
             // Pattern sans ^ : on cherche une correspondance qui "finit" au bord droit (= à pos_mot-1)
             // Dans le Python : boucle k de pos_mot-2 descendant vers -1,
             //   pattern.match(mot, k, pos_mot) : le match doit couvrir exactement [k, pos_mot-1]
-            if let Ok(re) = compile_regex(minus) {
+            if let Some(re) = get_regex(minus) {
                 let prefix_len = prefix.chars().count();
                 // Tester tous les points de départ possibles
                 for k in (0..prefix_len).rev() {

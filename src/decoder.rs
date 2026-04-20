@@ -23,12 +23,23 @@ pub enum SyllableMode {
     Oral,
 }
 
-/// Mode d'assemblage : LC (LireCouleur) ou STD (standard avec duplication des doubles consonnes)
+/// Mode d'assemblage syllabique.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AssembleMode {
-    /// LireCouleur : consonnes doubles restent dans la même syllabe
+    /// **Mode historique — non aligné avec LireCouleur 6 v6.**
+    ///
+    /// En mode phonologique, les consonnes doubles restent dans la même syllabe
+    /// (ex : `homme` → `ho-mme`). Ce mode n'est plus maintenu en conformité avec
+    /// LC6 depuis la migration v5→v6 ; il peut diverger sur certains mots.
+    ///
+    /// Utiliser [`AssembleMode::Std`] pour une conformité maximale avec LC6.
+    #[deprecated(
+        since = "0.4.0",
+        note = "non aligné avec LireCouleur 6 v6 ; préférer AssembleMode::Std"
+    )]
     Lc,
-    /// Standard : les consonnes doubles sont séparées (ex: pomme → pom|me)
+    /// Mode pédagogique (défaut LC6) : les consonnes doubles sont réparties entre deux syllabes
+    /// (ex : `homme` → `hom-me`, `pomme` → `pom-me`).
     Std,
 }
 
