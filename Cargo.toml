@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "wasm"]
+members = [".", "wasm", "ffi"]
 default-members = ["."]
 resolver = "2"
 
