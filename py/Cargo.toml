@@ -1,0 +1,20 @@
+[package]
+name = "syllabify-fr-py"
+version = "0.1.0"
+edition = "2021"
+description = "Python bindings for syllabify-fr — French syllabification library"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/dyscolor/syllabify-fr"
+
+[lib]
+name = "syllabify_fr"
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[features]
+default = []
+extension-module = ["pyo3/extension-module"]
+
+[dependencies]
+syllabify-fr = { path = ".." }
+pyo3 = { version = "0.23" }

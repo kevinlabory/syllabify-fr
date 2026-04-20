@@ -1,0 +1,15 @@
+[build-system]
+requires = ["maturin>=1,<2"]
+build-backend = "maturin"
+
+[project]
+name = "syllabify-fr"
+requires-python = ">=3.8"
+license = {text = "GPL-3.0-or-later"}
+description = "French syllabification for reading instruction — Python bindings"
+keywords = ["french", "syllables", "phonology", "dyslexia", "reading"]
+
+[tool.maturin]
+module-name = "syllabify_fr"
+manifest-path = "Cargo.toml"
+features = ["extension-module"]
