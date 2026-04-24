@@ -1,7 +1,7 @@
-use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyList};
 use ::syllabify_fr as core;
 use core::TextChunk;
+use pyo3::prelude::*;
+use pyo3::types::{PyDict, PyList};
 
 #[pyfunction]
 #[pyo3(name = "syllables")]

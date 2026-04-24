@@ -1,10 +1,13 @@
 [package]
 name = "syllabify-fr-ffi"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
 description = "C FFI bindings for syllabify-fr — French syllabification library"
-license = "GPL-3.0-or-later"
-repository = "https://github.com/dyscolor/syllabify-fr"
+readme = "README.md"
+keywords = ["french", "syllables", "ffi", "c", "dyslexia"]
 
 [lib]
 crate-type = ["cdylib", "staticlib", "rlib"]

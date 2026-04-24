@@ -45,6 +45,7 @@ pub fn lookup(word: &str, previous_word: Option<&str>) -> Option<Vec<(String, St
 }
 
 /// Liste les mots actuellement reconnus comme homographes non homophones.
+#[allow(dead_code)]
 pub fn known_homographs() -> impl Iterator<Item = &'static str> {
     HOMOGRAPHES.iter().map(|(k, _)| *k)
 }

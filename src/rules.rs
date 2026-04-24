@@ -187,7 +187,10 @@ pub fn regle_er(word: &[char], _pos_mot: usize) -> bool {
 pub fn regle_nc_ai_final(word: &[char], pos_mot: usize) -> bool {
     let mot = as_string(word);
     let m_seul = strip_elision(&mot);
-    if POSSIBLES_NC_AI_FINAL.binary_search(&m_seul.as_str()).is_ok() {
+    if POSSIBLES_NC_AI_FINAL
+        .binary_search(&m_seul.as_str())
+        .is_ok()
+    {
         return pos_mot == word.len() - 1;
     }
     false
@@ -232,7 +235,9 @@ pub fn regle_tien(word: &[char], pos_mot: usize) -> bool {
     if pos_mot < chars.len() - 4 {
         return false;
     }
-    EXCEPTIONS_FINAL_TIEN.binary_search(&m_sing.as_str()).is_ok()
+    EXCEPTIONS_FINAL_TIEN
+        .binary_search(&m_sing.as_str())
+        .is_ok()
 }
 
 #[cfg(test)]

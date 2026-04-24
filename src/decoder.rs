@@ -66,7 +66,7 @@ fn indices_of(codes: &[String], values: &[&str], limit: usize) -> Vec<usize> {
 
 /// Post-traitement `eu` : détermine si `x` est ouvert ou fermé.
 /// Équivalent `__post_process_e`.
-pub fn post_process_e(pp: &mut Vec<DecodedPhoneme>) {
+pub fn post_process_e(pp: &mut [DecodedPhoneme]) {
     if pp.len() <= 1 {
         return;
     }
@@ -99,15 +99,13 @@ pub fn post_process_e(pp: &mut Vec<DecodedPhoneme>) {
     }
 
     let consonnes_eu_ferme = ["z", "z_s", "t"];
-    if consonnes_eu_ferme.contains(&codes[i_ph + 1].as_str())
-        && codes[nb_ph] == "q_caduc"
-    {
+    if consonnes_eu_ferme.contains(&codes[i_ph + 1].as_str()) && codes[nb_ph] == "q_caduc" {
         pp[i_ph].code = "x^".to_string();
     }
 }
 
 /// Post-traitement `o` : ouvert ou fermé.
-pub fn post_process_o(pp: &mut Vec<DecodedPhoneme>) {
+pub fn post_process_o(pp: &mut [DecodedPhoneme]) {
     if pp.len() <= 1 {
         return;
     }
@@ -137,9 +135,10 @@ pub fn post_process_o(pp: &mut Vec<DecodedPhoneme>) {
         return;
     }
 
-    let consonnes = ["p", "t", "k", "b", "d", "g", "f", "f_ph", "s", "s^",
-                     "v", "z", "z^", "l", "r", "m", "n",
-                     "k_qu", "z^_g", "g_u", "s_c", "s_t", "z_s", "ks", "gz"];
+    let consonnes = [
+        "p", "t", "k", "b", "d", "g", "f", "f_ph", "s", "s^", "v", "z", "z^", "l", "r", "m", "n",
+        "k_qu", "z^_g", "g_u", "s_c", "s_t", "z_s", "ks", "gz",
+    ];
 
     for &i_ph in &i_o {
         if i_ph == nb_ph {
@@ -149,16 +148,9 @@ pub fn post_process_o(pp: &mut Vec<DecodedPhoneme>) {
             let next = codes.get(i_ph + 1).map(String::as_str).unwrap_or("");
             let next2 = codes.get(i_ph + 2).map(String::as_str).unwrap_or("");
 
-            if i_ph + 2 == nb_ph
-                && consonnes_syllabe_fermee.contains(&next)
-                && next2 == "q_caduc"
-            {
-                pp[i_ph].code = "o_ouvert".to_string();
-            } else if ["r", "z^_g", "v"].contains(&next) {
-                pp[i_ph].code = "o_ouvert".to_string();
-            } else if i_ph + 2 < nb_ph
-                && consonnes.contains(&next)
-                && consonnes.contains(&next2)
+            if (i_ph + 2 == nb_ph && consonnes_syllabe_fermee.contains(&next) && next2 == "q_caduc")
+                || ["r", "z^_g", "v"].contains(&next)
+                || (i_ph + 2 < nb_ph && consonnes.contains(&next) && consonnes.contains(&next2))
             {
                 pp[i_ph].code = "o_ouvert".to_string();
             }
@@ -167,7 +159,7 @@ pub fn post_process_o(pp: &mut Vec<DecodedPhoneme>) {
 }
 
 /// Post-traitement `w` : associe `u + voyelle` en phonème composé `w_X`.
-pub fn post_process_w(pp: &mut Vec<DecodedPhoneme>) {
+pub fn post_process_w(pp: &mut [DecodedPhoneme]) {
     if pp.len() <= 1 {
         return;
     }
@@ -179,13 +171,12 @@ pub fn post_process_w(pp: &mut Vec<DecodedPhoneme>) {
 }
 
 /// Post-traitement yod (v6) : remplace `i + voyelle` par `j` simple (plus de fusion `j_V`).
-pub fn post_process_yod(pp: &mut Vec<DecodedPhoneme>, _mode: SyllableMode) {
+pub fn post_process_yod(pp: &mut [DecodedPhoneme], _mode: SyllableMode) {
     if pp.len() <= 1 {
         return;
     }
     let phon_suivant = [
-        "a", "a~", "e", "e^", "e_comp", "e^_comp", "o", "o_comp", "o~", "e~",
-        "x", "x^", "u",
+        "a", "a~", "e", "e^", "e_comp", "e^_comp", "o", "o_comp", "o~", "e~", "x", "x^", "u",
     ];
 
     for i in 0..pp.len() - 1 {
@@ -215,9 +206,8 @@ pub fn assemble_syllables(
     if assemble_mode == AssembleMode::Std {
         for ph in phonemes {
             let c = classify(&ph.code);
-            let is_semi_consonne = ph.code.starts_with("j_")
-                || ph.code.starts_with("w_")
-                || ph.code.starts_with("y_");
+            let is_semi_consonne =
+                ph.code.starts_with("j_") || ph.code.starts_with("w_") || ph.code.starts_with("y_");
             let eligible = c == PhonClass::Consonant || is_semi_consonne;
             if eligible && ph.letters.chars().count() > 1 {
                 let chars: Vec<char> = ph.letters.chars().collect();
@@ -225,8 +215,14 @@ pub fn assemble_syllables(
                 if chars[n - 1] == chars[n - 2] {
                     let prefix: String = chars[..n - 1].iter().collect();
                     let last: String = chars[n - 1..].iter().collect();
-                    nphonemes.push(DecodedPhoneme { code: ph.code.clone(), letters: prefix });
-                    nphonemes.push(DecodedPhoneme { code: ph.code.clone(), letters: last });
+                    nphonemes.push(DecodedPhoneme {
+                        code: ph.code.clone(),
+                        letters: prefix,
+                    });
+                    nphonemes.push(DecodedPhoneme {
+                        code: ph.code.clone(),
+                        letters: last,
+                    });
                 } else {
                     nphonemes.push(ph.clone());
                 }
@@ -260,7 +256,10 @@ pub fn assemble_syllables(
         } else {
             classify(&ph.code)
         };
-        sylph.push(SylPh { class, indices: vec![i] });
+        sylph.push(SylPh {
+            class,
+            indices: vec![i],
+        });
     }
 
     // 3. Mixer les doubles consonnes type bl, br, tr, cr, chr, pl...
@@ -326,8 +325,8 @@ pub fn assemble_syllables(
         if i < nb_sylph && sylph[i].class == PhonClass::Vowel {
             i += 1;
             let mut cur_syl: Vec<usize> = Vec::new();
-            for k in j..i {
-                cur_syl.extend(sylph[k].indices.iter().copied());
+            for sp in &sylph[j..i] {
+                cur_syl.extend(sp.indices.iter().copied());
             }
             j = i;
             sylls.push(cur_syl);
@@ -359,8 +358,8 @@ pub fn assemble_syllables(
     // 7. Ajouter à la dernière syllabe TOUT ce qui reste à partir de j (et uniquement à partir de j).
     // Important : pas un HashSet sur tous les non-consommés, sinon on ré-agrège des phonèmes
     // délibérément laissés entre deux syllabes (ex: le 'r' central de "frère").
-    for k in j..nb_sylph {
-        sylls.last_mut().unwrap().extend(sylph[k].indices.iter().copied());
+    for sp in &sylph[j..nb_sylph] {
+        sylls.last_mut().unwrap().extend(sp.indices.iter().copied());
     }
 
     // 8. Mode oral : fusionner la dernière syllabe qui finit en q_caduc
@@ -384,7 +383,11 @@ pub fn assemble_syllables(
 }
 
 /// Extrait les phonèmes d'un mot unique (après nettoyage).
-pub fn extract_phonemes_word(word: &str, novice_reader: bool, mode: SyllableMode) -> Vec<DecodedPhoneme> {
+pub fn extract_phonemes_word(
+    word: &str,
+    novice_reader: bool,
+    mode: SyllableMode,
+) -> Vec<DecodedPhoneme> {
     // Le parser travaille en minuscules (l'automate est défini en minuscules).
     // On préserve la casse originale dans les `letters` de sortie.
     let lower: String = word.chars().flat_map(|c| c.to_lowercase()).collect();
@@ -399,8 +402,13 @@ pub fn extract_phonemes_word(word: &str, novice_reader: bool, mode: SyllableMode
         let end = (cursor + ph.step).min(chars_lower.len());
         // Lettres originales (avec casse) alignées par index char
         let orig_end = end.min(chars_orig.len());
-        let letters: String = chars_orig[cursor.min(chars_orig.len())..orig_end].iter().collect();
-        out.push(DecodedPhoneme { code: ph.code, letters });
+        let letters: String = chars_orig[cursor.min(chars_orig.len())..orig_end]
+            .iter()
+            .collect();
+        out.push(DecodedPhoneme {
+            code: ph.code,
+            letters,
+        });
         cursor = end;
     }
 
@@ -413,12 +421,14 @@ pub fn extract_phonemes_word(word: &str, novice_reader: bool, mode: SyllableMode
     out
 }
 
-/// API principale texte : équivalent `extract_syllables` pour un texte arbitraire.
-/// Retourne une liste d'éléments : soit un vecteur de syllabes (pour chaque mot),
-/// soit une chaîne de texte brut (ponctuation, espaces, etc.).
+/// Un élément de texte syllabifié : soit un mot décomposé en syllabes, soit du texte brut.
+///
+/// Retourné par [`crate::syllabify_text`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TextChunk {
+    /// Un mot découpé en syllabes (ex : `["cho", "co", "lat"]`).
     Word(Vec<String>),
+    /// Texte brut conservé tel quel : espaces, ponctuation, chiffres…
     Raw(String),
 }
 
@@ -456,21 +466,23 @@ pub fn extract_syllables(
         let lower_word = original_word.to_lowercase();
 
         // Désambiguïsation des homographes (v6)
-        let phonemes: Vec<DecodedPhoneme> = match crate::homographs::lookup(
-            &lower_word,
-            previous_word.as_deref(),
-        ) {
-            Some(coded) => coded
-                .into_iter()
-                .map(|(code, letters)| DecodedPhoneme { code, letters })
-                .collect(),
-            None => extract_phonemes_word(&original_word, novice_reader, syl_mode),
-        };
+        let phonemes: Vec<DecodedPhoneme> =
+            match crate::homographs::lookup(&lower_word, previous_word.as_deref()) {
+                Some(coded) => coded
+                    .into_iter()
+                    .map(|(code, letters)| DecodedPhoneme { code, letters })
+                    .collect(),
+                None => extract_phonemes_word(&original_word, novice_reader, syl_mode),
+            };
         let (sylls, nphons) = assemble_syllables(&phonemes, assemble_mode, syl_mode);
 
         let sylls_strings: Vec<String> = sylls
             .iter()
-            .map(|syl| syl.iter().map(|&i| nphons[i].letters.clone()).collect::<String>())
+            .map(|syl| {
+                syl.iter()
+                    .map(|&i| nphons[i].letters.clone())
+                    .collect::<String>()
+            })
             .collect();
 
         out.push(TextChunk::Word(sylls_strings));

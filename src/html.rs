@@ -152,7 +152,8 @@ mod tests {
 
     #[test]
     fn mot_alternance_demarre_a() {
-        assert!(render_word_html("famille").starts_with(r#"<span class="word"><span class="syl syl-a">fa</span>"#));
+        assert!(render_word_html("famille")
+            .starts_with(r#"<span class="word"><span class="syl syl-a">fa</span>"#));
     }
 
     #[test]
@@ -220,7 +221,11 @@ mod tests {
         let html_nom = render_html("le couvent");
         let html_verbe = render_html("elles couvent");
         // nom : deux syllabes cou/vent
-        assert!(html_nom.contains(r#">cou</span><span class="syl syl-b">vent</span>"#), "got: {}", html_nom);
+        assert!(
+            html_nom.contains(r#">cou</span><span class="syl syl-b">vent</span>"#),
+            "got: {}",
+            html_nom
+        );
         // verbe : la 2e syllabe 'vent' est prononcée muet, mais la graphie reste 'vent'
         // (la différence est phonétique, pas graphique — donc même rendu textuel).
         assert!(html_verbe.contains(">cou</span>"));

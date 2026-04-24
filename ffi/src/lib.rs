@@ -191,14 +191,23 @@ mod tests {
     fn test_syllabify_text_json_word_chunk() {
         let result = unsafe { round_trip(syllabify_text_json, "le chat dort") };
         assert!(result.starts_with('['), "expected JSON array: {result}");
-        assert!(result.contains("\"kind\":\"word\""), "missing word chunk: {result}");
-        assert!(result.contains("\"syllables\""), "missing syllables: {result}");
+        assert!(
+            result.contains("\"kind\":\"word\""),
+            "missing word chunk: {result}"
+        );
+        assert!(
+            result.contains("\"syllables\""),
+            "missing syllables: {result}"
+        );
     }
 
     #[test]
     fn test_syllabify_text_json_raw_chunk() {
         let result = unsafe { round_trip(syllabify_text_json, "bonjour !") };
-        assert!(result.contains("\"kind\":\"raw\""), "missing raw chunk: {result}");
+        assert!(
+            result.contains("\"kind\":\"raw\""),
+            "missing raw chunk: {result}"
+        );
     }
 
     #[test]

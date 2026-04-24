@@ -21,10 +21,7 @@ fn syllables_famille() {
 
 #[wasm_bindgen_test]
 fn syllables_parlent() {
-    assert_eq!(
-        syllabify_fr_wasm::syllables("parlent"),
-        vec!["par", "lent"]
-    );
+    assert_eq!(syllabify_fr_wasm::syllables("parlent"), vec!["par", "lent"]);
 }
 
 #[wasm_bindgen_test]
@@ -77,5 +74,9 @@ fn syllabify_text_handles_homographs() {
         }
     }
     // "couvent" after "le" is the noun form, -ent pronounced (a~)
-    assert!(serialized.iter().any(|s| s == "cou-vent"), "got: {:?}", serialized);
+    assert!(
+        serialized.iter().any(|s| s == "cou-vent"),
+        "got: {:?}",
+        serialized
+    );
 }

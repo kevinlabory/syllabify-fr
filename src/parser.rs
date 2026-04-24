@@ -2,7 +2,7 @@
 //! Parser : transforme un mot en suite de phonèmes.
 //! Équivalent de `parser.py` dans pylirecouleur.
 
-use crate::data::{AUTOMATON, LetterEntry, RuleKind, Special};
+use crate::data::{LetterEntry, RuleKind, Special, AUTOMATON};
 use crate::rules;
 // Features are additive in Cargo workspaces, so if both are unified we pick
 // regex-full (the native default). Only a WASM build with default-features=false
@@ -33,14 +33,21 @@ fn regex_cache() -> &'static HashMap<&'static str, Regex> {
         let mut map = HashMap::new();
         for (_, entry) in AUTOMATON {
             for rule in entry.rules {
-                if let RuleKind::Context { plus, minus, has_plus, has_minus } = rule.kind {
+                if let RuleKind::Context {
+                    plus,
+                    minus,
+                    has_plus,
+                    has_minus,
+                } = rule.kind
+                {
                     if has_plus && !plus.is_empty() {
                         map.entry(plus)
                             .or_insert_with(|| Regex::new(plus).expect("invalid regex in data.rs"));
                     }
                     if has_minus && !minus.is_empty() {
-                        map.entry(minus)
-                            .or_insert_with(|| Regex::new(minus).expect("invalid regex in data.rs"));
+                        map.entry(minus).or_insert_with(|| {
+                            Regex::new(minus).expect("invalid regex in data.rs")
+                        });
                     }
                 }
             }
@@ -160,35 +167,55 @@ fn one_step(word: &[char], pos: usize) -> Phoneme {
     let letter = word[pos];
     let entry = match lookup_letter(letter) {
         Some(e) => e,
-        None => return Phoneme { code: String::new(), step: 1 },
+        None => {
+            return Phoneme {
+                code: String::new(),
+                step: 1,
+            }
+        }
     };
 
     for rule in entry.rules {
         let applies = match rule.kind {
-            RuleKind::Context { plus, minus, has_plus, has_minus } => {
-                check_context(plus, minus, has_plus, has_minus, word, pos + 1)
-            }
+            RuleKind::Context {
+                plus,
+                minus,
+                has_plus,
+                has_minus,
+            } => check_context(plus, minus, has_plus, has_minus, word, pos + 1),
             RuleKind::Special(sp) => check_special(sp, word, pos + 1),
         };
         if applies {
-            return Phoneme { code: rule.phoneme.to_string(), step: rule.step };
+            return Phoneme {
+                code: rule.phoneme.to_string(),
+                step: rule.step,
+            };
         }
     }
 
     // Fin de mot : règle '@'
     if pos == word.len() - 1 {
         if let Some((phon, step)) = entry.end_of_word {
-            return Phoneme { code: phon.to_string(), step };
+            return Phoneme {
+                code: phon.to_string(),
+                step,
+            };
         }
     }
 
     // Règle par défaut '*'
     if let Some((phon, step)) = entry.default {
-        return Phoneme { code: phon.to_string(), step };
+        return Phoneme {
+            code: phon.to_string(),
+            step,
+        };
     }
 
     // Rien trouvé : caractère non décodable
-    Phoneme { code: String::new(), step: 1 }
+    Phoneme {
+        code: String::new(),
+        step: 1,
+    }
 }
 
 /// Décode un mot en suite de phonèmes.
