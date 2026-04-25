@@ -3,6 +3,9 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-4830%2F4830-brightgreen.svg)](tests/regression.rs)
 [![Conformance](https://img.shields.io/badge/LC6_conformance-100%25-brightgreen.svg)](NOTES-v6.md)
+[![Crates.io](https://img.shields.io/crates/v/syllabify-fr.svg)](https://crates.io/crates/syllabify-fr)
+[![Docs.rs](https://docs.rs/syllabify-fr/badge.svg)](https://docs.rs/syllabify-fr)
+[![CI](https://github.com/kevinlabory/syllabify-fr/actions/workflows/ci.yml/badge.svg)](https://github.com/kevinlabory/syllabify-fr/actions)
 
 Syllabification française pour l'apprentissage de la lecture, en particulier pour les enfants dyslexiques.
 
