@@ -183,7 +183,7 @@ pub fn regle_er(word: &[char], _pos_mot: usize) -> bool {
     EXCEPTIONS_FINAL_ER.binary_search(&m_sing.as_str()).is_ok()
 }
 
-/// `regle_nc_ai_final` : nom commun terminé par -ai prononcé [è] plutôt que [é].
+/// `regle_nc_ai_final` : nom commun terminé par -ai prononcé `[è]` plutôt que `[é]`.
 pub fn regle_nc_ai_final(word: &[char], pos_mot: usize) -> bool {
     let mot = as_string(word);
     let m_seul = strip_elision(&mot);
@@ -220,7 +220,7 @@ pub fn regle_t_final(word: &[char], _pos_mot: usize) -> bool {
     MOTS_T_FINAL.binary_search(&m_sing.as_str()).is_ok()
 }
 
-/// `regle_tien` : le mot se termine par `-tien` où le 't' se prononce [t].
+/// `regle_tien` : le mot se termine par `-tien` où le 't' se prononce `[t]`.
 pub fn regle_tien(word: &[char], pos_mot: usize) -> bool {
     let mot = as_string(word);
     let m_sing = strip_final_s(&mot);
