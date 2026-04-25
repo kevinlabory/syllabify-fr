@@ -206,8 +206,8 @@ Site officiel : <https://lirecouleur.forge.apps.education.fr/>
 - [x] CLI
 - [x] Homographes contextuels
 - [x] `liaisonAmont` / `liaisonAval` (liaisons entre mots)
-- [ ] FFI C (`syllabify-fr-sys`)
+- [x] FFI C (`syllabify-fr-ffi`)
 - [x] WASM (binding JS/Deno)
-- [ ] Python (PyO3)
+- [x] Python (PyO3)
 - [ ] Java (JNI)
 - [x] Sortie HTML avec spans pour intégration web (coloriage syllabique)
