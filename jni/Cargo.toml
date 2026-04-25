@@ -1,0 +1,17 @@
+[package]
+name = "syllabify-fr-jni"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "JNI bindings for syllabify-fr — French syllabification for Java/Kotlin/Android"
+keywords = ["syllabification", "french", "jni", "java", "android"]
+readme = "README.md"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+syllabify-fr = { path = "..", default-features = true }
+jni = { version = "0.21", default-features = false }

@@ -6,6 +6,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.5.0] — 2026-04-25
+
+### Added
+- `jni/` : nouvelle crate `syllabify-fr-jni 0.5.0` — bindings JNI pour Java, Kotlin et Android.
+  - 5 fonctions exportées : `syllables` (→ `String[]`), `syllabifyText`, `phonemes`,
+    `renderWordHtml`, `renderHtml` (→ JSON/HTML `String`)
+  - Classe Java `com.dyscolor.syllabify.SyllabifyFr` prête à l'emploi
+  - README avec instructions Android (cross-compilation par ABI)
+- Roadmap : Java/JNI coché.
+
+### Changed
+- Version workspace `0.4.1 → 0.5.0` (nouvelle crate publiée).
+
+---
+
 ## [0.4.1] — 2026-04-25
 
 ### Added

@@ -212,5 +212,5 @@ Site officiel : <https://lirecouleur.forge.apps.education.fr/>
 - [x] FFI C (`syllabify-fr-ffi`)
 - [x] WASM (binding JS/Deno)
 - [x] Python (PyO3)
-- [ ] Java (JNI)
+- [x] Java / Kotlin / Android (JNI, `syllabify-fr-jni`)
 - [x] Sortie HTML avec spans pour intégration web (coloriage syllabique)
