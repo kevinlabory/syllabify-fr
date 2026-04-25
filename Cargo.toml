@@ -3,14 +3,24 @@ members = [".", "wasm", "ffi", "py"]
 default-members = ["."]
 resolver = "2"
 
-[package]
-name = "syllabify-fr"
+[workspace.package]
 version = "0.4.0"
 edition = "2021"
-description = "Syllabification française pour l'apprentissage de la lecture — port de LireCouleur"
 license = "GPL-3.0-or-later"
+authors = ["Kevin Labory <kevin@dyscolor.com>"]
+repository = "https://github.com/kevinlabory/syllabify-fr"
+rust-version = "1.70"
+
+[package]
+name = "syllabify-fr"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Syllabification française pour l'apprentissage de la lecture — port de LireCouleur 6"
 readme = "README.md"
-repository = "https://github.com/dyscolor/syllabify-fr"
 keywords = ["french", "syllables", "phonology", "dyslexia", "reading"]
 categories = ["text-processing", "science"]
 
@@ -34,6 +44,7 @@ regex-lite = { version = "0.1", optional = true }
 
 [dev-dependencies]
 serde_json = "1"
+criterion = { version = "0.5", features = ["html_reports"] }
 
 [profile.release]
 lto = true
@@ -42,3 +53,7 @@ codegen-units = 1
 # Dedicated optimization profile for the WASM crate: aggressive size tuning.
 [profile.release.package.syllabify-fr-wasm]
 opt-level = "z"
+
+[[bench]]
+name = "syllabify"
+harness = false

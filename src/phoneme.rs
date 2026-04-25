@@ -24,13 +24,15 @@ pub fn classify(phon: &str) -> PhonClass {
     }
     match phon {
         // voyelles
-        "a" | "q" | "q_caduc" | "i" | "o" | "o_comp" | "o_ouvert" | "u" | "y"
-        | "e" | "e_comp" | "e^" | "e^_comp" | "a~" | "e~" | "x~" | "o~"
-        | "x" | "x^" | "wa" | "w5" => PhonClass::Vowel,
+        "a" | "q" | "q_caduc" | "i" | "o" | "o_comp" | "o_ouvert" | "u" | "y" | "e" | "e_comp"
+        | "e^" | "e^_comp" | "a~" | "e~" | "x~" | "o~" | "x" | "x^" | "wa" | "w5" => {
+            PhonClass::Vowel
+        }
         // consonnes
-        "p" | "t" | "k" | "b" | "d" | "g" | "f" | "f_ph" | "s" | "s^"
-        | "v" | "z" | "z^" | "l" | "r" | "m" | "n"
-        | "k_qu" | "z^_g" | "g_u" | "s_c" | "s_t" | "z_s" | "ks" | "gz" => PhonClass::Consonant,
+        "p" | "t" | "k" | "b" | "d" | "g" | "f" | "f_ph" | "s" | "s^" | "v" | "z" | "z^" | "l"
+        | "r" | "m" | "n" | "k_qu" | "z^_g" | "g_u" | "s_c" | "s_t" | "z_s" | "ks" | "gz" => {
+            PhonClass::Consonant
+        }
         // semi-voyelles
         "j" | "g~" | "n~" | "w" => PhonClass::SemiVowel,
         // marqueurs

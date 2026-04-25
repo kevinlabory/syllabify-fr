@@ -1,10 +1,13 @@
 [package]
 name = "syllabify-fr-wasm"
-version = "0.2.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
 description = "WebAssembly bindings for syllabify-fr (French syllabification, LireCouleur 6 port)"
-license = "GPL-3.0-or-later"
-repository = "https://github.com/dyscolor/syllabify-fr"
+readme = "README.md"
+keywords = ["french", "syllables", "wasm", "webassembly", "dyslexia"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]

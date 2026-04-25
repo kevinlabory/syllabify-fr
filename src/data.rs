@@ -3,7 +3,7 @@
 // Original work © Marie-Pierre & Luc Brungard (LireCouleur), GPL v3
 // DO NOT EDIT MANUALLY
 
-#![allow(clippy::all)]
+#![allow(clippy::all, dead_code)]
 
 /// Entrée de l'automate pour une lettre.
 #[derive(Debug, Clone, Copy)]
@@ -38,15 +38,15 @@ pub enum RuleKind {
 /// Fonctions spéciales de l'automate.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Special {
-    RegleAvoir,  // regle_avoir
-    RegleEr,  // regle_er
-    RegleIent,  // regle_ient
-    RegleMent,  // regle_ment
-    RegleMotsEnt,  // regle_mots_ent
-    RegleNcAiFinal,  // regle_nc_ai_final
-    RegleSFinal,  // regle_s_final
-    RegleTFinal,  // regle_t_final
-    RegleTien,  // regle_tien
+    RegleAvoir,     // regle_avoir
+    RegleEr,        // regle_er
+    RegleIent,      // regle_ient
+    RegleMent,      // regle_ment
+    RegleMotsEnt,   // regle_mots_ent
+    RegleNcAiFinal, // regle_nc_ai_final
+    RegleSFinal,    // regle_s_final
+    RegleTFinal,    // regle_t_final
+    RegleTien,      // regle_tien
     RegleVerbeMer,  // regle_verbe_mer
 }
 
@@ -61,610 +61,3680 @@ pub struct HomographVariant {
 
 /// Automate : une entrée par lettre.
 pub static AUTOMATON: &[(&str, LetterEntry)] = &[
-    ("'", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("#", 1)),
-        end_of_word: Some(("#", 1)),
-    }),
-    ("@", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("#", 1)),
-        end_of_word: Some(("#", 1)),
-    }),
-    ("_", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("#", 1)),
-        end_of_word: Some(("#", 1)),
-    }),
-    ("a", LetterEntry {
-        rules: &[
-        Rule { name: "u", kind: RuleKind::Context { plus: "u", minus: "", has_plus: true, has_minus: false }, phoneme: "o_comp", step: 2 },
-        Rule { name: "il", kind: RuleKind::Context { plus: "il($|l)", minus: "", has_plus: true, has_minus: false }, phoneme: "a", step: 1 },
-        Rule { name: "in", kind: RuleKind::Context { plus: "i[nm]([bcçdfghjklnmpqrstvwxz]|$)", minus: "", has_plus: true, has_minus: false }, phoneme: "e~", step: 3 },
-        Rule { name: "nc_ai_fin", kind: RuleKind::Special(Special::RegleNcAiFinal), phoneme: "e^_comp", step: 2 },
-        Rule { name: "ai_fin", kind: RuleKind::Context { plus: "i$", minus: "", has_plus: true, has_minus: false }, phoneme: "e_comp", step: 2 },
-        Rule { name: "i", kind: RuleKind::Context { plus: "[iî]", minus: "", has_plus: true, has_minus: false }, phoneme: "e^_comp", step: 2 },
-        Rule { name: "n", kind: RuleKind::Context { plus: "n[bcçdfgjklmpqrstvwxz]", minus: "", has_plus: true, has_minus: false }, phoneme: "a~", step: 2 },
-        Rule { name: "m", kind: RuleKind::Context { plus: "m[bp]", minus: "", has_plus: true, has_minus: false }, phoneme: "a~", step: 2 },
-        Rule { name: "nm", kind: RuleKind::Context { plus: "n(s?)$", minus: "", has_plus: true, has_minus: false }, phoneme: "a~", step: 2 },
-        Rule { name: "y_except", kind: RuleKind::Context { plus: "y", minus: "(^b|cob|cip)", has_plus: true, has_minus: true }, phoneme: "a", step: 1 },
-        Rule { name: "y", kind: RuleKind::Context { plus: "y", minus: "", has_plus: true, has_minus: false }, phoneme: "e^_comp", step: 1 },
-        ],
-        default: Some(("a", 1)),
-        end_of_word: None,
-    }),
-    ("b", LetterEntry {
-        rules: &[
-        Rule { name: "b", kind: RuleKind::Context { plus: "b", minus: "", has_plus: true, has_minus: false }, phoneme: "b", step: 2 },
-        Rule { name: "plomb", kind: RuleKind::Context { plus: "(s?)$", minus: "plom", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        ],
-        default: Some(("b", 1)),
-        end_of_word: None,
-    }),
-    ("c", LetterEntry {
-        rules: &[
-        Rule { name: "eiy", kind: RuleKind::Context { plus: "[eiyéèêëîï]", minus: "", has_plus: true, has_minus: false }, phoneme: "s_c", step: 1 },
-        Rule { name: "choeur_1", kind: RuleKind::Context { plus: "hoe", minus: "", has_plus: true, has_minus: false }, phoneme: "k", step: 2 },
-        Rule { name: "choeur_2", kind: RuleKind::Context { plus: "hœ", minus: "", has_plus: true, has_minus: false }, phoneme: "k", step: 2 },
-        Rule { name: "chor", kind: RuleKind::Context { plus: "hor", minus: "", has_plus: true, has_minus: false }, phoneme: "k", step: 2 },
-        Rule { name: "psycho", kind: RuleKind::Context { plus: "ho", minus: "psy", has_plus: true, has_minus: true }, phoneme: "k", step: 2 },
-        Rule { name: "brachio", kind: RuleKind::Context { plus: "hio", minus: "bra", has_plus: true, has_minus: true }, phoneme: "k", step: 2 },
-        Rule { name: "cheo", kind: RuleKind::Context { plus: "héo", minus: "", has_plus: true, has_minus: false }, phoneme: "k", step: 2 },
-        Rule { name: "chest", kind: RuleKind::Context { plus: "hest", minus: "", has_plus: true, has_minus: false }, phoneme: "k", step: 2 },
-        Rule { name: "chiro", kind: RuleKind::Context { plus: "hiro[p|m]", minus: "", has_plus: true, has_minus: false }, phoneme: "k", step: 2 },
-        Rule { name: "chlo_chlam", kind: RuleKind::Context { plus: "hl(o|am)", minus: "", has_plus: true, has_minus: false }, phoneme: "k", step: 2 },
-        Rule { name: "chr", kind: RuleKind::Context { plus: "hr", minus: "", has_plus: true, has_minus: false }, phoneme: "k", step: 2 },
-        Rule { name: "h", kind: RuleKind::Context { plus: "h", minus: "", has_plus: true, has_minus: false }, phoneme: "s^", step: 2 },
-        Rule { name: "erc_orc", kind: RuleKind::Context { plus: "(s?)$", minus: "[e|o]r", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "cisole", kind: RuleKind::Context { plus: "$", minus: "^", has_plus: true, has_minus: true }, phoneme: "s_c", step: 1 },
-        Rule { name: "c_muet_fin", kind: RuleKind::Context { plus: "(s?)$", minus: "taba|accro", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "onc_donc", kind: RuleKind::Context { plus: "", minus: "^on|^don", has_plus: false, has_minus: true }, phoneme: "k", step: 1 },
-        Rule { name: "nc_muet_fin", kind: RuleKind::Context { plus: "(s?)$", minus: "n", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "_spect", kind: RuleKind::Context { plus: "t(s?)$", minus: "spe", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "_inct", kind: RuleKind::Context { plus: "t(s?)$", minus: "in", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "cciey", kind: RuleKind::Context { plus: "c[eiyéèêëîï]", minus: "", has_plus: true, has_minus: false }, phoneme: "k", step: 1 },
-        Rule { name: "cc", kind: RuleKind::Context { plus: "c", minus: "", has_plus: true, has_minus: false }, phoneme: "k", step: 2 },
-        Rule { name: "apostrophe", kind: RuleKind::Context { plus: "('|’)", minus: "", has_plus: true, has_minus: false }, phoneme: "s", step: 2 },
-        ],
-        default: Some(("k", 1)),
-        end_of_word: Some(("k", 1)),
-    }),
-    ("d", LetterEntry {
-        rules: &[
-        Rule { name: "d", kind: RuleKind::Context { plus: "d", minus: "", has_plus: true, has_minus: false }, phoneme: "d", step: 2 },
-        Rule { name: "aujourdhui", kind: RuleKind::Context { plus: "", minus: "aujour", has_plus: false, has_minus: true }, phoneme: "d", step: 1 },
-        Rule { name: "disole", kind: RuleKind::Context { plus: "$", minus: "^", has_plus: true, has_minus: true }, phoneme: "d", step: 1 },
-        Rule { name: "except", kind: RuleKind::Context { plus: "(s?)$", minus: "(aï|oue)", has_plus: true, has_minus: true }, phoneme: "d", step: 1 },
-        Rule { name: "dmuet", kind: RuleKind::Context { plus: "(s?)$", minus: "", has_plus: true, has_minus: false }, phoneme: "#", step: 1 },
-        Rule { name: "apostrophe", kind: RuleKind::Context { plus: "('|’)", minus: "", has_plus: true, has_minus: false }, phoneme: "d", step: 2 },
-        ],
-        default: Some(("d", 1)),
-        end_of_word: None,
-    }),
-    ("e", LetterEntry {
-        rules: &[
-        Rule { name: "conj_v_ier", kind: RuleKind::Special(Special::RegleIent), phoneme: "#", step: 3 },
-        Rule { name: "uient", kind: RuleKind::Context { plus: "nt$", minus: "ui", has_plus: true, has_minus: true }, phoneme: "#", step: 3 },
-        Rule { name: "ien", kind: RuleKind::Context { plus: "n([bcçdfghjklpqrstvwxz]|$)", minus: "[bcdlmrstvh]i", has_plus: true, has_minus: true }, phoneme: "e~", step: 2 },
-        Rule { name: "ien_2", kind: RuleKind::Context { plus: "n([bcçdfghjklpqrstvwxz]|$)", minus: "ï", has_plus: true, has_minus: true }, phoneme: "e~", step: 2 },
-        Rule { name: "een", kind: RuleKind::Context { plus: "n(s?)$", minus: "é", has_plus: true, has_minus: true }, phoneme: "e~", step: 2 },
-        Rule { name: "except_en_1", kind: RuleKind::Context { plus: "n(s?)$", minus: "exam|mino|édu", has_plus: true, has_minus: true }, phoneme: "e~", step: 2 },
-        Rule { name: "except_en_2", kind: RuleKind::Context { plus: "n(s?)$", minus: "[ao]ï", has_plus: true, has_minus: true }, phoneme: "e~", step: 2 },
-        Rule { name: "_ent", kind: RuleKind::Special(Special::RegleMotsEnt), phoneme: "a~", step: 2 },
-        Rule { name: "clef", kind: RuleKind::Context { plus: "f", minus: "cl", has_plus: true, has_minus: true }, phoneme: "e_comp", step: 2 },
-        Rule { name: "hier", kind: RuleKind::Special(Special::RegleEr), phoneme: "e^_comp", step: 1 },
-        Rule { name: "adv_emment_fin", kind: RuleKind::Context { plus: "nt", minus: "emm", has_plus: true, has_minus: true }, phoneme: "a~", step: 2 },
-        Rule { name: "ment", kind: RuleKind::Special(Special::RegleMent), phoneme: "a~", step: 2 },
-        Rule { name: "imparfait", kind: RuleKind::Context { plus: "nt$", minus: "ai", has_plus: true, has_minus: true }, phoneme: "verb_3p", step: 3 },
-        Rule { name: "verbe_3_pluriel", kind: RuleKind::Context { plus: "nt$", minus: "", has_plus: true, has_minus: false }, phoneme: "q_caduc", step: 1 },
-        Rule { name: "au", kind: RuleKind::Context { plus: "au", minus: "", has_plus: true, has_minus: false }, phoneme: "o_comp", step: 3 },
-        Rule { name: "avoir", kind: RuleKind::Special(Special::RegleAvoir), phoneme: "y", step: 2 },
-        Rule { name: "monsieur", kind: RuleKind::Context { plus: "ur", minus: "si", has_plus: true, has_minus: true }, phoneme: "x^", step: 2 },
-        Rule { name: "jeudi", kind: RuleKind::Context { plus: "udi", minus: "j", has_plus: true, has_minus: true }, phoneme: "x^", step: 2 },
-        Rule { name: "jeu_", kind: RuleKind::Context { plus: "u", minus: "j", has_plus: true, has_minus: true }, phoneme: "x", step: 2 },
-        Rule { name: "eur", kind: RuleKind::Context { plus: "ur", minus: "", has_plus: true, has_minus: false }, phoneme: "x", step: 2 },
-        Rule { name: "eu", kind: RuleKind::Context { plus: "u", minus: "", has_plus: true, has_minus: false }, phoneme: "x", step: 2 },
-        Rule { name: "eu_accent_circ", kind: RuleKind::Context { plus: "û", minus: "", has_plus: true, has_minus: false }, phoneme: "x^", step: 2 },
-        Rule { name: "in", kind: RuleKind::Context { plus: "i[nm]([bcçdfghjklnmpqrstvwxz]|$)", minus: "", has_plus: true, has_minus: false }, phoneme: "e~", step: 3 },
-        Rule { name: "eil", kind: RuleKind::Context { plus: "il", minus: "", has_plus: true, has_minus: false }, phoneme: "e^_comp", step: 1 },
-        Rule { name: "y", kind: RuleKind::Context { plus: "y[aeiouéèêààäôâ]", minus: "", has_plus: true, has_minus: false }, phoneme: "e^_comp", step: 1 },
-        Rule { name: "iy", kind: RuleKind::Context { plus: "[iy]", minus: "", has_plus: true, has_minus: false }, phoneme: "e^_comp", step: 2 },
-        Rule { name: "ennemi", kind: RuleKind::Context { plus: "nnemi", minus: "^", has_plus: true, has_minus: true }, phoneme: "e^_comp", step: 1 },
-        Rule { name: "enn_debut_mot", kind: RuleKind::Context { plus: "nn", minus: "^", has_plus: true, has_minus: true }, phoneme: "a~", step: 2 },
-        Rule { name: "dessus_dessous", kind: RuleKind::Context { plus: "ss(o?)us", minus: "d", has_plus: true, has_minus: true }, phoneme: "q", step: 1 },
-        Rule { name: "et", kind: RuleKind::Context { plus: "t$", minus: "^", has_plus: true, has_minus: true }, phoneme: "e_comp", step: 2 },
-        Rule { name: "cet", kind: RuleKind::Context { plus: "[t]$", minus: "^c", has_plus: true, has_minus: true }, phoneme: "e^_comp", step: 1 },
-        Rule { name: "t_final", kind: RuleKind::Context { plus: "[t]$", minus: "", has_plus: true, has_minus: false }, phoneme: "e^_comp", step: 2 },
-        Rule { name: "eclm_final", kind: RuleKind::Context { plus: "[clm](s?)$", minus: "", has_plus: true, has_minus: false }, phoneme: "e^_comp", step: 1 },
-        Rule { name: "est_1", kind: RuleKind::Context { plus: "st$", minus: "^", has_plus: true, has_minus: true }, phoneme: "e^_comp", step: 3 },
-        Rule { name: "est_2", kind: RuleKind::Context { plus: "st$", minus: "@", has_plus: true, has_minus: true }, phoneme: "e^_comp", step: 3 },
-        Rule { name: "es_1", kind: RuleKind::Context { plus: "s$", minus: "^", has_plus: true, has_minus: true }, phoneme: "e^_comp", step: 2 },
-        Rule { name: "es_2", kind: RuleKind::Context { plus: "s$", minus: "@", has_plus: true, has_minus: true }, phoneme: "e^_comp", step: 2 },
-        Rule { name: "drz_final", kind: RuleKind::Context { plus: "[drz](s?)$", minus: "", has_plus: true, has_minus: false }, phoneme: "e_comp", step: 2 },
-        Rule { name: "n", kind: RuleKind::Context { plus: "n[bcçdfghjklmpqrstvwxz]", minus: "", has_plus: true, has_minus: false }, phoneme: "a~", step: 2 },
-        Rule { name: "adv_emment_a", kind: RuleKind::Context { plus: "mment", minus: "", has_plus: true, has_minus: false }, phoneme: "a", step: 1 },
-        Rule { name: "femme", kind: RuleKind::Context { plus: "mm", minus: "f", has_plus: true, has_minus: true }, phoneme: "a", step: 1 },
-        Rule { name: "lemme", kind: RuleKind::Context { plus: "mm", minus: "l", has_plus: true, has_minus: true }, phoneme: "e^_comp", step: 1 },
-        Rule { name: "em_gene", kind: RuleKind::Context { plus: "m[bcçdfghjklmnpqrstvwxz]", minus: "", has_plus: true, has_minus: false }, phoneme: "a~", step: 2 },
-        Rule { name: "nm", kind: RuleKind::Context { plus: "[nm]$", minus: "", has_plus: true, has_minus: false }, phoneme: "a~", step: 2 },
-        Rule { name: "tclesmesdes", kind: RuleKind::Context { plus: "s$", minus: "^[tcslmd]", has_plus: true, has_minus: true }, phoneme: "e_comp", step: 2 },
-        Rule { name: "que_isole", kind: RuleKind::Context { plus: "$", minus: "^qu", has_plus: true, has_minus: true }, phoneme: "q", step: 1 },
-        Rule { name: "que_gue_final", kind: RuleKind::Context { plus: "(s?)$", minus: "[gq]u", has_plus: true, has_minus: true }, phoneme: "q_caduc", step: 1 },
-        Rule { name: "jtcnslemede", kind: RuleKind::Context { plus: "$", minus: "^[jtcnslmd]", has_plus: true, has_minus: true }, phoneme: "q", step: 1 },
-        Rule { name: "jean", kind: RuleKind::Context { plus: "an", minus: "j", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "ge", kind: RuleKind::Context { plus: "[aouàäôâ]", minus: "g", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "eoi", kind: RuleKind::Context { plus: "oi", minus: "", has_plus: true, has_minus: false }, phoneme: "#", step: 1 },
-        Rule { name: "ex", kind: RuleKind::Context { plus: "x", minus: "", has_plus: true, has_minus: false }, phoneme: "e^", step: 1 },
-        Rule { name: "ef", kind: RuleKind::Context { plus: "[bf](s?)$", minus: "", has_plus: true, has_minus: false }, phoneme: "e^", step: 1 },
-        Rule { name: "reqquechose", kind: RuleKind::Context { plus: "[bcçdfghjklmnpqrstvwxz](h|l|r)", minus: "r", has_plus: true, has_minus: true }, phoneme: "q", step: 1 },
-        Rule { name: "except_evr", kind: RuleKind::Context { plus: "vr", minus: "", has_plus: true, has_minus: false }, phoneme: "q", step: 1 },
-        Rule { name: "2consonnes", kind: RuleKind::Context { plus: "[bcçdfghjklmnpqrstvwxz]{2}", minus: "", has_plus: true, has_minus: false }, phoneme: "e^_comp", step: 1 },
-        Rule { name: "abbaye", kind: RuleKind::Context { plus: "(s?)$", minus: "abbay", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "e_muet", kind: RuleKind::Context { plus: "(s?)$", minus: "[aeiouéèêà]", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "e_caduc", kind: RuleKind::Context { plus: "(s?)$", minus: "[bcçdfghjklmnpqrstvwxzy]", has_plus: true, has_minus: true }, phoneme: "q_caduc", step: 1 },
-        Rule { name: "e_deb", kind: RuleKind::Context { plus: "", minus: "^", has_plus: false, has_minus: true }, phoneme: "q", step: 1 },
-        ],
-        default: Some(("q", 1)),
-        end_of_word: Some(("q_caduc", 1)),
-    }),
-    ("f", LetterEntry {
-        rules: &[
-        Rule { name: "f", kind: RuleKind::Context { plus: "f", minus: "", has_plus: true, has_minus: false }, phoneme: "f", step: 2 },
-        Rule { name: "oeufs", kind: RuleKind::Context { plus: "s", minus: "(oeu|œu)", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        ],
-        default: Some(("f", 1)),
-        end_of_word: None,
-    }),
-    ("g", LetterEntry {
-        rules: &[
-        Rule { name: "g", kind: RuleKind::Context { plus: "g", minus: "", has_plus: true, has_minus: false }, phoneme: "g", step: 2 },
-        Rule { name: "ao", kind: RuleKind::Context { plus: "a|o", minus: "", has_plus: true, has_minus: false }, phoneme: "g", step: 1 },
-        Rule { name: "eiy", kind: RuleKind::Context { plus: "[eéèêëïiy]", minus: "", has_plus: true, has_minus: false }, phoneme: "z^_g", step: 1 },
-        Rule { name: "aiguille", kind: RuleKind::Context { plus: "u", minus: "ai", has_plus: true, has_minus: true }, phoneme: "g", step: 1 },
-        Rule { name: "u_consonne", kind: RuleKind::Context { plus: "u[bcçdfghjklmnpqrstvwxz]", minus: "", has_plus: true, has_minus: false }, phoneme: "g", step: 1 },
-        Rule { name: "u", kind: RuleKind::Context { plus: "u", minus: "", has_plus: true, has_minus: false }, phoneme: "g_u", step: 2 },
-        Rule { name: "n", kind: RuleKind::Context { plus: "n", minus: "", has_plus: true, has_minus: false }, phoneme: "n~", step: 2 },
-        Rule { name: "vingt", kind: RuleKind::Context { plus: "t", minus: "vin", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "g_muet_oin", kind: RuleKind::Context { plus: "", minus: "oi(n?)", has_plus: false, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "g_muet_our", kind: RuleKind::Context { plus: "", minus: "ou(r)", has_plus: false, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "g_muet_an", kind: RuleKind::Context { plus: "(s?)$", minus: "(s|^ét|^r)an", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "g_muet_fin", kind: RuleKind::Context { plus: "", minus: "lon|haren", has_plus: false, has_minus: true }, phoneme: "#", step: 1 },
-        ],
-        default: Some(("g", 1)),
-        end_of_word: None,
-    }),
-    ("h", LetterEntry {
-        rules: &[
-        Rule { name: "h1", kind: RuleKind::Context { plus: "ô", minus: "^", has_plus: true, has_minus: true }, phoneme: "#_h_muet", step: 1 },
-        Rule { name: "h2", kind: RuleKind::Context { plus: "y", minus: "^", has_plus: true, has_minus: true }, phoneme: "#_h_muet", step: 1 },
-        Rule { name: "h3", kind: RuleKind::Context { plus: "a(rm|b|ll)", minus: "^", has_plus: true, has_minus: true }, phoneme: "#_h_muet", step: 1 },
-        Rule { name: "h4", kind: RuleKind::Context { plus: "e([bclprx]|ur)", minus: "^", has_plus: true, has_minus: true }, phoneme: "#_h_muet", step: 1 },
-        Rule { name: "h5", kind: RuleKind::Context { plus: "é([bcdfgjkmnpqstvwxz]|li|ra|ré|rit)", minus: "^", has_plus: true, has_minus: true }, phoneme: "#_h_muet", step: 1 },
-        Rule { name: "h6", kind: RuleKind::Context { plus: "i([bv][^o]|st)", minus: "^", has_plus: true, has_minus: true }, phoneme: "#_h_muet", step: 1 },
-        Rule { name: "h7", kind: RuleKind::Context { plus: "o(m[imo]|nne|no|r[^ds]|s[pt])", minus: "^", has_plus: true, has_minus: true }, phoneme: "#_h_muet", step: 1 },
-        Rule { name: "h8", kind: RuleKind::Context { plus: "u(î|i[ls]|ma[in|ni|no]|mb|mec|meu|mér|mi|mor)", minus: "^", has_plus: true, has_minus: true }, phoneme: "#_h_muet", step: 1 },
-        ],
-        default: Some(("#", 1)),
-        end_of_word: None,
-    }),
-    ("i", LetterEntry {
-        rules: &[
-        Rule { name: "ing", kind: RuleKind::Context { plus: "ng$", minus: "[bcçdfghjklmnpqrstvwxz]", has_plus: true, has_minus: true }, phoneme: "i", step: 1 },
-        Rule { name: "n", kind: RuleKind::Context { plus: "n[bcçdfghjklmpqrstvwxz]", minus: "", has_plus: true, has_minus: false }, phoneme: "e~", step: 2 },
-        Rule { name: "m", kind: RuleKind::Context { plus: "m[bcçdfghjklnpqrstvwxz]", minus: "", has_plus: true, has_minus: false }, phoneme: "e~", step: 2 },
-        Rule { name: "nm", kind: RuleKind::Context { plus: "[n|m]$", minus: "", has_plus: true, has_minus: false }, phoneme: "e~", step: 2 },
-        Rule { name: "prec_2cons", kind: RuleKind::Context { plus: "", minus: "[ptkcbdgfv][lr]", has_plus: false, has_minus: true }, phoneme: "i", step: 1 },
-        Rule { name: "lldeb", kind: RuleKind::Context { plus: "ll", minus: "^", has_plus: true, has_minus: true }, phoneme: "i", step: 1 },
-        Rule { name: "vill", kind: RuleKind::Context { plus: "ll", minus: "v", has_plus: true, has_minus: true }, phoneme: "i", step: 1 },
-        Rule { name: "mill", kind: RuleKind::Context { plus: "ll", minus: "m", has_plus: true, has_minus: true }, phoneme: "i", step: 1 },
-        Rule { name: "tranquille", kind: RuleKind::Context { plus: "ll", minus: "tranqu", has_plus: true, has_minus: true }, phoneme: "i", step: 1 },
-        Rule { name: "ill", kind: RuleKind::Context { plus: "ll", minus: "[bcçdfghjklmnpqrstvwxz](u?)", has_plus: true, has_minus: true }, phoneme: "i", step: 1 },
-        Rule { name: "@ill", kind: RuleKind::Context { plus: "ll", minus: "[aeo]", has_plus: true, has_minus: true }, phoneme: "j", step: 3 },
-        Rule { name: "@il", kind: RuleKind::Context { plus: "l(s?)$", minus: "[aeou]", has_plus: true, has_minus: true }, phoneme: "j", step: 2 },
-        Rule { name: "ll", kind: RuleKind::Context { plus: "ll", minus: "", has_plus: true, has_minus: false }, phoneme: "j", step: 3 },
-        Rule { name: "ui", kind: RuleKind::Context { plus: "ent", minus: "u", has_plus: true, has_minus: true }, phoneme: "i", step: 1 },
-        Rule { name: "ient_1", kind: RuleKind::Special(Special::RegleIent), phoneme: "i", step: 1 },
-        Rule { name: "ient_2", kind: RuleKind::Context { plus: "ent(s)?$", minus: "", has_plus: true, has_minus: false }, phoneme: "j", step: 1 },
-        Rule { name: "ie", kind: RuleKind::Context { plus: "e(s)?$", minus: "", has_plus: true, has_minus: false }, phoneme: "i", step: 1 },
-        ],
-        default: Some(("i", 1)),
-        end_of_word: None,
-    }),
-    ("j", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("z^", 1)),
-        end_of_word: None,
-    }),
-    ("k", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("k", 1)),
-        end_of_word: None,
-    }),
-    ("l", LetterEntry {
-        rules: &[
-        Rule { name: "vill", kind: RuleKind::Context { plus: "l", minus: "^vi", has_plus: true, has_minus: true }, phoneme: "l", step: 2 },
-        Rule { name: "mill", kind: RuleKind::Context { plus: "l", minus: "^mi", has_plus: true, has_minus: true }, phoneme: "l", step: 2 },
-        Rule { name: "tranquille", kind: RuleKind::Context { plus: "l", minus: "tranqui", has_plus: true, has_minus: true }, phoneme: "l", step: 2 },
-        Rule { name: "illdeb", kind: RuleKind::Context { plus: "l", minus: "^i", has_plus: true, has_minus: true }, phoneme: "l", step: 2 },
-        Rule { name: "ill", kind: RuleKind::Context { plus: "l", minus: ".i", has_plus: true, has_minus: true }, phoneme: "j", step: 2 },
-        Rule { name: "eil", kind: RuleKind::Context { plus: "", minus: "e(u?)i", has_plus: false, has_minus: true }, phoneme: "j", step: 1 },
-        Rule { name: "ll", kind: RuleKind::Context { plus: "l", minus: "", has_plus: true, has_minus: false }, phoneme: "l", step: 2 },
-        Rule { name: "excep_il", kind: RuleKind::Context { plus: "(s?)$", minus: "fusi|outi|genti", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "apostrophe", kind: RuleKind::Context { plus: "('|’)", minus: "", has_plus: true, has_minus: false }, phoneme: "l", step: 2 },
-        Rule { name: "lisole", kind: RuleKind::Context { plus: "$", minus: "^", has_plus: true, has_minus: true }, phoneme: "l", step: 1 },
-        ],
-        default: Some(("l", 1)),
-        end_of_word: None,
-    }),
-    ("m", LetterEntry {
-        rules: &[
-        Rule { name: "m", kind: RuleKind::Context { plus: "m", minus: "", has_plus: true, has_minus: false }, phoneme: "m", step: 2 },
-        Rule { name: "damn", kind: RuleKind::Context { plus: "n", minus: "da", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "tomn", kind: RuleKind::Context { plus: "n", minus: "to", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "misole", kind: RuleKind::Context { plus: "$", minus: "^", has_plus: true, has_minus: true }, phoneme: "m", step: 1 },
-        Rule { name: "apostrophe", kind: RuleKind::Context { plus: "('|’)", minus: "", has_plus: true, has_minus: false }, phoneme: "m", step: 2 },
-        ],
-        default: Some(("m", 1)),
-        end_of_word: None,
-    }),
-    ("n", LetterEntry {
-        rules: &[
-        Rule { name: "ing", kind: RuleKind::Context { plus: "g$", minus: "i", has_plus: true, has_minus: true }, phoneme: "g~", step: 2 },
-        Rule { name: "n", kind: RuleKind::Context { plus: "n", minus: "", has_plus: true, has_minus: false }, phoneme: "n", step: 2 },
-        Rule { name: "ment", kind: RuleKind::Special(Special::RegleVerbeMer), phoneme: "verb_3p", step: 2 },
-        Rule { name: "urent", kind: RuleKind::Context { plus: "t$", minus: "ure", has_plus: true, has_minus: true }, phoneme: "verb_3p", step: 2 },
-        Rule { name: "irent", kind: RuleKind::Context { plus: "t$", minus: "ire", has_plus: true, has_minus: true }, phoneme: "verb_3p", step: 2 },
-        Rule { name: "erent", kind: RuleKind::Context { plus: "t$", minus: "ère", has_plus: true, has_minus: true }, phoneme: "verb_3p", step: 2 },
-        Rule { name: "ent", kind: RuleKind::Context { plus: "t$", minus: "e", has_plus: true, has_minus: true }, phoneme: "verb_3p", step: 2 },
-        Rule { name: "nisole", kind: RuleKind::Context { plus: "$", minus: "^", has_plus: true, has_minus: true }, phoneme: "n", step: 1 },
-        Rule { name: "apostrophe", kind: RuleKind::Context { plus: "('|’)", minus: "", has_plus: true, has_minus: false }, phoneme: "n", step: 2 },
-        ],
-        default: Some(("n", 1)),
-        end_of_word: None,
-    }),
-    ("o", LetterEntry {
-        rules: &[
-        Rule { name: "in", kind: RuleKind::Context { plus: "i[nm]([bcçdfghjklnmpqrstvwxz]|$)", minus: "", has_plus: true, has_minus: false }, phoneme: "w", step: 1 },
-        Rule { name: "oignon", kind: RuleKind::Context { plus: "ignon", minus: "^", has_plus: true, has_minus: true }, phoneme: "o", step: 2 },
-        Rule { name: "i", kind: RuleKind::Context { plus: "(i|î)", minus: "", has_plus: true, has_minus: false }, phoneme: "wa", step: 2 },
-        Rule { name: "tomn", kind: RuleKind::Context { plus: "mn", minus: "t", has_plus: true, has_minus: true }, phoneme: "o", step: 1 },
-        Rule { name: "monsieur", kind: RuleKind::Context { plus: "nsieur", minus: "m", has_plus: true, has_minus: true }, phoneme: "q", step: 2 },
-        Rule { name: "n", kind: RuleKind::Context { plus: "n[bcçdfgjklmpqrstvwxz]", minus: "", has_plus: true, has_minus: false }, phoneme: "o~", step: 2 },
-        Rule { name: "m", kind: RuleKind::Context { plus: "m[bcçdfgjklpqrstvwxz]", minus: "", has_plus: true, has_minus: false }, phoneme: "o~", step: 2 },
-        Rule { name: "nm", kind: RuleKind::Context { plus: "[nm]$", minus: "", has_plus: true, has_minus: false }, phoneme: "o~", step: 2 },
-        Rule { name: "y1", kind: RuleKind::Context { plus: "y$", minus: "", has_plus: true, has_minus: false }, phoneme: "wa", step: 2 },
-        Rule { name: "y2", kind: RuleKind::Context { plus: "y", minus: "", has_plus: true, has_minus: false }, phoneme: "wa", step: 1 },
-        Rule { name: "u", kind: RuleKind::Context { plus: "[uwûù]", minus: "", has_plus: true, has_minus: false }, phoneme: "u", step: 2 },
-        Rule { name: "o", kind: RuleKind::Context { plus: "o", minus: "", has_plus: true, has_minus: false }, phoneme: "o", step: 2 },
-        Rule { name: "oe_0", kind: RuleKind::Context { plus: "ê", minus: "", has_plus: true, has_minus: false }, phoneme: "wa", step: 2 },
-        Rule { name: "oe_1", kind: RuleKind::Context { plus: "e", minus: "c", has_plus: true, has_minus: true }, phoneme: "o", step: 1 },
-        Rule { name: "oe_2", kind: RuleKind::Context { plus: "e", minus: "m", has_plus: true, has_minus: true }, phoneme: "wa", step: 2 },
-        Rule { name: "oe_3", kind: RuleKind::Context { plus: "e", minus: "f", has_plus: true, has_minus: true }, phoneme: "e", step: 2 },
-        Rule { name: "voeux", kind: RuleKind::Context { plus: "eux", minus: "", has_plus: true, has_minus: false }, phoneme: "x^", step: 3 },
-        Rule { name: "oeufs", kind: RuleKind::Context { plus: "eufs", minus: "", has_plus: true, has_minus: false }, phoneme: "x^", step: 3 },
-        Rule { name: "noeud", kind: RuleKind::Context { plus: "eud", minus: "", has_plus: true, has_minus: false }, phoneme: "x^", step: 3 },
-        Rule { name: "oeu_defaut", kind: RuleKind::Context { plus: "eu", minus: "", has_plus: true, has_minus: false }, phoneme: "x", step: 3 },
-        Rule { name: "oe_defaut", kind: RuleKind::Context { plus: "e", minus: "", has_plus: true, has_minus: false }, phoneme: "x", step: 2 },
-        ],
-        default: Some(("o", 1)),
-        end_of_word: None,
-    }),
-    ("p", LetterEntry {
-        rules: &[
-        Rule { name: "h", kind: RuleKind::Context { plus: "h", minus: "", has_plus: true, has_minus: false }, phoneme: "f_ph", step: 2 },
-        Rule { name: "oup", kind: RuleKind::Context { plus: "$", minus: "[cl]ou", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "drap", kind: RuleKind::Context { plus: "$", minus: "dra", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "trop", kind: RuleKind::Context { plus: "$", minus: "tro", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "sculpt", kind: RuleKind::Context { plus: "t", minus: "scul", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "sirop", kind: RuleKind::Context { plus: "$", minus: "siro", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "sgalop", kind: RuleKind::Context { plus: "$", minus: "[gs]alo", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "rps", kind: RuleKind::Context { plus: "s$", minus: "[rm]", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "amp", kind: RuleKind::Context { plus: "$", minus: "c(h?)am", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "compt", kind: RuleKind::Context { plus: "t", minus: "com", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "bapti", kind: RuleKind::Context { plus: "ti", minus: "ba", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "sept", kind: RuleKind::Context { plus: "t(s?)$", minus: "^se", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "p", kind: RuleKind::Context { plus: "p", minus: "", has_plus: true, has_minus: false }, phoneme: "p", step: 2 },
-        ],
-        default: Some(("p", 1)),
-        end_of_word: None,
-    }),
-    ("q", LetterEntry {
-        rules: &[
-        Rule { name: "qu", kind: RuleKind::Context { plus: "u[bcçdfgjklmnpqrstvwxz]", minus: "", has_plus: true, has_minus: false }, phoneme: "k", step: 1 },
-        Rule { name: "qu_apos", kind: RuleKind::Context { plus: "u['|’]", minus: "", has_plus: true, has_minus: false }, phoneme: "k_qu", step: 3 },
-        Rule { name: "k", kind: RuleKind::Context { plus: "u", minus: "", has_plus: true, has_minus: false }, phoneme: "k_qu", step: 2 },
-        ],
-        default: Some(("k", 1)),
-        end_of_word: None,
-    }),
-    ("r", LetterEntry {
-        rules: &[
-        Rule { name: "monsieur", kind: RuleKind::Context { plus: "", minus: "monsieu", has_plus: false, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "messieurs", kind: RuleKind::Context { plus: "", minus: "messieu", has_plus: false, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "gars", kind: RuleKind::Context { plus: "s", minus: "ga", has_plus: true, has_minus: true }, phoneme: "#", step: 2 },
-        Rule { name: "r", kind: RuleKind::Context { plus: "r", minus: "", has_plus: true, has_minus: false }, phoneme: "r", step: 2 },
-        ],
-        default: Some(("r", 1)),
-        end_of_word: None,
-    }),
-    ("s", LetterEntry {
-        rules: &[
-        Rule { name: "sch", kind: RuleKind::Context { plus: "ch", minus: "", has_plus: true, has_minus: false }, phoneme: "s^", step: 3 },
-        Rule { name: "h", kind: RuleKind::Context { plus: "h", minus: "", has_plus: true, has_minus: false }, phoneme: "s^", step: 2 },
-        Rule { name: "s_final", kind: RuleKind::Special(Special::RegleSFinal), phoneme: "s", step: 1 },
-        Rule { name: "parasit", kind: RuleKind::Context { plus: "it", minus: "para", has_plus: true, has_minus: true }, phoneme: "z_s", step: 1 },
-        Rule { name: "para", kind: RuleKind::Context { plus: "", minus: "para", has_plus: false, has_minus: true }, phoneme: "s", step: 1 },
-        Rule { name: "mars", kind: RuleKind::Context { plus: "$", minus: "mar", has_plus: true, has_minus: true }, phoneme: "s", step: 1 },
-        Rule { name: "s", kind: RuleKind::Context { plus: "s", minus: "", has_plus: true, has_minus: false }, phoneme: "s", step: 2 },
-        Rule { name: "z", kind: RuleKind::Context { plus: "[aeiyouéèàüûùëöêîô]", minus: "[aeiyouéèàüûùëöêîô]", has_plus: true, has_minus: true }, phoneme: "z_s", step: 1 },
-        Rule { name: "sisole", kind: RuleKind::Context { plus: "$", minus: "^", has_plus: true, has_minus: true }, phoneme: "s", step: 1 },
-        Rule { name: "smuet", kind: RuleKind::Context { plus: "$", minus: "(e?)", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "apostrophe", kind: RuleKind::Context { plus: "('|’)", minus: "", has_plus: true, has_minus: false }, phoneme: "s", step: 2 },
-        ],
-        default: Some(("s", 1)),
-        end_of_word: Some(("#", 1)),
-    }),
-    ("t", LetterEntry {
-        rules: &[
-        Rule { name: "t", kind: RuleKind::Context { plus: "t", minus: "", has_plus: true, has_minus: false }, phoneme: "t", step: 2 },
-        Rule { name: "tisole", kind: RuleKind::Context { plus: "$", minus: "^", has_plus: true, has_minus: true }, phoneme: "t", step: 1 },
-        Rule { name: "except_tien", kind: RuleKind::Special(Special::RegleTien), phoneme: "t", step: 1 },
-        Rule { name: "_tien", kind: RuleKind::Context { plus: "ien", minus: "", has_plus: true, has_minus: false }, phoneme: "s_t", step: 1 },
-        Rule { name: "cratie", kind: RuleKind::Context { plus: "ie", minus: "cra", has_plus: true, has_minus: true }, phoneme: "s_t", step: 1 },
-        Rule { name: "vingt", kind: RuleKind::Context { plus: "$", minus: "ving", has_plus: true, has_minus: true }, phoneme: "t", step: 1 },
-        Rule { name: "tion", kind: RuleKind::Context { plus: "ion", minus: "", has_plus: true, has_minus: false }, phoneme: "s_t", step: 1 },
-        Rule { name: "ourt", kind: RuleKind::Context { plus: "$", minus: "(a|h|g)our", has_plus: true, has_minus: true }, phoneme: "t", step: 1 },
-        Rule { name: "_inct", kind: RuleKind::Context { plus: "(s?)$", minus: "inc", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "_spect", kind: RuleKind::Context { plus: "(s?)$", minus: "spec", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        Rule { name: "_ct", kind: RuleKind::Context { plus: "(s?)$", minus: "c", has_plus: true, has_minus: true }, phoneme: "t", step: 1 },
-        Rule { name: "_est", kind: RuleKind::Context { plus: "(s?)$", minus: "es", has_plus: true, has_minus: true }, phoneme: "t", step: 1 },
-        Rule { name: "t_final", kind: RuleKind::Special(Special::RegleTFinal), phoneme: "t", step: 1 },
-        Rule { name: "tmuet", kind: RuleKind::Context { plus: "(s?)$", minus: "", has_plus: true, has_minus: false }, phoneme: "#", step: 1 },
-        Rule { name: "apostrophe", kind: RuleKind::Context { plus: "('|’)", minus: "", has_plus: true, has_minus: false }, phoneme: "t", step: 2 },
-        ],
-        default: Some(("t", 1)),
-        end_of_word: Some(("#", 1)),
-    }),
-    ("u", LetterEntry {
-        rules: &[
-        Rule { name: "um", kind: RuleKind::Context { plus: "m$", minus: "[^aefo]", has_plus: true, has_minus: true }, phoneme: "o", step: 1 },
-        Rule { name: "n", kind: RuleKind::Context { plus: "n[bcçdfghjklmpqrstvwxz]", minus: "", has_plus: true, has_minus: false }, phoneme: "x~", step: 2 },
-        Rule { name: "nm", kind: RuleKind::Context { plus: "[nm]$", minus: "", has_plus: true, has_minus: false }, phoneme: "x~", step: 2 },
-        Rule { name: "ueil", kind: RuleKind::Context { plus: "eil", minus: "", has_plus: true, has_minus: false }, phoneme: "x", step: 2 },
-        ],
-        default: Some(("y", 1)),
-        end_of_word: None,
-    }),
-    ("v", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("v", 1)),
-        end_of_word: None,
-    }),
-    ("w", LetterEntry {
-        rules: &[
-        Rule { name: "wurt", kind: RuleKind::Context { plus: "urt", minus: "", has_plus: true, has_minus: false }, phoneme: "v", step: 1 },
-        Rule { name: "wisig", kind: RuleKind::Context { plus: "isig", minus: "", has_plus: true, has_minus: false }, phoneme: "v", step: 1 },
-        Rule { name: "wag", kind: RuleKind::Context { plus: "ag", minus: "", has_plus: true, has_minus: false }, phoneme: "v", step: 1 },
-        Rule { name: "wa", kind: RuleKind::Context { plus: "a", minus: "", has_plus: true, has_minus: false }, phoneme: "wa", step: 2 },
-        Rule { name: "wi", kind: RuleKind::Context { plus: "i", minus: "", has_plus: true, has_minus: false }, phoneme: "u", step: 1 },
-        ],
-        default: Some(("w", 1)),
-        end_of_word: None,
-    }),
-    ("x", LetterEntry {
-        rules: &[
-        Rule { name: "six_dix", kind: RuleKind::Context { plus: "", minus: "(s|d)i", has_plus: false, has_minus: true }, phoneme: "s_x", step: 1 },
-        Rule { name: "gz_1", kind: RuleKind::Context { plus: "[aeiouéèàüëöêîôûù]", minus: "^", has_plus: true, has_minus: true }, phoneme: "gz", step: 1 },
-        Rule { name: "gz_2", kind: RuleKind::Context { plus: "[aeiouéèàüëöêîôûù]", minus: "^(h?)e", has_plus: true, has_minus: true }, phoneme: "gz", step: 1 },
-        Rule { name: "gz_3", kind: RuleKind::Context { plus: "[aeiouéèàüëöêîôûù]", minus: "^coe", has_plus: true, has_minus: true }, phoneme: "gz", step: 1 },
-        Rule { name: "gz_4", kind: RuleKind::Context { plus: "[aeiouéèàüëöêîôûù]", minus: "^ine", has_plus: true, has_minus: true }, phoneme: "gz", step: 1 },
-        Rule { name: "gz_5", kind: RuleKind::Context { plus: "[aeiouéèàüëöêîôûù]", minus: "^(p?)rée", has_plus: true, has_minus: true }, phoneme: "gz", step: 1 },
-        Rule { name: "_aeox", kind: RuleKind::Context { plus: "", minus: "[aeo]", has_plus: false, has_minus: true }, phoneme: "ks", step: 1 },
-        Rule { name: "fix", kind: RuleKind::Context { plus: "", minus: "fi", has_plus: false, has_minus: true }, phoneme: "ks", step: 1 },
-        Rule { name: "_ix", kind: RuleKind::Context { plus: "", minus: "(remi|obéli|astéri|héli|phéni|féli)", has_plus: false, has_minus: true }, phoneme: "ks", step: 1 },
-        ],
-        default: Some(("ks", 1)),
-        end_of_word: Some(("#", 1)),
-    }),
-    ("y", LetterEntry {
-        rules: &[
-        Rule { name: "m", kind: RuleKind::Context { plus: "m[mpb]", minus: "", has_plus: true, has_minus: false }, phoneme: "e~", step: 2 },
-        Rule { name: "n", kind: RuleKind::Context { plus: "n[bcçdfghjklmpqrstvwxz]", minus: "", has_plus: true, has_minus: false }, phoneme: "e~", step: 2 },
-        Rule { name: "nm", kind: RuleKind::Context { plus: "[n|m]$", minus: "", has_plus: true, has_minus: false }, phoneme: "e~", step: 2 },
-        Rule { name: "abbaye", kind: RuleKind::Context { plus: "e", minus: "abba", has_plus: true, has_minus: true }, phoneme: "i", step: 1 },
-        Rule { name: "y_voyelle", kind: RuleKind::Context { plus: "[aeiouéèàüëöêîôûù]", minus: "", has_plus: true, has_minus: false }, phoneme: "j", step: 1 },
-        ],
-        default: Some(("i", 1)),
-        end_of_word: None,
-    }),
-    ("z", LetterEntry {
-        rules: &[
-        Rule { name: "raz_riz", kind: RuleKind::Context { plus: "$", minus: "^r[ai]", has_plus: true, has_minus: true }, phoneme: "#", step: 1 },
-        ],
-        default: Some(("z", 1)),
-        end_of_word: Some(("z", 1)),
-    }),
-    ("à", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("a", 1)),
-        end_of_word: None,
-    }),
-    ("â", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("a", 1)),
-        end_of_word: None,
-    }),
-    ("ç", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("s", 1)),
-        end_of_word: None,
-    }),
-    ("è", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("e^", 1)),
-        end_of_word: None,
-    }),
-    ("é", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("e", 1)),
-        end_of_word: None,
-    }),
-    ("ê", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("e^", 1)),
-        end_of_word: None,
-    }),
-    ("ë", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("e^", 1)),
-        end_of_word: None,
-    }),
-    ("î", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("i", 1)),
-        end_of_word: None,
-    }),
-    ("ï", LetterEntry {
-        rules: &[
-        Rule { name: "thai", kind: RuleKind::Context { plus: "", minus: "t(h?)a", has_plus: false, has_minus: true }, phoneme: "j", step: 1 },
-        Rule { name: "aie", kind: RuleKind::Context { plus: "e", minus: "[ao]", has_plus: true, has_minus: true }, phoneme: "j", step: 1 },
-        ],
-        default: Some(("i", 1)),
-        end_of_word: None,
-    }),
-    ("ô", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("o", 1)),
-        end_of_word: None,
-    }),
-    ("ö", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("o", 1)),
-        end_of_word: None,
-    }),
-    ("ù", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("y", 1)),
-        end_of_word: None,
-    }),
-    ("û", LetterEntry {
-        rules: &[
-
-        ],
-        default: Some(("y", 1)),
-        end_of_word: None,
-    }),
-    ("œ", LetterEntry {
-        rules: &[
-        Rule { name: "voeux", kind: RuleKind::Context { plus: "ux", minus: "", has_plus: true, has_minus: false }, phoneme: "x^", step: 2 },
-        Rule { name: "oeufs", kind: RuleKind::Context { plus: "ufs", minus: "", has_plus: true, has_minus: false }, phoneme: "x^", step: 2 },
-        Rule { name: "noeud", kind: RuleKind::Context { plus: "ud", minus: "", has_plus: true, has_minus: false }, phoneme: "x^", step: 2 },
-        ],
-        default: Some(("x^", 2)),
-        end_of_word: None,
-    }),
+    (
+        "'",
+        LetterEntry {
+            rules: &[],
+            default: Some(("#", 1)),
+            end_of_word: Some(("#", 1)),
+        },
+    ),
+    (
+        "@",
+        LetterEntry {
+            rules: &[],
+            default: Some(("#", 1)),
+            end_of_word: Some(("#", 1)),
+        },
+    ),
+    (
+        "_",
+        LetterEntry {
+            rules: &[],
+            default: Some(("#", 1)),
+            end_of_word: Some(("#", 1)),
+        },
+    ),
+    (
+        "a",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "u",
+                    kind: RuleKind::Context {
+                        plus: "u",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "o_comp",
+                    step: 2,
+                },
+                Rule {
+                    name: "il",
+                    kind: RuleKind::Context {
+                        plus: "il($|l)",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "a",
+                    step: 1,
+                },
+                Rule {
+                    name: "in",
+                    kind: RuleKind::Context {
+                        plus: "i[nm]([bcçdfghjklnmpqrstvwxz]|$)",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e~",
+                    step: 3,
+                },
+                Rule {
+                    name: "nc_ai_fin",
+                    kind: RuleKind::Special(Special::RegleNcAiFinal),
+                    phoneme: "e^_comp",
+                    step: 2,
+                },
+                Rule {
+                    name: "ai_fin",
+                    kind: RuleKind::Context {
+                        plus: "i$",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e_comp",
+                    step: 2,
+                },
+                Rule {
+                    name: "i",
+                    kind: RuleKind::Context {
+                        plus: "[iî]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e^_comp",
+                    step: 2,
+                },
+                Rule {
+                    name: "n",
+                    kind: RuleKind::Context {
+                        plus: "n[bcçdfgjklmpqrstvwxz]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "a~",
+                    step: 2,
+                },
+                Rule {
+                    name: "m",
+                    kind: RuleKind::Context {
+                        plus: "m[bp]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "a~",
+                    step: 2,
+                },
+                Rule {
+                    name: "nm",
+                    kind: RuleKind::Context {
+                        plus: "n(s?)$",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "a~",
+                    step: 2,
+                },
+                Rule {
+                    name: "y_except",
+                    kind: RuleKind::Context {
+                        plus: "y",
+                        minus: "(^b|cob|cip)",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "a",
+                    step: 1,
+                },
+                Rule {
+                    name: "y",
+                    kind: RuleKind::Context {
+                        plus: "y",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e^_comp",
+                    step: 1,
+                },
+            ],
+            default: Some(("a", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "b",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "b",
+                    kind: RuleKind::Context {
+                        plus: "b",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "b",
+                    step: 2,
+                },
+                Rule {
+                    name: "plomb",
+                    kind: RuleKind::Context {
+                        plus: "(s?)$",
+                        minus: "plom",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+            ],
+            default: Some(("b", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "c",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "eiy",
+                    kind: RuleKind::Context {
+                        plus: "[eiyéèêëîï]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "s_c",
+                    step: 1,
+                },
+                Rule {
+                    name: "choeur_1",
+                    kind: RuleKind::Context {
+                        plus: "hoe",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "k",
+                    step: 2,
+                },
+                Rule {
+                    name: "choeur_2",
+                    kind: RuleKind::Context {
+                        plus: "hœ",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "k",
+                    step: 2,
+                },
+                Rule {
+                    name: "chor",
+                    kind: RuleKind::Context {
+                        plus: "hor",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "k",
+                    step: 2,
+                },
+                Rule {
+                    name: "psycho",
+                    kind: RuleKind::Context {
+                        plus: "ho",
+                        minus: "psy",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "k",
+                    step: 2,
+                },
+                Rule {
+                    name: "brachio",
+                    kind: RuleKind::Context {
+                        plus: "hio",
+                        minus: "bra",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "k",
+                    step: 2,
+                },
+                Rule {
+                    name: "cheo",
+                    kind: RuleKind::Context {
+                        plus: "héo",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "k",
+                    step: 2,
+                },
+                Rule {
+                    name: "chest",
+                    kind: RuleKind::Context {
+                        plus: "hest",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "k",
+                    step: 2,
+                },
+                Rule {
+                    name: "chiro",
+                    kind: RuleKind::Context {
+                        plus: "hiro[p|m]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "k",
+                    step: 2,
+                },
+                Rule {
+                    name: "chlo_chlam",
+                    kind: RuleKind::Context {
+                        plus: "hl(o|am)",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "k",
+                    step: 2,
+                },
+                Rule {
+                    name: "chr",
+                    kind: RuleKind::Context {
+                        plus: "hr",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "k",
+                    step: 2,
+                },
+                Rule {
+                    name: "h",
+                    kind: RuleKind::Context {
+                        plus: "h",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "s^",
+                    step: 2,
+                },
+                Rule {
+                    name: "erc_orc",
+                    kind: RuleKind::Context {
+                        plus: "(s?)$",
+                        minus: "[e|o]r",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "cisole",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "s_c",
+                    step: 1,
+                },
+                Rule {
+                    name: "c_muet_fin",
+                    kind: RuleKind::Context {
+                        plus: "(s?)$",
+                        minus: "taba|accro",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "onc_donc",
+                    kind: RuleKind::Context {
+                        plus: "",
+                        minus: "^on|^don",
+                        has_plus: false,
+                        has_minus: true,
+                    },
+                    phoneme: "k",
+                    step: 1,
+                },
+                Rule {
+                    name: "nc_muet_fin",
+                    kind: RuleKind::Context {
+                        plus: "(s?)$",
+                        minus: "n",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "_spect",
+                    kind: RuleKind::Context {
+                        plus: "t(s?)$",
+                        minus: "spe",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "_inct",
+                    kind: RuleKind::Context {
+                        plus: "t(s?)$",
+                        minus: "in",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "cciey",
+                    kind: RuleKind::Context {
+                        plus: "c[eiyéèêëîï]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "k",
+                    step: 1,
+                },
+                Rule {
+                    name: "cc",
+                    kind: RuleKind::Context {
+                        plus: "c",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "k",
+                    step: 2,
+                },
+                Rule {
+                    name: "apostrophe",
+                    kind: RuleKind::Context {
+                        plus: "('|’)",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "s",
+                    step: 2,
+                },
+            ],
+            default: Some(("k", 1)),
+            end_of_word: Some(("k", 1)),
+        },
+    ),
+    (
+        "d",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "d",
+                    kind: RuleKind::Context {
+                        plus: "d",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "d",
+                    step: 2,
+                },
+                Rule {
+                    name: "aujourdhui",
+                    kind: RuleKind::Context {
+                        plus: "",
+                        minus: "aujour",
+                        has_plus: false,
+                        has_minus: true,
+                    },
+                    phoneme: "d",
+                    step: 1,
+                },
+                Rule {
+                    name: "disole",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "d",
+                    step: 1,
+                },
+                Rule {
+                    name: "except",
+                    kind: RuleKind::Context {
+                        plus: "(s?)$",
+                        minus: "(aï|oue)",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "d",
+                    step: 1,
+                },
+                Rule {
+                    name: "dmuet",
+                    kind: RuleKind::Context {
+                        plus: "(s?)$",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "apostrophe",
+                    kind: RuleKind::Context {
+                        plus: "('|’)",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "d",
+                    step: 2,
+                },
+            ],
+            default: Some(("d", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "e",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "conj_v_ier",
+                    kind: RuleKind::Special(Special::RegleIent),
+                    phoneme: "#",
+                    step: 3,
+                },
+                Rule {
+                    name: "uient",
+                    kind: RuleKind::Context {
+                        plus: "nt$",
+                        minus: "ui",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 3,
+                },
+                Rule {
+                    name: "ien",
+                    kind: RuleKind::Context {
+                        plus: "n([bcçdfghjklpqrstvwxz]|$)",
+                        minus: "[bcdlmrstvh]i",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "e~",
+                    step: 2,
+                },
+                Rule {
+                    name: "ien_2",
+                    kind: RuleKind::Context {
+                        plus: "n([bcçdfghjklpqrstvwxz]|$)",
+                        minus: "ï",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "e~",
+                    step: 2,
+                },
+                Rule {
+                    name: "een",
+                    kind: RuleKind::Context {
+                        plus: "n(s?)$",
+                        minus: "é",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "e~",
+                    step: 2,
+                },
+                Rule {
+                    name: "except_en_1",
+                    kind: RuleKind::Context {
+                        plus: "n(s?)$",
+                        minus: "exam|mino|édu",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "e~",
+                    step: 2,
+                },
+                Rule {
+                    name: "except_en_2",
+                    kind: RuleKind::Context {
+                        plus: "n(s?)$",
+                        minus: "[ao]ï",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "e~",
+                    step: 2,
+                },
+                Rule {
+                    name: "_ent",
+                    kind: RuleKind::Special(Special::RegleMotsEnt),
+                    phoneme: "a~",
+                    step: 2,
+                },
+                Rule {
+                    name: "clef",
+                    kind: RuleKind::Context {
+                        plus: "f",
+                        minus: "cl",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "e_comp",
+                    step: 2,
+                },
+                Rule {
+                    name: "hier",
+                    kind: RuleKind::Special(Special::RegleEr),
+                    phoneme: "e^_comp",
+                    step: 1,
+                },
+                Rule {
+                    name: "adv_emment_fin",
+                    kind: RuleKind::Context {
+                        plus: "nt",
+                        minus: "emm",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "a~",
+                    step: 2,
+                },
+                Rule {
+                    name: "ment",
+                    kind: RuleKind::Special(Special::RegleMent),
+                    phoneme: "a~",
+                    step: 2,
+                },
+                Rule {
+                    name: "imparfait",
+                    kind: RuleKind::Context {
+                        plus: "nt$",
+                        minus: "ai",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "verb_3p",
+                    step: 3,
+                },
+                Rule {
+                    name: "verbe_3_pluriel",
+                    kind: RuleKind::Context {
+                        plus: "nt$",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "q_caduc",
+                    step: 1,
+                },
+                Rule {
+                    name: "au",
+                    kind: RuleKind::Context {
+                        plus: "au",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "o_comp",
+                    step: 3,
+                },
+                Rule {
+                    name: "avoir",
+                    kind: RuleKind::Special(Special::RegleAvoir),
+                    phoneme: "y",
+                    step: 2,
+                },
+                Rule {
+                    name: "monsieur",
+                    kind: RuleKind::Context {
+                        plus: "ur",
+                        minus: "si",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "x^",
+                    step: 2,
+                },
+                Rule {
+                    name: "jeudi",
+                    kind: RuleKind::Context {
+                        plus: "udi",
+                        minus: "j",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "x^",
+                    step: 2,
+                },
+                Rule {
+                    name: "jeu_",
+                    kind: RuleKind::Context {
+                        plus: "u",
+                        minus: "j",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "x",
+                    step: 2,
+                },
+                Rule {
+                    name: "eur",
+                    kind: RuleKind::Context {
+                        plus: "ur",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "x",
+                    step: 2,
+                },
+                Rule {
+                    name: "eu",
+                    kind: RuleKind::Context {
+                        plus: "u",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "x",
+                    step: 2,
+                },
+                Rule {
+                    name: "eu_accent_circ",
+                    kind: RuleKind::Context {
+                        plus: "û",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "x^",
+                    step: 2,
+                },
+                Rule {
+                    name: "in",
+                    kind: RuleKind::Context {
+                        plus: "i[nm]([bcçdfghjklnmpqrstvwxz]|$)",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e~",
+                    step: 3,
+                },
+                Rule {
+                    name: "eil",
+                    kind: RuleKind::Context {
+                        plus: "il",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e^_comp",
+                    step: 1,
+                },
+                Rule {
+                    name: "y",
+                    kind: RuleKind::Context {
+                        plus: "y[aeiouéèêààäôâ]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e^_comp",
+                    step: 1,
+                },
+                Rule {
+                    name: "iy",
+                    kind: RuleKind::Context {
+                        plus: "[iy]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e^_comp",
+                    step: 2,
+                },
+                Rule {
+                    name: "ennemi",
+                    kind: RuleKind::Context {
+                        plus: "nnemi",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "e^_comp",
+                    step: 1,
+                },
+                Rule {
+                    name: "enn_debut_mot",
+                    kind: RuleKind::Context {
+                        plus: "nn",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "a~",
+                    step: 2,
+                },
+                Rule {
+                    name: "dessus_dessous",
+                    kind: RuleKind::Context {
+                        plus: "ss(o?)us",
+                        minus: "d",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "q",
+                    step: 1,
+                },
+                Rule {
+                    name: "et",
+                    kind: RuleKind::Context {
+                        plus: "t$",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "e_comp",
+                    step: 2,
+                },
+                Rule {
+                    name: "cet",
+                    kind: RuleKind::Context {
+                        plus: "[t]$",
+                        minus: "^c",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "e^_comp",
+                    step: 1,
+                },
+                Rule {
+                    name: "t_final",
+                    kind: RuleKind::Context {
+                        plus: "[t]$",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e^_comp",
+                    step: 2,
+                },
+                Rule {
+                    name: "eclm_final",
+                    kind: RuleKind::Context {
+                        plus: "[clm](s?)$",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e^_comp",
+                    step: 1,
+                },
+                Rule {
+                    name: "est_1",
+                    kind: RuleKind::Context {
+                        plus: "st$",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "e^_comp",
+                    step: 3,
+                },
+                Rule {
+                    name: "est_2",
+                    kind: RuleKind::Context {
+                        plus: "st$",
+                        minus: "@",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "e^_comp",
+                    step: 3,
+                },
+                Rule {
+                    name: "es_1",
+                    kind: RuleKind::Context {
+                        plus: "s$",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "e^_comp",
+                    step: 2,
+                },
+                Rule {
+                    name: "es_2",
+                    kind: RuleKind::Context {
+                        plus: "s$",
+                        minus: "@",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "e^_comp",
+                    step: 2,
+                },
+                Rule {
+                    name: "drz_final",
+                    kind: RuleKind::Context {
+                        plus: "[drz](s?)$",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e_comp",
+                    step: 2,
+                },
+                Rule {
+                    name: "n",
+                    kind: RuleKind::Context {
+                        plus: "n[bcçdfghjklmpqrstvwxz]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "a~",
+                    step: 2,
+                },
+                Rule {
+                    name: "adv_emment_a",
+                    kind: RuleKind::Context {
+                        plus: "mment",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "a",
+                    step: 1,
+                },
+                Rule {
+                    name: "femme",
+                    kind: RuleKind::Context {
+                        plus: "mm",
+                        minus: "f",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "a",
+                    step: 1,
+                },
+                Rule {
+                    name: "lemme",
+                    kind: RuleKind::Context {
+                        plus: "mm",
+                        minus: "l",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "e^_comp",
+                    step: 1,
+                },
+                Rule {
+                    name: "em_gene",
+                    kind: RuleKind::Context {
+                        plus: "m[bcçdfghjklmnpqrstvwxz]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "a~",
+                    step: 2,
+                },
+                Rule {
+                    name: "nm",
+                    kind: RuleKind::Context {
+                        plus: "[nm]$",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "a~",
+                    step: 2,
+                },
+                Rule {
+                    name: "tclesmesdes",
+                    kind: RuleKind::Context {
+                        plus: "s$",
+                        minus: "^[tcslmd]",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "e_comp",
+                    step: 2,
+                },
+                Rule {
+                    name: "que_isole",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "^qu",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "q",
+                    step: 1,
+                },
+                Rule {
+                    name: "que_gue_final",
+                    kind: RuleKind::Context {
+                        plus: "(s?)$",
+                        minus: "[gq]u",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "q_caduc",
+                    step: 1,
+                },
+                Rule {
+                    name: "jtcnslemede",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "^[jtcnslmd]",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "q",
+                    step: 1,
+                },
+                Rule {
+                    name: "jean",
+                    kind: RuleKind::Context {
+                        plus: "an",
+                        minus: "j",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "ge",
+                    kind: RuleKind::Context {
+                        plus: "[aouàäôâ]",
+                        minus: "g",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "eoi",
+                    kind: RuleKind::Context {
+                        plus: "oi",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "ex",
+                    kind: RuleKind::Context {
+                        plus: "x",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e^",
+                    step: 1,
+                },
+                Rule {
+                    name: "ef",
+                    kind: RuleKind::Context {
+                        plus: "[bf](s?)$",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e^",
+                    step: 1,
+                },
+                Rule {
+                    name: "reqquechose",
+                    kind: RuleKind::Context {
+                        plus: "[bcçdfghjklmnpqrstvwxz](h|l|r)",
+                        minus: "r",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "q",
+                    step: 1,
+                },
+                Rule {
+                    name: "except_evr",
+                    kind: RuleKind::Context {
+                        plus: "vr",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "q",
+                    step: 1,
+                },
+                Rule {
+                    name: "2consonnes",
+                    kind: RuleKind::Context {
+                        plus: "[bcçdfghjklmnpqrstvwxz]{2}",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e^_comp",
+                    step: 1,
+                },
+                Rule {
+                    name: "abbaye",
+                    kind: RuleKind::Context {
+                        plus: "(s?)$",
+                        minus: "abbay",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "e_muet",
+                    kind: RuleKind::Context {
+                        plus: "(s?)$",
+                        minus: "[aeiouéèêà]",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "e_caduc",
+                    kind: RuleKind::Context {
+                        plus: "(s?)$",
+                        minus: "[bcçdfghjklmnpqrstvwxzy]",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "q_caduc",
+                    step: 1,
+                },
+                Rule {
+                    name: "e_deb",
+                    kind: RuleKind::Context {
+                        plus: "",
+                        minus: "^",
+                        has_plus: false,
+                        has_minus: true,
+                    },
+                    phoneme: "q",
+                    step: 1,
+                },
+            ],
+            default: Some(("q", 1)),
+            end_of_word: Some(("q_caduc", 1)),
+        },
+    ),
+    (
+        "f",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "f",
+                    kind: RuleKind::Context {
+                        plus: "f",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "f",
+                    step: 2,
+                },
+                Rule {
+                    name: "oeufs",
+                    kind: RuleKind::Context {
+                        plus: "s",
+                        minus: "(oeu|œu)",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+            ],
+            default: Some(("f", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "g",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "g",
+                    kind: RuleKind::Context {
+                        plus: "g",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "g",
+                    step: 2,
+                },
+                Rule {
+                    name: "ao",
+                    kind: RuleKind::Context {
+                        plus: "a|o",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "g",
+                    step: 1,
+                },
+                Rule {
+                    name: "eiy",
+                    kind: RuleKind::Context {
+                        plus: "[eéèêëïiy]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "z^_g",
+                    step: 1,
+                },
+                Rule {
+                    name: "aiguille",
+                    kind: RuleKind::Context {
+                        plus: "u",
+                        minus: "ai",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "g",
+                    step: 1,
+                },
+                Rule {
+                    name: "u_consonne",
+                    kind: RuleKind::Context {
+                        plus: "u[bcçdfghjklmnpqrstvwxz]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "g",
+                    step: 1,
+                },
+                Rule {
+                    name: "u",
+                    kind: RuleKind::Context {
+                        plus: "u",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "g_u",
+                    step: 2,
+                },
+                Rule {
+                    name: "n",
+                    kind: RuleKind::Context {
+                        plus: "n",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "n~",
+                    step: 2,
+                },
+                Rule {
+                    name: "vingt",
+                    kind: RuleKind::Context {
+                        plus: "t",
+                        minus: "vin",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "g_muet_oin",
+                    kind: RuleKind::Context {
+                        plus: "",
+                        minus: "oi(n?)",
+                        has_plus: false,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "g_muet_our",
+                    kind: RuleKind::Context {
+                        plus: "",
+                        minus: "ou(r)",
+                        has_plus: false,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "g_muet_an",
+                    kind: RuleKind::Context {
+                        plus: "(s?)$",
+                        minus: "(s|^ét|^r)an",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "g_muet_fin",
+                    kind: RuleKind::Context {
+                        plus: "",
+                        minus: "lon|haren",
+                        has_plus: false,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+            ],
+            default: Some(("g", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "h",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "h1",
+                    kind: RuleKind::Context {
+                        plus: "ô",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#_h_muet",
+                    step: 1,
+                },
+                Rule {
+                    name: "h2",
+                    kind: RuleKind::Context {
+                        plus: "y",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#_h_muet",
+                    step: 1,
+                },
+                Rule {
+                    name: "h3",
+                    kind: RuleKind::Context {
+                        plus: "a(rm|b|ll)",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#_h_muet",
+                    step: 1,
+                },
+                Rule {
+                    name: "h4",
+                    kind: RuleKind::Context {
+                        plus: "e([bclprx]|ur)",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#_h_muet",
+                    step: 1,
+                },
+                Rule {
+                    name: "h5",
+                    kind: RuleKind::Context {
+                        plus: "é([bcdfgjkmnpqstvwxz]|li|ra|ré|rit)",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#_h_muet",
+                    step: 1,
+                },
+                Rule {
+                    name: "h6",
+                    kind: RuleKind::Context {
+                        plus: "i([bv][^o]|st)",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#_h_muet",
+                    step: 1,
+                },
+                Rule {
+                    name: "h7",
+                    kind: RuleKind::Context {
+                        plus: "o(m[imo]|nne|no|r[^ds]|s[pt])",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#_h_muet",
+                    step: 1,
+                },
+                Rule {
+                    name: "h8",
+                    kind: RuleKind::Context {
+                        plus: "u(î|i[ls]|ma[in|ni|no]|mb|mec|meu|mér|mi|mor)",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#_h_muet",
+                    step: 1,
+                },
+            ],
+            default: Some(("#", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "i",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "ing",
+                    kind: RuleKind::Context {
+                        plus: "ng$",
+                        minus: "[bcçdfghjklmnpqrstvwxz]",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "i",
+                    step: 1,
+                },
+                Rule {
+                    name: "n",
+                    kind: RuleKind::Context {
+                        plus: "n[bcçdfghjklmpqrstvwxz]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e~",
+                    step: 2,
+                },
+                Rule {
+                    name: "m",
+                    kind: RuleKind::Context {
+                        plus: "m[bcçdfghjklnpqrstvwxz]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e~",
+                    step: 2,
+                },
+                Rule {
+                    name: "nm",
+                    kind: RuleKind::Context {
+                        plus: "[n|m]$",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e~",
+                    step: 2,
+                },
+                Rule {
+                    name: "prec_2cons",
+                    kind: RuleKind::Context {
+                        plus: "",
+                        minus: "[ptkcbdgfv][lr]",
+                        has_plus: false,
+                        has_minus: true,
+                    },
+                    phoneme: "i",
+                    step: 1,
+                },
+                Rule {
+                    name: "lldeb",
+                    kind: RuleKind::Context {
+                        plus: "ll",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "i",
+                    step: 1,
+                },
+                Rule {
+                    name: "vill",
+                    kind: RuleKind::Context {
+                        plus: "ll",
+                        minus: "v",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "i",
+                    step: 1,
+                },
+                Rule {
+                    name: "mill",
+                    kind: RuleKind::Context {
+                        plus: "ll",
+                        minus: "m",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "i",
+                    step: 1,
+                },
+                Rule {
+                    name: "tranquille",
+                    kind: RuleKind::Context {
+                        plus: "ll",
+                        minus: "tranqu",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "i",
+                    step: 1,
+                },
+                Rule {
+                    name: "ill",
+                    kind: RuleKind::Context {
+                        plus: "ll",
+                        minus: "[bcçdfghjklmnpqrstvwxz](u?)",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "i",
+                    step: 1,
+                },
+                Rule {
+                    name: "@ill",
+                    kind: RuleKind::Context {
+                        plus: "ll",
+                        minus: "[aeo]",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "j",
+                    step: 3,
+                },
+                Rule {
+                    name: "@il",
+                    kind: RuleKind::Context {
+                        plus: "l(s?)$",
+                        minus: "[aeou]",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "j",
+                    step: 2,
+                },
+                Rule {
+                    name: "ll",
+                    kind: RuleKind::Context {
+                        plus: "ll",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "j",
+                    step: 3,
+                },
+                Rule {
+                    name: "ui",
+                    kind: RuleKind::Context {
+                        plus: "ent",
+                        minus: "u",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "i",
+                    step: 1,
+                },
+                Rule {
+                    name: "ient_1",
+                    kind: RuleKind::Special(Special::RegleIent),
+                    phoneme: "i",
+                    step: 1,
+                },
+                Rule {
+                    name: "ient_2",
+                    kind: RuleKind::Context {
+                        plus: "ent(s)?$",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "j",
+                    step: 1,
+                },
+                Rule {
+                    name: "ie",
+                    kind: RuleKind::Context {
+                        plus: "e(s)?$",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "i",
+                    step: 1,
+                },
+            ],
+            default: Some(("i", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "j",
+        LetterEntry {
+            rules: &[],
+            default: Some(("z^", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "k",
+        LetterEntry {
+            rules: &[],
+            default: Some(("k", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "l",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "vill",
+                    kind: RuleKind::Context {
+                        plus: "l",
+                        minus: "^vi",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "l",
+                    step: 2,
+                },
+                Rule {
+                    name: "mill",
+                    kind: RuleKind::Context {
+                        plus: "l",
+                        minus: "^mi",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "l",
+                    step: 2,
+                },
+                Rule {
+                    name: "tranquille",
+                    kind: RuleKind::Context {
+                        plus: "l",
+                        minus: "tranqui",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "l",
+                    step: 2,
+                },
+                Rule {
+                    name: "illdeb",
+                    kind: RuleKind::Context {
+                        plus: "l",
+                        minus: "^i",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "l",
+                    step: 2,
+                },
+                Rule {
+                    name: "ill",
+                    kind: RuleKind::Context {
+                        plus: "l",
+                        minus: ".i",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "j",
+                    step: 2,
+                },
+                Rule {
+                    name: "eil",
+                    kind: RuleKind::Context {
+                        plus: "",
+                        minus: "e(u?)i",
+                        has_plus: false,
+                        has_minus: true,
+                    },
+                    phoneme: "j",
+                    step: 1,
+                },
+                Rule {
+                    name: "ll",
+                    kind: RuleKind::Context {
+                        plus: "l",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "l",
+                    step: 2,
+                },
+                Rule {
+                    name: "excep_il",
+                    kind: RuleKind::Context {
+                        plus: "(s?)$",
+                        minus: "fusi|outi|genti",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "apostrophe",
+                    kind: RuleKind::Context {
+                        plus: "('|’)",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "l",
+                    step: 2,
+                },
+                Rule {
+                    name: "lisole",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "l",
+                    step: 1,
+                },
+            ],
+            default: Some(("l", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "m",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "m",
+                    kind: RuleKind::Context {
+                        plus: "m",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "m",
+                    step: 2,
+                },
+                Rule {
+                    name: "damn",
+                    kind: RuleKind::Context {
+                        plus: "n",
+                        minus: "da",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "tomn",
+                    kind: RuleKind::Context {
+                        plus: "n",
+                        minus: "to",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "misole",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "m",
+                    step: 1,
+                },
+                Rule {
+                    name: "apostrophe",
+                    kind: RuleKind::Context {
+                        plus: "('|’)",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "m",
+                    step: 2,
+                },
+            ],
+            default: Some(("m", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "n",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "ing",
+                    kind: RuleKind::Context {
+                        plus: "g$",
+                        minus: "i",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "g~",
+                    step: 2,
+                },
+                Rule {
+                    name: "n",
+                    kind: RuleKind::Context {
+                        plus: "n",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "n",
+                    step: 2,
+                },
+                Rule {
+                    name: "ment",
+                    kind: RuleKind::Special(Special::RegleVerbeMer),
+                    phoneme: "verb_3p",
+                    step: 2,
+                },
+                Rule {
+                    name: "urent",
+                    kind: RuleKind::Context {
+                        plus: "t$",
+                        minus: "ure",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "verb_3p",
+                    step: 2,
+                },
+                Rule {
+                    name: "irent",
+                    kind: RuleKind::Context {
+                        plus: "t$",
+                        minus: "ire",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "verb_3p",
+                    step: 2,
+                },
+                Rule {
+                    name: "erent",
+                    kind: RuleKind::Context {
+                        plus: "t$",
+                        minus: "ère",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "verb_3p",
+                    step: 2,
+                },
+                Rule {
+                    name: "ent",
+                    kind: RuleKind::Context {
+                        plus: "t$",
+                        minus: "e",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "verb_3p",
+                    step: 2,
+                },
+                Rule {
+                    name: "nisole",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "n",
+                    step: 1,
+                },
+                Rule {
+                    name: "apostrophe",
+                    kind: RuleKind::Context {
+                        plus: "('|’)",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "n",
+                    step: 2,
+                },
+            ],
+            default: Some(("n", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "o",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "in",
+                    kind: RuleKind::Context {
+                        plus: "i[nm]([bcçdfghjklnmpqrstvwxz]|$)",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "w",
+                    step: 1,
+                },
+                Rule {
+                    name: "oignon",
+                    kind: RuleKind::Context {
+                        plus: "ignon",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "o",
+                    step: 2,
+                },
+                Rule {
+                    name: "i",
+                    kind: RuleKind::Context {
+                        plus: "(i|î)",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "wa",
+                    step: 2,
+                },
+                Rule {
+                    name: "tomn",
+                    kind: RuleKind::Context {
+                        plus: "mn",
+                        minus: "t",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "o",
+                    step: 1,
+                },
+                Rule {
+                    name: "monsieur",
+                    kind: RuleKind::Context {
+                        plus: "nsieur",
+                        minus: "m",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "q",
+                    step: 2,
+                },
+                Rule {
+                    name: "n",
+                    kind: RuleKind::Context {
+                        plus: "n[bcçdfgjklmpqrstvwxz]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "o~",
+                    step: 2,
+                },
+                Rule {
+                    name: "m",
+                    kind: RuleKind::Context {
+                        plus: "m[bcçdfgjklpqrstvwxz]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "o~",
+                    step: 2,
+                },
+                Rule {
+                    name: "nm",
+                    kind: RuleKind::Context {
+                        plus: "[nm]$",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "o~",
+                    step: 2,
+                },
+                Rule {
+                    name: "y1",
+                    kind: RuleKind::Context {
+                        plus: "y$",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "wa",
+                    step: 2,
+                },
+                Rule {
+                    name: "y2",
+                    kind: RuleKind::Context {
+                        plus: "y",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "wa",
+                    step: 1,
+                },
+                Rule {
+                    name: "u",
+                    kind: RuleKind::Context {
+                        plus: "[uwûù]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "u",
+                    step: 2,
+                },
+                Rule {
+                    name: "o",
+                    kind: RuleKind::Context {
+                        plus: "o",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "o",
+                    step: 2,
+                },
+                Rule {
+                    name: "oe_0",
+                    kind: RuleKind::Context {
+                        plus: "ê",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "wa",
+                    step: 2,
+                },
+                Rule {
+                    name: "oe_1",
+                    kind: RuleKind::Context {
+                        plus: "e",
+                        minus: "c",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "o",
+                    step: 1,
+                },
+                Rule {
+                    name: "oe_2",
+                    kind: RuleKind::Context {
+                        plus: "e",
+                        minus: "m",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "wa",
+                    step: 2,
+                },
+                Rule {
+                    name: "oe_3",
+                    kind: RuleKind::Context {
+                        plus: "e",
+                        minus: "f",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "e",
+                    step: 2,
+                },
+                Rule {
+                    name: "voeux",
+                    kind: RuleKind::Context {
+                        plus: "eux",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "x^",
+                    step: 3,
+                },
+                Rule {
+                    name: "oeufs",
+                    kind: RuleKind::Context {
+                        plus: "eufs",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "x^",
+                    step: 3,
+                },
+                Rule {
+                    name: "noeud",
+                    kind: RuleKind::Context {
+                        plus: "eud",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "x^",
+                    step: 3,
+                },
+                Rule {
+                    name: "oeu_defaut",
+                    kind: RuleKind::Context {
+                        plus: "eu",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "x",
+                    step: 3,
+                },
+                Rule {
+                    name: "oe_defaut",
+                    kind: RuleKind::Context {
+                        plus: "e",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "x",
+                    step: 2,
+                },
+            ],
+            default: Some(("o", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "p",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "h",
+                    kind: RuleKind::Context {
+                        plus: "h",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "f_ph",
+                    step: 2,
+                },
+                Rule {
+                    name: "oup",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "[cl]ou",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "drap",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "dra",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "trop",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "tro",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "sculpt",
+                    kind: RuleKind::Context {
+                        plus: "t",
+                        minus: "scul",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "sirop",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "siro",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "sgalop",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "[gs]alo",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "rps",
+                    kind: RuleKind::Context {
+                        plus: "s$",
+                        minus: "[rm]",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "amp",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "c(h?)am",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "compt",
+                    kind: RuleKind::Context {
+                        plus: "t",
+                        minus: "com",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "bapti",
+                    kind: RuleKind::Context {
+                        plus: "ti",
+                        minus: "ba",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "sept",
+                    kind: RuleKind::Context {
+                        plus: "t(s?)$",
+                        minus: "^se",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "p",
+                    kind: RuleKind::Context {
+                        plus: "p",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "p",
+                    step: 2,
+                },
+            ],
+            default: Some(("p", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "q",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "qu",
+                    kind: RuleKind::Context {
+                        plus: "u[bcçdfgjklmnpqrstvwxz]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "k",
+                    step: 1,
+                },
+                Rule {
+                    name: "qu_apos",
+                    kind: RuleKind::Context {
+                        plus: "u['|’]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "k_qu",
+                    step: 3,
+                },
+                Rule {
+                    name: "k",
+                    kind: RuleKind::Context {
+                        plus: "u",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "k_qu",
+                    step: 2,
+                },
+            ],
+            default: Some(("k", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "r",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "monsieur",
+                    kind: RuleKind::Context {
+                        plus: "",
+                        minus: "monsieu",
+                        has_plus: false,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "messieurs",
+                    kind: RuleKind::Context {
+                        plus: "",
+                        minus: "messieu",
+                        has_plus: false,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "gars",
+                    kind: RuleKind::Context {
+                        plus: "s",
+                        minus: "ga",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 2,
+                },
+                Rule {
+                    name: "r",
+                    kind: RuleKind::Context {
+                        plus: "r",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "r",
+                    step: 2,
+                },
+            ],
+            default: Some(("r", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "s",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "sch",
+                    kind: RuleKind::Context {
+                        plus: "ch",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "s^",
+                    step: 3,
+                },
+                Rule {
+                    name: "h",
+                    kind: RuleKind::Context {
+                        plus: "h",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "s^",
+                    step: 2,
+                },
+                Rule {
+                    name: "s_final",
+                    kind: RuleKind::Special(Special::RegleSFinal),
+                    phoneme: "s",
+                    step: 1,
+                },
+                Rule {
+                    name: "parasit",
+                    kind: RuleKind::Context {
+                        plus: "it",
+                        minus: "para",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "z_s",
+                    step: 1,
+                },
+                Rule {
+                    name: "para",
+                    kind: RuleKind::Context {
+                        plus: "",
+                        minus: "para",
+                        has_plus: false,
+                        has_minus: true,
+                    },
+                    phoneme: "s",
+                    step: 1,
+                },
+                Rule {
+                    name: "mars",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "mar",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "s",
+                    step: 1,
+                },
+                Rule {
+                    name: "s",
+                    kind: RuleKind::Context {
+                        plus: "s",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "s",
+                    step: 2,
+                },
+                Rule {
+                    name: "z",
+                    kind: RuleKind::Context {
+                        plus: "[aeiyouéèàüûùëöêîô]",
+                        minus: "[aeiyouéèàüûùëöêîô]",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "z_s",
+                    step: 1,
+                },
+                Rule {
+                    name: "sisole",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "s",
+                    step: 1,
+                },
+                Rule {
+                    name: "smuet",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "(e?)",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "apostrophe",
+                    kind: RuleKind::Context {
+                        plus: "('|’)",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "s",
+                    step: 2,
+                },
+            ],
+            default: Some(("s", 1)),
+            end_of_word: Some(("#", 1)),
+        },
+    ),
+    (
+        "t",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "t",
+                    kind: RuleKind::Context {
+                        plus: "t",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "t",
+                    step: 2,
+                },
+                Rule {
+                    name: "tisole",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "t",
+                    step: 1,
+                },
+                Rule {
+                    name: "except_tien",
+                    kind: RuleKind::Special(Special::RegleTien),
+                    phoneme: "t",
+                    step: 1,
+                },
+                Rule {
+                    name: "_tien",
+                    kind: RuleKind::Context {
+                        plus: "ien",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "s_t",
+                    step: 1,
+                },
+                Rule {
+                    name: "cratie",
+                    kind: RuleKind::Context {
+                        plus: "ie",
+                        minus: "cra",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "s_t",
+                    step: 1,
+                },
+                Rule {
+                    name: "vingt",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "ving",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "t",
+                    step: 1,
+                },
+                Rule {
+                    name: "tion",
+                    kind: RuleKind::Context {
+                        plus: "ion",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "s_t",
+                    step: 1,
+                },
+                Rule {
+                    name: "ourt",
+                    kind: RuleKind::Context {
+                        plus: "$",
+                        minus: "(a|h|g)our",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "t",
+                    step: 1,
+                },
+                Rule {
+                    name: "_inct",
+                    kind: RuleKind::Context {
+                        plus: "(s?)$",
+                        minus: "inc",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "_spect",
+                    kind: RuleKind::Context {
+                        plus: "(s?)$",
+                        minus: "spec",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "_ct",
+                    kind: RuleKind::Context {
+                        plus: "(s?)$",
+                        minus: "c",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "t",
+                    step: 1,
+                },
+                Rule {
+                    name: "_est",
+                    kind: RuleKind::Context {
+                        plus: "(s?)$",
+                        minus: "es",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "t",
+                    step: 1,
+                },
+                Rule {
+                    name: "t_final",
+                    kind: RuleKind::Special(Special::RegleTFinal),
+                    phoneme: "t",
+                    step: 1,
+                },
+                Rule {
+                    name: "tmuet",
+                    kind: RuleKind::Context {
+                        plus: "(s?)$",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "#",
+                    step: 1,
+                },
+                Rule {
+                    name: "apostrophe",
+                    kind: RuleKind::Context {
+                        plus: "('|’)",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "t",
+                    step: 2,
+                },
+            ],
+            default: Some(("t", 1)),
+            end_of_word: Some(("#", 1)),
+        },
+    ),
+    (
+        "u",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "um",
+                    kind: RuleKind::Context {
+                        plus: "m$",
+                        minus: "[^aefo]",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "o",
+                    step: 1,
+                },
+                Rule {
+                    name: "n",
+                    kind: RuleKind::Context {
+                        plus: "n[bcçdfghjklmpqrstvwxz]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "x~",
+                    step: 2,
+                },
+                Rule {
+                    name: "nm",
+                    kind: RuleKind::Context {
+                        plus: "[nm]$",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "x~",
+                    step: 2,
+                },
+                Rule {
+                    name: "ueil",
+                    kind: RuleKind::Context {
+                        plus: "eil",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "x",
+                    step: 2,
+                },
+            ],
+            default: Some(("y", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "v",
+        LetterEntry {
+            rules: &[],
+            default: Some(("v", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "w",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "wurt",
+                    kind: RuleKind::Context {
+                        plus: "urt",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "v",
+                    step: 1,
+                },
+                Rule {
+                    name: "wisig",
+                    kind: RuleKind::Context {
+                        plus: "isig",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "v",
+                    step: 1,
+                },
+                Rule {
+                    name: "wag",
+                    kind: RuleKind::Context {
+                        plus: "ag",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "v",
+                    step: 1,
+                },
+                Rule {
+                    name: "wa",
+                    kind: RuleKind::Context {
+                        plus: "a",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "wa",
+                    step: 2,
+                },
+                Rule {
+                    name: "wi",
+                    kind: RuleKind::Context {
+                        plus: "i",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "u",
+                    step: 1,
+                },
+            ],
+            default: Some(("w", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "x",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "six_dix",
+                    kind: RuleKind::Context {
+                        plus: "",
+                        minus: "(s|d)i",
+                        has_plus: false,
+                        has_minus: true,
+                    },
+                    phoneme: "s_x",
+                    step: 1,
+                },
+                Rule {
+                    name: "gz_1",
+                    kind: RuleKind::Context {
+                        plus: "[aeiouéèàüëöêîôûù]",
+                        minus: "^",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "gz",
+                    step: 1,
+                },
+                Rule {
+                    name: "gz_2",
+                    kind: RuleKind::Context {
+                        plus: "[aeiouéèàüëöêîôûù]",
+                        minus: "^(h?)e",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "gz",
+                    step: 1,
+                },
+                Rule {
+                    name: "gz_3",
+                    kind: RuleKind::Context {
+                        plus: "[aeiouéèàüëöêîôûù]",
+                        minus: "^coe",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "gz",
+                    step: 1,
+                },
+                Rule {
+                    name: "gz_4",
+                    kind: RuleKind::Context {
+                        plus: "[aeiouéèàüëöêîôûù]",
+                        minus: "^ine",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "gz",
+                    step: 1,
+                },
+                Rule {
+                    name: "gz_5",
+                    kind: RuleKind::Context {
+                        plus: "[aeiouéèàüëöêîôûù]",
+                        minus: "^(p?)rée",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "gz",
+                    step: 1,
+                },
+                Rule {
+                    name: "_aeox",
+                    kind: RuleKind::Context {
+                        plus: "",
+                        minus: "[aeo]",
+                        has_plus: false,
+                        has_minus: true,
+                    },
+                    phoneme: "ks",
+                    step: 1,
+                },
+                Rule {
+                    name: "fix",
+                    kind: RuleKind::Context {
+                        plus: "",
+                        minus: "fi",
+                        has_plus: false,
+                        has_minus: true,
+                    },
+                    phoneme: "ks",
+                    step: 1,
+                },
+                Rule {
+                    name: "_ix",
+                    kind: RuleKind::Context {
+                        plus: "",
+                        minus: "(remi|obéli|astéri|héli|phéni|féli)",
+                        has_plus: false,
+                        has_minus: true,
+                    },
+                    phoneme: "ks",
+                    step: 1,
+                },
+            ],
+            default: Some(("ks", 1)),
+            end_of_word: Some(("#", 1)),
+        },
+    ),
+    (
+        "y",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "m",
+                    kind: RuleKind::Context {
+                        plus: "m[mpb]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e~",
+                    step: 2,
+                },
+                Rule {
+                    name: "n",
+                    kind: RuleKind::Context {
+                        plus: "n[bcçdfghjklmpqrstvwxz]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e~",
+                    step: 2,
+                },
+                Rule {
+                    name: "nm",
+                    kind: RuleKind::Context {
+                        plus: "[n|m]$",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "e~",
+                    step: 2,
+                },
+                Rule {
+                    name: "abbaye",
+                    kind: RuleKind::Context {
+                        plus: "e",
+                        minus: "abba",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "i",
+                    step: 1,
+                },
+                Rule {
+                    name: "y_voyelle",
+                    kind: RuleKind::Context {
+                        plus: "[aeiouéèàüëöêîôûù]",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "j",
+                    step: 1,
+                },
+            ],
+            default: Some(("i", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "z",
+        LetterEntry {
+            rules: &[Rule {
+                name: "raz_riz",
+                kind: RuleKind::Context {
+                    plus: "$",
+                    minus: "^r[ai]",
+                    has_plus: true,
+                    has_minus: true,
+                },
+                phoneme: "#",
+                step: 1,
+            }],
+            default: Some(("z", 1)),
+            end_of_word: Some(("z", 1)),
+        },
+    ),
+    (
+        "à",
+        LetterEntry {
+            rules: &[],
+            default: Some(("a", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "â",
+        LetterEntry {
+            rules: &[],
+            default: Some(("a", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "ç",
+        LetterEntry {
+            rules: &[],
+            default: Some(("s", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "è",
+        LetterEntry {
+            rules: &[],
+            default: Some(("e^", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "é",
+        LetterEntry {
+            rules: &[],
+            default: Some(("e", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "ê",
+        LetterEntry {
+            rules: &[],
+            default: Some(("e^", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "ë",
+        LetterEntry {
+            rules: &[],
+            default: Some(("e^", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "î",
+        LetterEntry {
+            rules: &[],
+            default: Some(("i", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "ï",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "thai",
+                    kind: RuleKind::Context {
+                        plus: "",
+                        minus: "t(h?)a",
+                        has_plus: false,
+                        has_minus: true,
+                    },
+                    phoneme: "j",
+                    step: 1,
+                },
+                Rule {
+                    name: "aie",
+                    kind: RuleKind::Context {
+                        plus: "e",
+                        minus: "[ao]",
+                        has_plus: true,
+                        has_minus: true,
+                    },
+                    phoneme: "j",
+                    step: 1,
+                },
+            ],
+            default: Some(("i", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "ô",
+        LetterEntry {
+            rules: &[],
+            default: Some(("o", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "ö",
+        LetterEntry {
+            rules: &[],
+            default: Some(("o", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "ù",
+        LetterEntry {
+            rules: &[],
+            default: Some(("y", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "û",
+        LetterEntry {
+            rules: &[],
+            default: Some(("y", 1)),
+            end_of_word: None,
+        },
+    ),
+    (
+        "œ",
+        LetterEntry {
+            rules: &[
+                Rule {
+                    name: "voeux",
+                    kind: RuleKind::Context {
+                        plus: "ux",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "x^",
+                    step: 2,
+                },
+                Rule {
+                    name: "oeufs",
+                    kind: RuleKind::Context {
+                        plus: "ufs",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "x^",
+                    step: 2,
+                },
+                Rule {
+                    name: "noeud",
+                    kind: RuleKind::Context {
+                        plus: "ud",
+                        minus: "",
+                        has_plus: true,
+                        has_minus: false,
+                    },
+                    phoneme: "x^",
+                    step: 2,
+                },
+            ],
+            default: Some(("x^", 2)),
+            end_of_word: None,
+        },
+    ),
 ];
 
 /// Homographes non homophones (v6).
 pub static HOMOGRAPHES: &[(&str, &[HomographVariant])] = &[
-    ("affluent", &[
-        HomographVariant { precedent: &["mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes", "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les", "ce", "cette", "cet", "ces", "du"], codage: &[("a", "a"), ("f", "ff"), ("l", "l"), ("y", "u"), ("a~", "en"), ("#", "t")] },
-        HomographVariant { precedent: &["je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "y", "s'y", "me", "te", "se"], codage: &[("a", "a"), ("f", "ff"), ("l", "l"), ("y", "u"), ("q_caduc", "e"), ("verb_3p", "nt")] },
-    ]),
-    ("as", &[
-        HomographVariant { precedent: &["je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "y", "s'y", "me", "te", "se"], codage: &[("a", "a"), ("#", "s")] },
-        HomographVariant { precedent: &["mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes", "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les", "ce", "cette", "cet", "ces", "du"], codage: &[("a", "a"), ("s", "s")] },
-    ]),
-    ("content", &[
-        HomographVariant { precedent: &["mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes", "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les", "ce", "cette", "cet", "ces", "du"], codage: &[("k", "c"), ("o~", "on"), ("t", "t"), ("a~", "en"), ("#", "t")] },
-        HomographVariant { precedent: &["je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "y", "s'y", "me", "te", "se"], codage: &[("k", "c"), ("o~", "on"), ("t", "t"), ("q_caduc", "e"), ("verb_3p", "nt")] },
-    ]),
-    ("couvent", &[
-        HomographVariant { precedent: &["je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "y", "s'y", "me", "te", "se"], codage: &[("k", "c"), ("u", "ou"), ("v", "v"), ("q_caduc", "e"), ("verb_3p", "nt")] },
-        HomographVariant { precedent: &["mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes", "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les", "ce", "cette", "cet", "ces", "du"], codage: &[("k", "c"), ("u", "ou"), ("v", "v"), ("a~", "en"), ("#", "t")] },
-    ]),
-    ("est", &[
-        HomographVariant { precedent: &["je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "y", "s'y", "me", "te", "se"], codage: &[("e^_comp", "est")] },
-        HomographVariant { precedent: &["mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes", "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les", "ce", "cette", "cet", "ces", "du"], codage: &[("e^_comp", "e"), ("s", "s"), ("t", "t")] },
-    ]),
-    ("excellent", &[
-        HomographVariant { precedent: &["mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes", "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les", "ce", "cette", "cet", "ces", "du"], codage: &[("e^", "e"), ("ks", "x"), ("s_c", "c"), ("e^_comp", "e"), ("l", "ll"), ("a~", "en"), ("#", "t")] },
-        HomographVariant { precedent: &["je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "y", "s'y", "me", "te", "se"], codage: &[("e^", "e"), ("ks", "x"), ("s_c", "c"), ("e^_comp", "e"), ("l", "ll"), ("q_caduc", "e"), ("verb_3p", "nt")] },
-    ]),
-    ("fier", &[
-        HomographVariant { precedent: &["mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes", "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les", "ce", "cette", "cet", "ces", "du"], codage: &[("f", "f"), ("j", "i"), ("e^_comp", "e"), ("r", "r")] },
-        HomographVariant { precedent: &["je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "y", "s'y", "me", "te", "se"], codage: &[("f", "f"), ("j", "i"), ("e_comp", "er")] },
-    ]),
-    ("négligent", &[
-        HomographVariant { precedent: &["mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes", "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les", "ce", "cette", "cet", "ces", "du"], codage: &[("n", "n"), ("e", "é"), ("g", "g"), ("l", "l"), ("i", "i"), ("z^_g", "g"), ("a~", "en"), ("#", "t")] },
-        HomographVariant { precedent: &["je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "y", "s'y", "me", "te", "se"], codage: &[("n", "n"), ("e", "é"), ("g", "g"), ("l", "l"), ("i", "i"), ("z^_g", "g"), ("q_caduc", "e"), ("verb_3p", "nt")] },
-    ]),
-    ("objections", &[
-        HomographVariant { precedent: &["mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes", "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les", "ce", "cette", "cet", "ces", "du"], codage: &[("o", "o"), ("b", "b"), ("z^", "j"), ("e^_comp", "e"), ("k", "c"), ("s_t", "t"), ("j", "i"), ("o~", "on"), ("#", "s")] },
-        HomographVariant { precedent: &["je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "y", "s'y", "me", "te", "se"], codage: &[("o", "o"), ("b", "b"), ("z^", "j"), ("e^_comp", "e"), ("k", "c"), ("t", "t"), ("j", "i"), ("o~", "on"), ("#", "s")] },
-    ]),
-    ("parent", &[
-        HomographVariant { precedent: &["mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes", "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les", "ce", "cette", "cet", "ces", "du"], codage: &[("p", "p"), ("a", "a"), ("r", "r"), ("a~", "en"), ("#", "t")] },
-        HomographVariant { precedent: &["je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "y", "s'y", "me", "te", "se"], codage: &[("p", "p"), ("a", "a"), ("r", "r"), ("q_caduc", "e"), ("verb_3p", "nt")] },
-    ]),
-    ("portions", &[
-        HomographVariant { precedent: &["je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "y", "s'y", "me", "te", "se"], codage: &[("p", "p"), ("o", "o"), ("r", "r"), ("t", "t"), ("j", "i"), ("o~", "on"), ("#", "s")] },
-        HomographVariant { precedent: &["mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes", "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les", "ce", "cette", "cet", "ces", "du"], codage: &[("p", "p"), ("o", "o"), ("r", "r"), ("s_t", "t"), ("j", "i"), ("o~", "on"), ("#", "s")] },
-    ]),
-    ("relations", &[
-        HomographVariant { precedent: &["mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes", "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les", "ce", "cette", "cet", "ces", "du"], codage: &[("r", "r"), ("q", "e"), ("l", "l"), ("a", "a"), ("s_t", "t"), ("j", "i"), ("o~", "on"), ("#", "s")] },
-        HomographVariant { precedent: &["je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "y", "s'y", "me", "te", "se"], codage: &[("r", "r"), ("q", "e"), ("l", "l"), ("a", "a"), ("t", "t"), ("j", "i"), ("o~", "on"), ("#", "s")] },
-    ]),
-    ("résident", &[
-        HomographVariant { precedent: &["mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes", "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les", "ce", "cette", "cet", "ces", "du"], codage: &[("r", "r"), ("e", "é"), ("z_s", "s"), ("i", "i"), ("d", "d"), ("a~", "en"), ("#", "t")] },
-        HomographVariant { precedent: &["je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "y", "s'y", "me", "te", "se"], codage: &[("r", "r"), ("e", "é"), ("z_s", "s"), ("i", "i"), ("d", "d"), ("q_caduc", "e"), ("verb_3p", "nt")] },
-    ]),
-    ("violent", &[
-        HomographVariant { precedent: &["mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes", "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les", "ce", "cette", "cet", "ces", "du"], codage: &[("v", "v"), ("i", "i"), ("o", "o"), ("l", "l"), ("a~", "en"), ("#", "t")] },
-        HomographVariant { precedent: &["je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "y", "s'y", "me", "te", "se"], codage: &[("v", "v"), ("i", "i"), ("o", "o"), ("l", "l"), ("q_caduc", "e"), ("verb_3p", "nt")] },
-    ]),
-    ("vis", &[
-        HomographVariant { precedent: &["mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes", "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les", "ce", "cette", "cet", "ces", "du"], codage: &[("v", "v"), ("i", "i"), ("s", "s")] },
-        HomographVariant { precedent: &["je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "y", "s'y", "me", "te", "se"], codage: &[("v", "v"), ("i", "i"), ("#", "s")] },
-    ]),
-    ("éditions", &[
-        HomographVariant { precedent: &["je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "y", "s'y", "me", "te", "se"], codage: &[("e", "é"), ("d", "d"), ("i", "i"), ("s_t", "t"), ("j", "i"), ("o~", "on"), ("#", "s")] },
-        HomographVariant { precedent: &["mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes", "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les", "ce", "cette", "cet", "ces", "du"], codage: &[("e", "é"), ("d", "d"), ("i", "i"), ("s", "t"), ("j", "i"), ("o~", "on"), ("#", "s")] },
-    ]),
+    (
+        "affluent",
+        &[
+            HomographVariant {
+                precedent: &[
+                    "mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes",
+                    "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les",
+                    "ce", "cette", "cet", "ces", "du",
+                ],
+                codage: &[
+                    ("a", "a"),
+                    ("f", "ff"),
+                    ("l", "l"),
+                    ("y", "u"),
+                    ("a~", "en"),
+                    ("#", "t"),
+                ],
+            },
+            HomographVariant {
+                precedent: &[
+                    "je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
+                    "y", "s'y", "me", "te", "se",
+                ],
+                codage: &[
+                    ("a", "a"),
+                    ("f", "ff"),
+                    ("l", "l"),
+                    ("y", "u"),
+                    ("q_caduc", "e"),
+                    ("verb_3p", "nt"),
+                ],
+            },
+        ],
+    ),
+    (
+        "as",
+        &[
+            HomographVariant {
+                precedent: &[
+                    "je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
+                    "y", "s'y", "me", "te", "se",
+                ],
+                codage: &[("a", "a"), ("#", "s")],
+            },
+            HomographVariant {
+                precedent: &[
+                    "mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes",
+                    "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les",
+                    "ce", "cette", "cet", "ces", "du",
+                ],
+                codage: &[("a", "a"), ("s", "s")],
+            },
+        ],
+    ),
+    (
+        "content",
+        &[
+            HomographVariant {
+                precedent: &[
+                    "mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes",
+                    "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les",
+                    "ce", "cette", "cet", "ces", "du",
+                ],
+                codage: &[
+                    ("k", "c"),
+                    ("o~", "on"),
+                    ("t", "t"),
+                    ("a~", "en"),
+                    ("#", "t"),
+                ],
+            },
+            HomographVariant {
+                precedent: &[
+                    "je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
+                    "y", "s'y", "me", "te", "se",
+                ],
+                codage: &[
+                    ("k", "c"),
+                    ("o~", "on"),
+                    ("t", "t"),
+                    ("q_caduc", "e"),
+                    ("verb_3p", "nt"),
+                ],
+            },
+        ],
+    ),
+    (
+        "couvent",
+        &[
+            HomographVariant {
+                precedent: &[
+                    "je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
+                    "y", "s'y", "me", "te", "se",
+                ],
+                codage: &[
+                    ("k", "c"),
+                    ("u", "ou"),
+                    ("v", "v"),
+                    ("q_caduc", "e"),
+                    ("verb_3p", "nt"),
+                ],
+            },
+            HomographVariant {
+                precedent: &[
+                    "mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes",
+                    "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les",
+                    "ce", "cette", "cet", "ces", "du",
+                ],
+                codage: &[
+                    ("k", "c"),
+                    ("u", "ou"),
+                    ("v", "v"),
+                    ("a~", "en"),
+                    ("#", "t"),
+                ],
+            },
+        ],
+    ),
+    (
+        "est",
+        &[
+            HomographVariant {
+                precedent: &[
+                    "je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
+                    "y", "s'y", "me", "te", "se",
+                ],
+                codage: &[("e^_comp", "est")],
+            },
+            HomographVariant {
+                precedent: &[
+                    "mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes",
+                    "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les",
+                    "ce", "cette", "cet", "ces", "du",
+                ],
+                codage: &[("e^_comp", "e"), ("s", "s"), ("t", "t")],
+            },
+        ],
+    ),
+    (
+        "excellent",
+        &[
+            HomographVariant {
+                precedent: &[
+                    "mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes",
+                    "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les",
+                    "ce", "cette", "cet", "ces", "du",
+                ],
+                codage: &[
+                    ("e^", "e"),
+                    ("ks", "x"),
+                    ("s_c", "c"),
+                    ("e^_comp", "e"),
+                    ("l", "ll"),
+                    ("a~", "en"),
+                    ("#", "t"),
+                ],
+            },
+            HomographVariant {
+                precedent: &[
+                    "je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
+                    "y", "s'y", "me", "te", "se",
+                ],
+                codage: &[
+                    ("e^", "e"),
+                    ("ks", "x"),
+                    ("s_c", "c"),
+                    ("e^_comp", "e"),
+                    ("l", "ll"),
+                    ("q_caduc", "e"),
+                    ("verb_3p", "nt"),
+                ],
+            },
+        ],
+    ),
+    (
+        "fier",
+        &[
+            HomographVariant {
+                precedent: &[
+                    "mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes",
+                    "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les",
+                    "ce", "cette", "cet", "ces", "du",
+                ],
+                codage: &[("f", "f"), ("j", "i"), ("e^_comp", "e"), ("r", "r")],
+            },
+            HomographVariant {
+                precedent: &[
+                    "je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
+                    "y", "s'y", "me", "te", "se",
+                ],
+                codage: &[("f", "f"), ("j", "i"), ("e_comp", "er")],
+            },
+        ],
+    ),
+    (
+        "négligent",
+        &[
+            HomographVariant {
+                precedent: &[
+                    "mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes",
+                    "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les",
+                    "ce", "cette", "cet", "ces", "du",
+                ],
+                codage: &[
+                    ("n", "n"),
+                    ("e", "é"),
+                    ("g", "g"),
+                    ("l", "l"),
+                    ("i", "i"),
+                    ("z^_g", "g"),
+                    ("a~", "en"),
+                    ("#", "t"),
+                ],
+            },
+            HomographVariant {
+                precedent: &[
+                    "je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
+                    "y", "s'y", "me", "te", "se",
+                ],
+                codage: &[
+                    ("n", "n"),
+                    ("e", "é"),
+                    ("g", "g"),
+                    ("l", "l"),
+                    ("i", "i"),
+                    ("z^_g", "g"),
+                    ("q_caduc", "e"),
+                    ("verb_3p", "nt"),
+                ],
+            },
+        ],
+    ),
+    (
+        "objections",
+        &[
+            HomographVariant {
+                precedent: &[
+                    "mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes",
+                    "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les",
+                    "ce", "cette", "cet", "ces", "du",
+                ],
+                codage: &[
+                    ("o", "o"),
+                    ("b", "b"),
+                    ("z^", "j"),
+                    ("e^_comp", "e"),
+                    ("k", "c"),
+                    ("s_t", "t"),
+                    ("j", "i"),
+                    ("o~", "on"),
+                    ("#", "s"),
+                ],
+            },
+            HomographVariant {
+                precedent: &[
+                    "je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
+                    "y", "s'y", "me", "te", "se",
+                ],
+                codage: &[
+                    ("o", "o"),
+                    ("b", "b"),
+                    ("z^", "j"),
+                    ("e^_comp", "e"),
+                    ("k", "c"),
+                    ("t", "t"),
+                    ("j", "i"),
+                    ("o~", "on"),
+                    ("#", "s"),
+                ],
+            },
+        ],
+    ),
+    (
+        "parent",
+        &[
+            HomographVariant {
+                precedent: &[
+                    "mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes",
+                    "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les",
+                    "ce", "cette", "cet", "ces", "du",
+                ],
+                codage: &[("p", "p"), ("a", "a"), ("r", "r"), ("a~", "en"), ("#", "t")],
+            },
+            HomographVariant {
+                precedent: &[
+                    "je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
+                    "y", "s'y", "me", "te", "se",
+                ],
+                codage: &[
+                    ("p", "p"),
+                    ("a", "a"),
+                    ("r", "r"),
+                    ("q_caduc", "e"),
+                    ("verb_3p", "nt"),
+                ],
+            },
+        ],
+    ),
+    (
+        "portions",
+        &[
+            HomographVariant {
+                precedent: &[
+                    "je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
+                    "y", "s'y", "me", "te", "se",
+                ],
+                codage: &[
+                    ("p", "p"),
+                    ("o", "o"),
+                    ("r", "r"),
+                    ("t", "t"),
+                    ("j", "i"),
+                    ("o~", "on"),
+                    ("#", "s"),
+                ],
+            },
+            HomographVariant {
+                precedent: &[
+                    "mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes",
+                    "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les",
+                    "ce", "cette", "cet", "ces", "du",
+                ],
+                codage: &[
+                    ("p", "p"),
+                    ("o", "o"),
+                    ("r", "r"),
+                    ("s_t", "t"),
+                    ("j", "i"),
+                    ("o~", "on"),
+                    ("#", "s"),
+                ],
+            },
+        ],
+    ),
+    (
+        "relations",
+        &[
+            HomographVariant {
+                precedent: &[
+                    "mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes",
+                    "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les",
+                    "ce", "cette", "cet", "ces", "du",
+                ],
+                codage: &[
+                    ("r", "r"),
+                    ("q", "e"),
+                    ("l", "l"),
+                    ("a", "a"),
+                    ("s_t", "t"),
+                    ("j", "i"),
+                    ("o~", "on"),
+                    ("#", "s"),
+                ],
+            },
+            HomographVariant {
+                precedent: &[
+                    "je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
+                    "y", "s'y", "me", "te", "se",
+                ],
+                codage: &[
+                    ("r", "r"),
+                    ("q", "e"),
+                    ("l", "l"),
+                    ("a", "a"),
+                    ("t", "t"),
+                    ("j", "i"),
+                    ("o~", "on"),
+                    ("#", "s"),
+                ],
+            },
+        ],
+    ),
+    (
+        "résident",
+        &[
+            HomographVariant {
+                precedent: &[
+                    "mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes",
+                    "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les",
+                    "ce", "cette", "cet", "ces", "du",
+                ],
+                codage: &[
+                    ("r", "r"),
+                    ("e", "é"),
+                    ("z_s", "s"),
+                    ("i", "i"),
+                    ("d", "d"),
+                    ("a~", "en"),
+                    ("#", "t"),
+                ],
+            },
+            HomographVariant {
+                precedent: &[
+                    "je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
+                    "y", "s'y", "me", "te", "se",
+                ],
+                codage: &[
+                    ("r", "r"),
+                    ("e", "é"),
+                    ("z_s", "s"),
+                    ("i", "i"),
+                    ("d", "d"),
+                    ("q_caduc", "e"),
+                    ("verb_3p", "nt"),
+                ],
+            },
+        ],
+    ),
+    (
+        "violent",
+        &[
+            HomographVariant {
+                precedent: &[
+                    "mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes",
+                    "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les",
+                    "ce", "cette", "cet", "ces", "du",
+                ],
+                codage: &[
+                    ("v", "v"),
+                    ("i", "i"),
+                    ("o", "o"),
+                    ("l", "l"),
+                    ("a~", "en"),
+                    ("#", "t"),
+                ],
+            },
+            HomographVariant {
+                precedent: &[
+                    "je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
+                    "y", "s'y", "me", "te", "se",
+                ],
+                codage: &[
+                    ("v", "v"),
+                    ("i", "i"),
+                    ("o", "o"),
+                    ("l", "l"),
+                    ("q_caduc", "e"),
+                    ("verb_3p", "nt"),
+                ],
+            },
+        ],
+    ),
+    (
+        "vis",
+        &[
+            HomographVariant {
+                precedent: &[
+                    "mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes",
+                    "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les",
+                    "ce", "cette", "cet", "ces", "du",
+                ],
+                codage: &[("v", "v"), ("i", "i"), ("s", "s")],
+            },
+            HomographVariant {
+                precedent: &[
+                    "je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
+                    "y", "s'y", "me", "te", "se",
+                ],
+                codage: &[("v", "v"), ("i", "i"), ("#", "s")],
+            },
+        ],
+    ),
+    (
+        "éditions",
+        &[
+            HomographVariant {
+                precedent: &[
+                    "je", "j'", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
+                    "y", "s'y", "me", "te", "se",
+                ],
+                codage: &[
+                    ("e", "é"),
+                    ("d", "d"),
+                    ("i", "i"),
+                    ("s_t", "t"),
+                    ("j", "i"),
+                    ("o~", "on"),
+                    ("#", "s"),
+                ],
+            },
+            HomographVariant {
+                precedent: &[
+                    "mon", "ton", "son", "notre", "votre", "leur", "ma", "ta", "sa", "mes", "tes",
+                    "ses", "nos", "vos", "leurs", "un", "une", "le", "la", "l'", "des", "les",
+                    "ce", "cette", "cet", "ces", "du",
+                ],
+                codage: &[
+                    ("e", "é"),
+                    ("d", "d"),
+                    ("i", "i"),
+                    ("s", "t"),
+                    ("j", "i"),
+                    ("o~", "on"),
+                    ("#", "s"),
+                ],
+            },
+        ],
+    ),
 ];
 
 // ================= DATABASES =================
@@ -1253,38 +4323,13 @@ pub static EXCEPTIONS_FINAL_ER: &[&str] = &[
 ];
 
 pub static POSSIBLES_NC_AI_FINAL: &[&str] = &[
-    "balai",
-    "brai",
-    "chai",
-    "déblai",
-    "délai",
-    "essai",
-    "frai",
-    "geai",
-    "lai",
-    "mai",
-    "minerai",
-    "papegai",
-    "quai",
-    "rai",
-    "remblai",
+    "balai", "brai", "chai", "déblai", "délai", "essai", "frai", "geai", "lai", "mai", "minerai",
+    "papegai", "quai", "rai", "remblai",
 ];
 
 pub static POSSIBLES_AVOIR: &[&str] = &[
-    "eu",
-    "eue",
-    "eues",
-    "eurent",
-    "eus",
-    "eusse",
-    "eussent",
-    "eusses",
-    "eussiez",
-    "eussions",
-    "eut",
-    "eûmes",
-    "eût",
-    "eûtes",
+    "eu", "eue", "eues", "eurent", "eus", "eusse", "eussent", "eusses", "eussiez", "eussions",
+    "eut", "eûmes", "eût", "eûtes",
 ];
 
 pub static MOTS_S_FINAL: &[&str] = &[
@@ -1449,13 +4494,8 @@ pub static MOTS_T_FINAL: &[&str] = &[
     "zut",
 ];
 
-pub static EXCEPTIONS_FINAL_TIEN: &[&str] = &[
-    "chrétien",
-    "entretien",
-    "kantien",
-    "proustien",
-    "soutien",
-];
+pub static EXCEPTIONS_FINAL_TIEN: &[&str] =
+    &["chrétien", "entretien", "kantien", "proustien", "soutien"];
 
 pub static MOTS_OSSE: &[&str] = &[
     "bosse",
@@ -1487,93 +4527,19 @@ pub static EXCEPTIONS_EN_FINAL: &[&str] = &[
 ];
 
 pub static DETERMINANTS: &[&str] = &[
-    "ce",
-    "ces",
-    "cet",
-    "cette",
-    "des",
-    "du",
-    "l'",
-    "la",
-    "le",
-    "les",
-    "leur",
-    "leurs",
-    "ma",
-    "mes",
-    "mon",
-    "nos",
-    "notre",
-    "sa",
-    "ses",
-    "son",
-    "ta",
-    "tes",
-    "ton",
-    "un",
-    "une",
-    "vos",
+    "ce", "ces", "cet", "cette", "des", "du", "l'", "la", "le", "les", "leur", "leurs", "ma",
+    "mes", "mon", "nos", "notre", "sa", "ses", "son", "ta", "tes", "ton", "un", "une", "vos",
     "votre",
 ];
 
 pub static PRONOMS: &[&str] = &[
-    "elle",
-    "elles",
-    "il",
-    "ils",
-    "j'",
-    "je",
-    "me",
-    "nous",
-    "on",
-    "s'y",
-    "se",
-    "te",
-    "tu",
-    "vous",
+    "elle", "elles", "il", "ils", "j'", "je", "me", "nous", "on", "s'y", "se", "te", "tu", "vous",
     "y",
 ];
 
 pub static LIAISONS_AVAL: &[&str] = &[
-    "aucun",
-    "aux",
-    "bien",
-    "ces",
-    "chez",
-    "comment",
-    "dans",
-    "des",
-    "deux",
-    "dix",
-    "elles",
-    "en",
-    "ils",
-    "les",
-    "leurs",
-    "mes",
-    "mon",
-    "nos",
-    "nous",
-    "on",
-    "plus",
-    "quand",
-    "quelles",
-    "quelques",
-    "quels",
-    "sans",
-    "ses",
-    "six",
-    "son",
-    "sous",
-    "sur",
-    "tes",
-    "ton",
-    "tout",
-    "trois",
-    "très",
-    "un",
-    "vingt",
-    "vos",
-    "vous",
+    "aucun", "aux", "bien", "ces", "chez", "comment", "dans", "des", "deux", "dix", "elles", "en",
+    "ils", "les", "leurs", "mes", "mon", "nos", "nous", "on", "plus", "quand", "quelles",
+    "quelques", "quels", "sans", "ses", "six", "son", "sous", "sur", "tes", "ton", "tout", "trois",
+    "très", "un", "vingt", "vos", "vous",
 ];
-

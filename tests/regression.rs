@@ -38,7 +38,10 @@ fn fmt_oracle_chunks(chunks: &Value) -> String {
     let mut s = String::new();
     for c in arr {
         if let Some(syls) = c.as_array() {
-            let ss: Vec<String> = syls.iter().map(|v| v.as_str().unwrap().to_string()).collect();
+            let ss: Vec<String> = syls
+                .iter()
+                .map(|v| v.as_str().unwrap().to_string())
+                .collect();
             s.push_str(&ss.join("|"));
         } else if let Some(raw) = c.as_str() {
             s.push_str(&format!("[{}]", raw));
@@ -93,6 +96,9 @@ fn regression_syllabes() {
             report.push_str(&line);
         }
         let _ = fs::write("/tmp/syllabify_mismatches.txt", &report);
-        panic!("{} cas divergent de pylirecouleur (détails dans /tmp/syllabify_mismatches.txt)", nb);
+        panic!(
+            "{} cas divergent de pylirecouleur (détails dans /tmp/syllabify_mismatches.txt)",
+            nb
+        );
     }
 }

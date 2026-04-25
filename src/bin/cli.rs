@@ -82,7 +82,7 @@ fn main() -> ExitCode {
                 };
                 let word = line.trim();
                 if word.is_empty() {
-                    writeln!(out, "").ok();
+                    writeln!(out).ok();
                     continue;
                 }
                 writeln!(out, "{}", syllabify_to_dashes(word)).ok();
