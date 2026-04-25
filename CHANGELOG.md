@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.4.1] — 2026-04-25
+
+### Added
+- `tests/edge_cases.rs` : 9 tests sur les entrées atypiques (chaîne vide, chiffres,
+  majuscules, apostrophe, trait d'union, ponctuation seule).
+- README : badges crates.io, docs.rs et CI GitHub Actions.
+- Roadmap : FFI C et Python cochés ; nom de crate corrigé (`syllabify-fr-ffi`).
+
+---
+
 ## [0.4.0] — 2026-04-19
 
 ### Added
