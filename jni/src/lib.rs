@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 use jni::objects::{JClass, JObjectArray, JString};
-use jni::sys::{jstring, jobjectArray};
+use jni::sys::{jobjectArray, jstring};
 use jni::JNIEnv;
 use syllabify_fr::{phonemes, render_html, render_word_html, syllabify_text, syllables, TextChunk};
 
@@ -72,10 +72,11 @@ pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_syllables<'local>
         Ok(c) => c,
         Err(_) => return std::ptr::null_mut(),
     };
-    let arr: JObjectArray = match env.new_object_array(syls.len() as i32, string_class, JString::default()) {
-        Ok(a) => a,
-        Err(_) => return std::ptr::null_mut(),
-    };
+    let arr: JObjectArray =
+        match env.new_object_array(syls.len() as i32, string_class, JString::default()) {
+            Ok(a) => a,
+            Err(_) => return std::ptr::null_mut(),
+        };
     for (i, syl) in syls.iter().enumerate() {
         let js = match env.new_string(syl) {
             Ok(s) => s,
