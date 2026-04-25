@@ -27,7 +27,6 @@ pub struct Phoneme {
 // Compile every regex pattern that appears in AUTOMATON exactly once, at first parse.
 // The resulting HashMap is immutable: concurrent reads need no lock.
 fn regex_cache() -> &'static HashMap<&'static str, Regex> {
-    use crate::data::RuleKind;
     static CACHE: OnceLock<HashMap<&'static str, Regex>> = OnceLock::new();
     CACHE.get_or_init(|| {
         let mut map = HashMap::new();
