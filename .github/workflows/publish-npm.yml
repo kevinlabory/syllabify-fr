@@ -1,0 +1,37 @@
+name: Publish npm
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  id-token: write  # Required for npm Trusted Publishing (OIDC)
+
+jobs:
+  publish-wasm:
+    name: Publish @dyscolor/syllabify-fr-wasm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+      - name: Build WASM
+        run: wasm-pack build wasm/ --target bundler --scope dyscolor --release
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          # No registry-url: prevents setup-node from injecting NODE_AUTH_TOKEN,
+          # which would shadow the OIDC credentials.
+      - name: Upgrade npm
+        run: npm install -g npm@latest  # >= 11.5.1 required for OIDC auth
+      - name: Publish to npm
+        working-directory: wasm/pkg
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ""  # clear in case setup-node injected one

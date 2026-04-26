@@ -15,6 +15,21 @@ wasm-pack build wasm/ --target web --release
 
 Other targets: `--target bundler` (Vite/Webpack), `--target nodejs`.
 
+## Publish to npm
+
+```bash
+# Build with @dyscolor scope (generates wasm/pkg/ with name @dyscolor/syllabify-fr-wasm)
+wasm-pack build wasm/ --target bundler --scope dyscolor --release
+
+# Publish (first time: npm login + the @dyscolor scope must exist on your npm account)
+cd wasm/pkg
+npm publish --access public
+```
+
+Publication is automated via GitHub Actions (`.github/workflows/publish-npm.yml`)
+on every `v*` tag push. Requires the `NPM_TOKEN` secret to be set in the repository
+(Settings → Secrets and variables → Actions).
+
 ## Usage (ESM / browser)
 
 ```js
