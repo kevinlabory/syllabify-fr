@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write  # Required for npm Trusted Publishing (OIDC)
+  id-token: write  # Required for --provenance (OIDC attestation)
 
 jobs:
   publish-wasm:
@@ -31,3 +31,5 @@ jobs:
       - name: Publish to npm
         working-directory: wasm/pkg
         run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
