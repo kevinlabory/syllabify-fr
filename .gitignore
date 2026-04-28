@@ -5,3 +5,7 @@ Cargo.lock
 /tmp
 /wasm/pkg
 .claude/settings.local.json
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
