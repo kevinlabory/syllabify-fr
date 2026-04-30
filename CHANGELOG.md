@@ -6,6 +6,26 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.6.0] — 2026-04-30
+
+### Added
+- `[lints]` table dans `Cargo.toml` : `forbid(unsafe_code)`, et `warn` clippy
+  sur `dbg_macro`, `todo`, `unimplemented` (appliqué à tous les targets).
+- `#[must_use]` sur les fonctions publiques pures :
+  `syllables`, `syllables_with`, `phonemes`, `syllabify_text`,
+  `liaison_amont`, `liaison_aval`, `liaison_possible`,
+  `render_word_html`, `render_html`.
+- Documentation des champs publics de `Phoneme` et `DecodedPhoneme`.
+
+### Changed
+- **Breaking** : `TextChunk`, `AssembleMode`, `SyllableMode` sont désormais
+  `#[non_exhaustive]`. Les consommateurs qui matchent dessus doivent ajouter
+  un bras `_ => …` pour rester forward-compatibles.
+- **MSRV** bumpée `1.70 → 1.74` (requise par la table `[lints]`). Le job CI
+  MSRV est mis à jour en conséquence.
+
+---
+
 ## [0.5.0] — 2026-04-25
 
 ### Added
