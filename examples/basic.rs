@@ -37,6 +37,7 @@ fn main() {
             .map(|c| match c {
                 TextChunk::Word(s) => s.join("-"),
                 TextChunk::Raw(s) => s.clone(),
+                _ => String::new(),
             })
             .collect();
         println!("  {:25} → {}", text, rendered.join(""));

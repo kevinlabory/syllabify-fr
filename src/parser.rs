@@ -17,10 +17,18 @@ use std::sync::OnceLock;
 #[cfg(not(any(feature = "regex-full", feature = "regex-lite")))]
 compile_error!("one of the features `regex-full` or `regex-lite` must be enabled");
 
-/// Un phonème produit par le parser : (code phonétique, nombre de caractères consommés).
+/// Un phonème produit par le parser, avant les post-traitements du décodeur.
+///
+/// `code` est l'étiquette phonétique LC6 (ex : `"a"`, `"s^"` pour /ʃ/, `"#_h_muet"`).
+/// `step` est le nombre de caractères consommés du mot d'entrée par cette
+/// règle de l'automate (1 pour `'a'`, 2 pour `"ch"`, 3 pour `"ill"` selon le
+/// contexte). La somme des `step` égale toujours le nombre de caractères
+/// du mot après nettoyage par [`crate::cleaner`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Phoneme {
+    /// Code phonétique LC6.
     pub code: String,
+    /// Nombre de caractères consommés du mot d'entrée.
     pub step: usize,
 }
 

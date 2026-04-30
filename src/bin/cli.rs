@@ -42,6 +42,7 @@ fn syllabify_text_to_string(text: &str) -> String {
         match chunk {
             TextChunk::Word(syls) => out.push_str(&syls.join("-")),
             TextChunk::Raw(s) => out.push_str(&s),
+            _ => {}
         }
     }
     out
