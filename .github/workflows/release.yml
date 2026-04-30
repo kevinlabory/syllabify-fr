@@ -73,17 +73,13 @@ jobs:
         run: wasm-pack build wasm/ --target bundler --scope dyscolor --release
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'   # ships with npm 11.x natively (required for OIDC)
           # No registry-url: prevents setup-node from injecting NODE_AUTH_TOKEN,
           # which would shadow the OIDC credentials.
-      - name: Use npm 11 (required for OIDC) via corepack
-        # Avoids the in-place self-upgrade bug of `npm install -g npm@latest`
-        # (npm 10.x removes its own `promise-retry` mid-upgrade and crashes).
-        # corepack ships with Node ≥ 16.10 and installs npm in a separate path.
+      - name: Verify npm version (>= 11.5.1 required for OIDC trusted publishing)
         run: |
-          corepack enable
-          corepack prepare npm@11.5.1 --activate
           npm --version
+          npm --version | awk -F. '{ if ($1 < 11 || ($1 == 11 && $2 < 5)) { print "npm >= 11.5.1 required for OIDC, got " $0 > "/dev/stderr"; exit 1 } }'
       - name: Publish to npm
         working-directory: wasm/pkg
         run: npm publish --access public --provenance
