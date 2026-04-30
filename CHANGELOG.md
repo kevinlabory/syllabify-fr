@@ -6,6 +6,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.6.1] — 2026-04-30
+
+### Fixed
+- CI : remplace `npm install -g npm@latest` (cassé par le bug d'auto-upgrade
+  d'npm 10.x sur Node 22 — `Cannot find module 'promise-retry'`) par
+  `corepack prepare npm@11.5.1 --activate`. Le job `publish-npm` du workflow
+  `release.yml` peut désormais s'exécuter avec succès. Aucune autre modification
+  fonctionnelle ; même API, même comportement que 0.6.0.
+
+---
+
 ## [0.6.0] — 2026-04-30
 
 ### Added

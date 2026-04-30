@@ -76,8 +76,14 @@ jobs:
           node-version: '22'
           # No registry-url: prevents setup-node from injecting NODE_AUTH_TOKEN,
           # which would shadow the OIDC credentials.
-      - name: Upgrade npm
-        run: npm install -g npm@latest  # >= 11.5.1 required for OIDC auth
+      - name: Use npm 11 (required for OIDC) via corepack
+        # Avoids the in-place self-upgrade bug of `npm install -g npm@latest`
+        # (npm 10.x removes its own `promise-retry` mid-upgrade and crashes).
+        # corepack ships with Node ≥ 16.10 and installs npm in a separate path.
+        run: |
+          corepack enable
+          corepack prepare npm@11.5.1 --activate
+          npm --version
       - name: Publish to npm
         working-directory: wasm/pkg
         run: npm publish --access public --provenance
