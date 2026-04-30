@@ -26,6 +26,7 @@ use crate::phoneme::{classify, PhonClass};
 ///
 /// Vrai si son premier phonème est une voyelle ou `#_h_muet` (h muet).
 /// Faux pour un h aspiré (phonème `#`) ou une consonne initiale.
+#[must_use]
 pub fn liaison_amont(word: &str) -> bool {
     let phonemes = extract_phonemes_word(word, false, SyllableMode::Written);
     match phonemes.first() {
@@ -39,6 +40,7 @@ pub fn liaison_amont(word: &str) -> bool {
 ///
 /// Vrai s'il appartient à la liste fermée LC6 (40 mots : déterminants,
 /// pronoms sujets, adverbes, prépositions, numéraux). Insensible à la casse.
+#[must_use]
 pub fn liaison_aval(word: &str) -> bool {
     let lower: String = word.chars().flat_map(|c| c.to_lowercase()).collect();
     LIAISONS_AVAL.iter().any(|w| *w == lower)
@@ -47,6 +49,7 @@ pub fn liaison_aval(word: &str) -> bool {
 /// Y a-t-il possibilité de liaison entre `previous` et `next` ?
 ///
 /// Équivalent à `liaison_aval(previous) && liaison_amont(next)`.
+#[must_use]
 pub fn liaison_possible(previous: &str, next: &str) -> bool {
     liaison_aval(previous) && liaison_amont(next)
 }

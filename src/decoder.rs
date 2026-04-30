@@ -8,14 +8,21 @@ use crate::parser::parse;
 use crate::phoneme::{classify, PhonClass};
 
 /// Un phonème décoré avec la chaîne de lettres du mot d'origine qui le produit.
+///
+/// Issu de [`crate::parser::Phoneme`] après les post-traitements
+/// (yod, o ouvert/fermé, eu ouvert/fermé) et reliage avec le segment de mot
+/// correspondant. La concaténation des `letters` reproduit le mot nettoyé.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DecodedPhoneme {
+    /// Code phonétique LC6 (cf. [`crate::parser::Phoneme::code`]).
     pub code: String,
+    /// Segment de lettres du mot d'origine qui produit ce phonème.
     pub letters: String,
 }
 
 /// Mode de syllabification : orale ou écrite.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum SyllableMode {
     /// Syllabes écrites : la dernière syllabe muette reste détachée (ex: `é-co-le`)
     Written,
@@ -25,6 +32,7 @@ pub enum SyllableMode {
 
 /// Mode d'assemblage syllabique.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum AssembleMode {
     /// **Mode historique — non aligné avec LireCouleur 6 v6.**
     ///
@@ -425,6 +433,7 @@ pub fn extract_phonemes_word(
 ///
 /// Retourné par [`crate::syllabify_text`].
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum TextChunk {
     /// Un mot découpé en syllabes (ex : `["cho", "co", "lat"]`).
     Word(Vec<String>),

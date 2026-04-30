@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #![warn(missing_docs)]
+#![warn(missing_debug_implementations)]
 //! # syllabify-fr
 //!
 //! Syllabification française destinée à l'apprentissage de la lecture.
@@ -38,6 +39,7 @@ pub use liaisons::{liaison_amont, liaison_aval, liaison_possible};
 /// use syllabify_fr::syllables;
 /// assert_eq!(syllables("chocolat"), vec!["cho", "co", "lat"]);
 /// ```
+#[must_use]
 pub fn syllables(word: &str) -> Vec<String> {
     syllables_with(word, false, AssembleMode::Std, SyllableMode::Written)
 }
@@ -48,6 +50,7 @@ pub fn syllables(word: &str) -> Vec<String> {
 /// * `assemble_mode` — [`AssembleMode::Std`] (défaut pédagogique LC6) ou
 ///   [`AssembleMode::Lc`] (legacy, non aligné LC6 v6).
 /// * `syl_mode` — [`SyllableMode::Written`] ou [`SyllableMode::Oral`].
+#[must_use]
 pub fn syllables_with(
     word: &str,
     novice_reader: bool,
@@ -73,6 +76,7 @@ pub fn syllables_with(
 /// let ph = phonemes("chat");
 /// assert_eq!(ph[0], ("s^".to_string(), "ch".to_string()));
 /// ```
+#[must_use]
 pub fn phonemes(word: &str) -> Vec<(String, String)> {
     decoder::extract_phonemes_word(word, false, SyllableMode::Written)
         .into_iter()
@@ -90,6 +94,7 @@ pub fn phonemes(word: &str) -> Vec<(String, String)> {
 /// let chunks = syllabify_text("le chat dort");
 /// assert!(matches!(&chunks[0], TextChunk::Word(s) if s == &["le"]));
 /// ```
+#[must_use]
 pub fn syllabify_text(text: &str) -> Vec<TextChunk> {
     decoder::extract_syllables(text, false, AssembleMode::Std, SyllableMode::Written)
 }

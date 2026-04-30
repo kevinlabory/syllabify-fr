@@ -26,6 +26,7 @@ fn fmt_chunks(chunks: &[TextChunk]) -> String {
         match c {
             TextChunk::Word(syls) => s.push_str(&syls.join("|")),
             TextChunk::Raw(r) => s.push_str(&format!("[{}]", r)),
+            _ => {}
         }
         s.push(' ');
     }

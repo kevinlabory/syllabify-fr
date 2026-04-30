@@ -35,6 +35,7 @@ use crate::{liaison_possible, syllabify_text, syllables};
 ///
 /// Le mot complet est enveloppé dans `<span class="word">…</span>`.
 /// Utilise le mode standard (pédagogique) — `homme` → `hom-me`.
+#[must_use]
 pub fn render_word_html(word: &str) -> String {
     render_word_spans(&syllables(word))
 }
@@ -48,6 +49,7 @@ pub fn render_word_html(word: &str) -> String {
 /// Le texte brut entre les mots (espaces, ponctuation) est préservé et
 /// échappé HTML. Une liaison n'est émise que si l'intervalle entre deux
 /// mots est constitué *uniquement* d'espaces (pas de virgule, point, etc.).
+#[must_use]
 pub fn render_html(text: &str) -> String {
     let chunks = syllabify_text(text);
     let mut out = String::with_capacity(text.len() * 4);

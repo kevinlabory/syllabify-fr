@@ -38,6 +38,13 @@ pub fn syllabify_text_js(text: &str) -> Array {
                 let _ = Reflect::set(&obj, &JsValue::from_str("kind"), &JsValue::from_str("raw"));
                 let _ = Reflect::set(&obj, &JsValue::from_str("text"), &JsValue::from_str(&raw));
             }
+            _ => {
+                let _ = Reflect::set(
+                    &obj,
+                    &JsValue::from_str("kind"),
+                    &JsValue::from_str("unknown"),
+                );
+            }
         }
         out.push(&obj);
     }

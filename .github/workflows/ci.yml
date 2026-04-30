@@ -65,13 +65,13 @@ jobs:
           RUSTDOCFLAGS: "-D warnings"
 
   msrv:
-    name: MSRV 1.70
+    name: MSRV 1.74
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: "1.70"
+          toolchain: "1.74"
       - uses: Swatinem/rust-cache@v2
       - run: rm -f Cargo.lock
       - run: cargo build --lib

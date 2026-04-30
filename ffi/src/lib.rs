@@ -39,6 +39,7 @@ fn json_chunk(chunk: &TextChunk) -> String {
         TextChunk::Raw(text) => {
             format!("{{\"kind\":\"raw\",\"text\":{}}}", json_str(text))
         }
+        _ => "{\"kind\":\"unknown\"}".to_string(),
     }
 }
 

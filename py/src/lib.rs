@@ -24,6 +24,9 @@ fn syllabify_text_py<'py>(py: Python<'py>, text: &str) -> PyResult<Bound<'py, Py
                 d.set_item("kind", "raw")?;
                 d.set_item("text", s)?;
             }
+            _ => {
+                d.set_item("kind", "unknown")?;
+            }
         }
         list.append(d)?;
     }
