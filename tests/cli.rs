@@ -1,5 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! Tests d'intégration du binaire `syllabify`.
+//!
+//! Gated behind `cli` feature : avec `--no-default-features --features regex-lite`,
+//! le binaire n'est pas compilé (`required-features = ["cli"]`), donc ces tests
+//! seraient des panics. On désactive le fichier entier dans ce cas.
+
+#![cfg(feature = "cli")]
 
 use assert_cmd::Command;
 use predicates::str::contains;
