@@ -1,0 +1,56 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Fuzz harness for syllabify-fr.
+#
+# Requires Rust nightly to run:
+#   rustup toolchain install nightly
+#   cargo install cargo-fuzz
+#   cargo +nightly fuzz run syllables -- -max_total_time=60
+#
+# This crate is intentionally NOT a member of the parent workspace
+# (see the empty `[workspace]` section at the bottom): it pulls
+# `libfuzzer-sys` which only builds on nightly and would force the
+# whole workspace onto nightly otherwise.
+
+[package]
+name = "syllabify-fr-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+syllabify-fr = { path = ".." }
+
+[[bin]]
+name = "syllables"
+path = "fuzz_targets/syllables.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "syllabify_text"
+path = "fuzz_targets/syllabify_text.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "phonemes"
+path = "fuzz_targets/phonemes.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "render_html"
+path = "fuzz_targets/render_html.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]

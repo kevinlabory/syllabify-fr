@@ -6,3 +6,9 @@ Cargo.lock
 /wasm/pkg
 .claude/settings.local.json
 __pycache__/
+
+# cargo-fuzz artifacts
+/fuzz/target
+/fuzz/corpus
+/fuzz/artifacts
+/fuzz/coverage
