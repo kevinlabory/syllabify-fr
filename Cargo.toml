@@ -4,7 +4,7 @@ default-members = ["."]
 resolver = "2"
 
 [workspace.package]
-version = "0.6.2"
+version = "0.7.0"
 edition = "2021"
 license = "GPL-3.0-or-later"
 authors = ["Kevin Labory <kevin@dyscolor.com>"]
@@ -31,21 +31,26 @@ path = "src/lib.rs"
 [[bin]]
 name = "syllabify"
 path = "src/bin/cli.rs"
-required-features = ["regex-full"]
+required-features = ["cli"]
 
 [features]
-default = ["regex-full"]
+default = ["regex-full", "cli"]
 regex-full = ["dep:regex"]
 regex-lite = ["dep:regex-lite"]
+cli = ["regex-full", "dep:clap", "dep:clap_complete"]
 
 [dependencies]
 regex = { version = "1", optional = true }
 regex-lite = { version = "0.1", optional = true }
+clap = { version = "4", features = ["derive"], optional = true }
+clap_complete = { version = "4", optional = true }
 
 [dev-dependencies]
 serde_json = "1"
 criterion = { version = "0.5", features = ["html_reports"] }
 proptest = "1"
+assert_cmd = "2"
+predicates = "3"
 
 [profile.release]
 lto = true

@@ -71,6 +71,32 @@ echo -e "famille\nlion\nhier" | ./target/release/syllabify -
 # fa-mi-lle
 # lion
 # hier
+
+# Mode oral : q caduc final fusionné
+./target/release/syllabify --oral école
+# é-cole   (vs `é-co-le` en mode écrit)
+
+# Désactive les post-traitements subtils (yod, o ouvert/fermé)
+./target/release/syllabify --novice-reader chocolat
+
+./target/release/syllabify --version
+./target/release/syllabify --help
+```
+
+#### Completions shell
+
+Le binaire génère ses completions sur stdout pour `bash`, `zsh`, `fish`,
+`powershell` et `elvish` :
+
+```bash
+# Bash (à sourcer à chaque shell)
+syllabify --completions bash > ~/.local/share/bash-completion/completions/syllabify
+
+# Zsh (à placer dans un dossier de $fpath)
+syllabify --completions zsh > ~/.zfunc/_syllabify
+
+# Fish
+syllabify --completions fish > ~/.config/fish/completions/syllabify.fish
 ```
 
 ### Bibliothèque Rust
