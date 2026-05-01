@@ -6,6 +6,7 @@
 [![Crates.io](https://img.shields.io/crates/v/syllabify-fr.svg)](https://crates.io/crates/syllabify-fr)
 [![Docs.rs](https://docs.rs/syllabify-fr/badge.svg)](https://docs.rs/syllabify-fr)
 [![CI](https://github.com/kevinlabory/syllabify-fr/actions/workflows/ci.yml/badge.svg)](https://github.com/kevinlabory/syllabify-fr/actions)
+[![Coverage](https://codecov.io/gh/kevinlabory/syllabify-fr/branch/main/graph/badge.svg)](https://codecov.io/gh/kevinlabory/syllabify-fr)
 
 Syllabification française pour l'apprentissage de la lecture, en particulier pour les enfants dyslexiques.
 
