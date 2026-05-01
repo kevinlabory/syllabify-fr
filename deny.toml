@@ -1,0 +1,63 @@
+# Configuration cargo-deny — audit supply-chain.
+#
+# Lance `cargo deny check` ou via la CI (.github/workflows/ci.yml).
+# Doc : https://embarkstudios.github.io/cargo-deny/
+
+[graph]
+# Vérifier toutes les features pour ne rien rater.
+all-features = true
+
+# ─── Vulnérabilités ───────────────────────────────────────────────────────
+# Source : RustSec advisory DB (https://rustsec.org).
+[advisories]
+version = 2
+yanked = "deny"
+ignore = []
+
+# ─── Licences ─────────────────────────────────────────────────────────────
+# La crate est GPL-3.0-or-later. La GPL est compatible avec :
+# MIT, Apache-2.0, BSD-2/3, ISC, MPL-2.0, Zlib, Unicode, CC0.
+# Cette liste est conservatrice : on l'élargit au cas par cas.
+[licenses]
+version = 2
+# Garder une liste large même si elle contient des licences pas encore
+# utilisées : ça anticipe l'arrivée de futures deps. Pour ne pas polluer
+# la CI avec un warning par licence non rencontrée, on les autorise
+# explicitement.
+unused-allowed-license = "allow"
+allow = [
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "MIT",
+    "MIT-0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "MPL-2.0",
+    "Zlib",
+    "Unicode-DFS-2016",
+    "Unicode-3.0",
+    "CC0-1.0",
+    "CDLA-Permissive-2.0",
+    "GPL-3.0",
+    "GPL-3.0-or-later",
+    "0BSD",
+]
+confidence-threshold = 0.93
+
+# ─── Dépendances bannies / dupliquées ──────────────────────────────────────
+[bans]
+# Plusieurs versions d'une même crate dans le graphe : on warn (très
+# courant dans l'écosystème, ne devrait pas bloquer la CI). Si on veut
+# durcir plus tard, passer à "deny".
+multiple-versions = "warn"
+# Refuser les wildcards `*` : casse la reproductibilité.
+wildcards = "deny"
+deny = []
+
+# ─── Sources ───────────────────────────────────────────────────────────────
+# On ne tire que de crates.io officiel : pas de git, pas de registry exotique.
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
