@@ -31,6 +31,9 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   wildcards, sources crates.io). Job CI `deny`. (#17)
 
 ### Changed
+- **MSRV** bumpée `1.74 → 1.85` (requise par `clap` 4.6.x, adopté pour rester
+  à l'état de l'art de l'écosystème CLI Rust 2026). Le job CI `MSRV` est mis
+  à jour en conséquence.
 - `Cargo.toml` : nouvelle feature `cli` (regroupe `regex-full` + `clap` +
   `clap_complete`), incluse dans `default`. Lib users avec
   `default-features = false` ne compilent pas `clap`.
