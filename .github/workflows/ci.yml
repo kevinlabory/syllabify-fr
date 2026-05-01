@@ -75,3 +75,45 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: rm -f Cargo.lock
       - run: cargo build --lib
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    # Non bloquant : on observe la baseline d'abord, on durcira plus tard.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: taiki-e/install-action@cargo-llvm-cov
+      - uses: Swatinem/rust-cache@v2
+      - name: Generate lcov report
+        run: cargo llvm-cov --workspace --lcov --output-path lcov.info
+      - uses: codecov/codecov-action@v4
+        with:
+          files: lcov.info
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  fuzz-smoke:
+    name: Fuzz smoke (60s × cible)
+    # Uniquement sur push main : ne ralentit pas les PRs, donne un signal sur main.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --locked
+      - name: Smoke fuzz each target (60s)
+        working-directory: fuzz
+        run: |
+          for target in syllables syllabify_text phonemes render_html; do
+            echo "::group::fuzz $target"
+            cargo +nightly fuzz run "$target" -- -max_total_time=60
+            echo "::endgroup::"
+          done
