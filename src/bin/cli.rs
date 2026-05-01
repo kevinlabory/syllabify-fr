@@ -1,34 +1,60 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! CLI : `syllabify <mot>` ou `syllabify --text "phrase entière"`.
 
-use std::env;
 use std::io::{self, BufRead, Write};
 use std::process::ExitCode;
 
-use syllabify_fr::{syllabify_text, syllables, TextChunk};
+use clap::{CommandFactory, Parser};
+use clap_complete::{generate, Shell};
+use syllabify_fr::{syllabify_text, syllables_with, AssembleMode, SyllableMode, TextChunk};
 
-fn print_usage() {
-    eprintln!("syllabify-fr — syllabification française (LireCouleur port)");
-    eprintln!();
-    eprintln!("USAGE:");
-    eprintln!("  syllabify <mot>                  Syllabifie un mot, séparateur '-'");
-    eprintln!("  syllabify --text \"une phrase\"    Syllabifie un texte entier");
-    eprintln!("  syllabify --json <mot>           Sortie JSON (tableau de syllabes)");
-    eprintln!("  syllabify -                      Lit stdin, un mot par ligne");
-    eprintln!();
-    eprintln!("EXEMPLES:");
-    eprintln!("  syllabify chocolat                        # cho-co-lat");
-    eprintln!("  syllabify --text \"le petit chat noir\"     # le pe-tit chat noir");
-    eprintln!("  echo \"famille\" | syllabify -              # fa-mi-lle");
+#[derive(Parser, Debug)]
+#[command(
+    name = "syllabify",
+    version,
+    about = "Syllabification française (port LireCouleur 6)",
+    long_about = "Segmente chaque mot français en toutes ses syllabes — utile pour l'apprentissage de la lecture, notamment chez les enfants dyslexiques. Contrairement aux séparateurs typographiques (Hypher, hyphen-fr…) qui minimisent les points de coupure, syllabify segmente l'intégralité du mot."
+)]
+struct Cli {
+    /// Mots à syllabifier. Utiliser `-` pour lire stdin (un mot par ligne).
+    #[arg(value_name = "MOT")]
+    words: Vec<String>,
+
+    /// Syllabifier un texte complet (avec désambiguïsation des homographes).
+    #[arg(long, conflicts_with = "json")]
+    text: bool,
+
+    /// Sortie JSON (tableau de syllabes).
+    #[arg(long)]
+    json: bool,
+
+    /// Désactive les post-traitements subtils (yod, o ouvert/fermé).
+    #[arg(long = "novice-reader")]
+    novice_reader: bool,
+
+    /// Mode oral (q caduc final fusionné : `école` → `é-cole`).
+    #[arg(long)]
+    oral: bool,
+
+    /// Génère les completions shell sur stdout, puis quitte.
+    #[arg(long, value_enum, value_name = "SHELL", exclusive = true)]
+    completions: Option<Shell>,
 }
 
-fn syllabify_to_dashes(word: &str) -> String {
-    syllables(word).join("-")
+fn syllable_mode(oral: bool) -> SyllableMode {
+    if oral {
+        SyllableMode::Oral
+    } else {
+        SyllableMode::Written
+    }
 }
 
-fn syllabify_to_json(word: &str) -> String {
-    let s = syllables(word);
-    // JSON array simple, on échappe juste les " et \
+fn syllabify_to_dashes(word: &str, novice: bool, oral: bool) -> String {
+    syllables_with(word, novice, AssembleMode::Std, syllable_mode(oral)).join("-")
+}
+
+fn syllabify_to_json(word: &str, novice: bool, oral: bool) -> String {
+    let s = syllables_with(word, novice, AssembleMode::Std, syllable_mode(oral));
     let escaped: Vec<String> = s
         .iter()
         .map(|s| format!("\"{}\"", s.replace('\\', "\\\\").replace('"', "\\\"")))
@@ -48,52 +74,71 @@ fn syllabify_text_to_string(text: &str) -> String {
     out
 }
 
-fn main() -> ExitCode {
-    let args: Vec<String> = env::args().skip(1).collect();
+fn run_stdin(novice: bool, oral: bool) {
+    let stdin = io::stdin();
+    let stdout = io::stdout();
+    let mut out = stdout.lock();
+    for line in stdin.lock().lines() {
+        let line = match line {
+            Ok(l) => l,
+            Err(_) => break,
+        };
+        let word = line.trim();
+        if word.is_empty() {
+            writeln!(out).ok();
+            continue;
+        }
+        writeln!(out, "{}", syllabify_to_dashes(word, novice, oral)).ok();
+    }
+}
 
-    if args.is_empty() || args[0] == "-h" || args[0] == "--help" {
-        print_usage();
-        return ExitCode::from(if args.is_empty() { 1 } else { 0 });
+fn main() -> ExitCode {
+    let cli = Cli::parse();
+
+    if let Some(shell) = cli.completions {
+        let mut cmd = Cli::command();
+        let name = cmd.get_name().to_string();
+        generate(shell, &mut cmd, name, &mut io::stdout());
+        return ExitCode::SUCCESS;
     }
 
-    match args[0].as_str() {
-        "--text" => {
-            if args.len() < 2 {
-                eprintln!("erreur: --text requiert un argument");
-                return ExitCode::from(2);
-            }
-            let text = args[1..].join(" ");
-            println!("{}", syllabify_text_to_string(&text));
+    if cli.text {
+        if cli.words.is_empty() {
+            eprintln!("erreur: --text requiert au moins un argument");
+            return ExitCode::from(2);
         }
-        "--json" => {
-            if args.len() < 2 {
-                eprintln!("erreur: --json requiert un argument");
-                return ExitCode::from(2);
-            }
-            println!("{}", syllabify_to_json(&args[1]));
+        let text = cli.words.join(" ");
+        println!("{}", syllabify_text_to_string(&text));
+        return ExitCode::SUCCESS;
+    }
+
+    if cli.words.len() == 1 && cli.words[0] == "-" {
+        run_stdin(cli.novice_reader, cli.oral);
+        return ExitCode::SUCCESS;
+    }
+
+    if cli.words.is_empty() {
+        Cli::command().print_help().ok();
+        println!();
+        return ExitCode::from(2);
+    }
+
+    if cli.json {
+        if cli.words.len() > 1 {
+            eprintln!("erreur: --json n'accepte qu'un seul mot");
+            return ExitCode::from(2);
         }
-        "-" => {
-            let stdin = io::stdin();
-            let stdout = io::stdout();
-            let mut out = stdout.lock();
-            for line in stdin.lock().lines() {
-                let line = match line {
-                    Ok(l) => l,
-                    Err(_) => break,
-                };
-                let word = line.trim();
-                if word.is_empty() {
-                    writeln!(out).ok();
-                    continue;
-                }
-                writeln!(out, "{}", syllabify_to_dashes(word)).ok();
-            }
-        }
-        _ => {
-            // syllabifier chacun des args comme un mot
-            let outs: Vec<String> = args.iter().map(|w| syllabify_to_dashes(w)).collect();
-            println!("{}", outs.join(" "));
-        }
+        println!(
+            "{}",
+            syllabify_to_json(&cli.words[0], cli.novice_reader, cli.oral)
+        );
+    } else {
+        let outs: Vec<String> = cli
+            .words
+            .iter()
+            .map(|w| syllabify_to_dashes(w, cli.novice_reader, cli.oral))
+            .collect();
+        println!("{}", outs.join(" "));
     }
     ExitCode::SUCCESS
 }

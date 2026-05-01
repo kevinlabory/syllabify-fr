@@ -6,6 +6,46 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.7.0] — 2026-05-01
+
+### Added
+- **CLI : migration vers `clap`** — parser robuste, `--help` et `--version`
+  auto-générés, validation arguments, messages d'erreur clairs. Aucun breaking
+  sur la surface CLI existante (`syllabify <mot>`, `--text`, `--json`,
+  `syllabify -` pour stdin).
+- `--novice-reader` : expose l'option `novice_reader` de la lib (désactive
+  post-traitements subtils — yod, o ouvert/fermé).
+- `--oral` : expose `SyllableMode::Oral` (q caduc final fusionné, ex. `école`
+  → `é-cole` au lieu de `é-co-le`).
+- `--completions <SHELL>` : génère les completions shell sur stdout
+  (`bash`, `zsh`, `fish`, `powershell`, `elvish`). Documentation install dans
+  README.
+- Tests d'intégration CLI (`tests/cli.rs`) via `assert_cmd` — 14 tests
+  couvrant tous les modes et flags.
+- Property tests `proptest` sur invariants stables (non-panique sur entrées
+  adversariales UTF-8/emojis/mots géants, conservation des lettres). (#16)
+- Workspace `fuzz/` (cargo-fuzz) avec 4 cibles + smoke-fuzz 60 s/cible en CI
+  sur push main. (#16)
+- Coverage CI via `cargo-llvm-cov` + Codecov (non bloquant). (#16)
+- Audit supply-chain `cargo-deny` (advisories CVE, licences GPL-compat, bans
+  wildcards, sources crates.io). Job CI `deny`. (#17)
+
+### Changed
+- **MSRV** bumpée `1.74 → 1.85` (requise par `clap` 4.6.x, adopté pour rester
+  à l'état de l'art de l'écosystème CLI Rust 2026). Le job CI `MSRV` est mis
+  à jour en conséquence.
+- `Cargo.toml` : nouvelle feature `cli` (regroupe `regex-full` + `clap` +
+  `clap_complete`), incluse dans `default`. Lib users avec
+  `default-features = false` ne compilent pas `clap`.
+
+### Notes
+- Aucun breaking change pour les utilisateurs de la lib (API publique
+  inchangée).
+- Le binaire `syllabify` reste 100% retro-compatible sur sa surface
+  pré-existante.
+
+---
+
 ## [0.6.2] — 2026-04-30
 
 ### Fixed
