@@ -76,6 +76,16 @@ jobs:
       - run: rm -f Cargo.lock
       - run: cargo build --lib
 
+  deny:
+    name: Cargo deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check all
+          # `check all` runs : advisories, licenses, bans, sources
+
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
