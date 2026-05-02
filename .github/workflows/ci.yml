@@ -99,7 +99,11 @@ jobs:
       - uses: taiki-e/install-action@cargo-llvm-cov
       - uses: Swatinem/rust-cache@v2
       - name: Generate lcov report
-        run: cargo llvm-cov --workspace --lcov --output-path lcov.info
+        # Exclut le glue cross-language (FFI/JNI/PyO3/WASM) et le crate fuzz :
+        # ces fichiers sont testés dans leur écosystème natif, pas par cargo test.
+        run: |
+          cargo llvm-cov --workspace --lcov --output-path lcov.info \
+            --ignore-filename-regex '(ffi|jni|py|wasm|fuzz)/src/.*'
       - uses: codecov/codecov-action@v4
         with:
           files: lcov.info
