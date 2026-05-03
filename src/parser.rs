@@ -67,15 +67,24 @@ fn get_regex(pattern: &str) -> Option<&'static Regex> {
     regex_cache().get(pattern)
 }
 
+// Index char → LetterEntry built once at first parse, replacing a linear scan
+// over AUTOMATON's 41 entries on every letter.
+fn letter_index() -> &'static HashMap<char, &'static LetterEntry> {
+    static IDX: OnceLock<HashMap<char, &'static LetterEntry>> = OnceLock::new();
+    IDX.get_or_init(|| {
+        let mut map = HashMap::with_capacity(AUTOMATON.len());
+        for (k, entry) in AUTOMATON {
+            if let Some(c) = k.chars().next() {
+                map.insert(c, entry);
+            }
+        }
+        map
+    })
+}
+
 /// Lookup dans l'automate pour une lettre donnée.
 fn lookup_letter(letter: char) -> Option<&'static LetterEntry> {
-    let s = letter.to_string();
-    for (k, entry) in AUTOMATON {
-        if *k == s.as_str() {
-            return Some(entry);
-        }
-    }
-    None
+    letter_index().get(&letter).copied()
 }
 
 /// Évalue une règle contextuelle : lookahead (`plus`) et lookbehind (`minus`).

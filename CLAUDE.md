@@ -67,7 +67,8 @@ See NOTES-v6.md §"Points non portés". `regle_en_final` and `dernierTraitement`
 
 ## Technical debt to be aware of
 
-- `parser.rs` regex cache is a global `Mutex<HashMap>` — fine for single-threaded use, suboptimal otherwise. Candidate for `OnceCell` thread-local or compile-time regex.
-- `Lc` mode drift (see above).
+- None tracked at the moment. The previously-listed `Mutex<HashMap>` regex cache
+  in `parser.rs` is now an `OnceLock<HashMap>`; `AssembleMode::Lc` carries
+  `#[deprecated]` and its drift from LC6 v6 is documented inline.
 
 Always consult **NOTES-v6.md** before modifying parser/decoder behavior — it documents four concrete pitfalls that bit during the port and explains *why* specific lines look the way they do.
