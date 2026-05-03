@@ -6,6 +6,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.7.1] — 2026-05-03
+
+### Performance
+- `parser::lookup_letter` : remplace le scan linéaire sur les 41 entrées
+  d'`AUTOMATON` par un index `OnceLock<HashMap<char, &'static LetterEntry>>`
+  construit une fois au premier appel (lecture concurrente lock-free ensuite).
+  Gain : 41 string-compares → 1 hash lookup par lettre. Comportement
+  strictement identique (oracle 4830 mots toujours à 100%). (#19)
+
+### Documentation
+- `CLAUDE.md` : retire la section « Technical debt » périmée — le cache regex
+  utilise déjà `OnceLock` et `AssembleMode::Lc` est déjà `#[deprecated]`.
+
+---
+
 ## [0.7.0] — 2026-05-01
 
 ### Added
