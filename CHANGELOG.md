@@ -6,6 +6,33 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.8.0] — 2026-05-06
+
+### Added
+- **Module `letters`** : mise en évidence de lettres ou successions de
+  lettres (`b`, `pir`, …) via couleurs, gras, contour, classes CSS.
+  Port fidèle de la fonction `lettres` de LireCouleur 6
+  (`functionlc6.js:222-296`) — destinée notamment aux confusions de
+  lettres pour lecteurs dyslexiques (b/d/p/q, m/n/u, séquences `pir`/`pri`).
+  - API publique : `match_letters`, `render_letters_html`,
+    `LetterRule`, `LetterStyle`, `LetterSpan`, `RenderMode`
+    (`Inline` par défaut, `Classes` en option).
+  - Sous-module `letters::presets` : `bdpq()`, `mnu()`, `pir_pri()`.
+  - 13 tests unitaires couvrant scan, folding diacritique, priorité
+    règles, escaping HTML, multi-byte UTF-8.
+- CLI : nouveau flag `--highlight-letters <PRESET>` (valeurs : `bdpq`,
+  `mnu`, `pir-pri`) qui produit du HTML avec styles inline. 3 tests
+  d'intégration ajoutés.
+
+### Notes
+- Les groupes de confusion ne sont pas hard-codés dans LC6 — les presets
+  Rust sont du sucre pour la découvrabilité, le moteur reste générique
+  (l'utilisateur peut passer ses propres `Vec<LetterRule>`).
+- Aucun changement dans le pipeline syllabique : oracle 4830 mots
+  toujours à 100%.
+
+---
+
 ## [0.7.1] — 2026-05-03
 
 ### Performance

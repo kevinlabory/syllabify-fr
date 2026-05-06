@@ -135,3 +135,31 @@ fn completions_zsh() {
 fn no_args_shows_help_and_exits_with_error() {
     syllabify().assert().failure().code(2);
 }
+
+#[test]
+fn highlight_letters_bdpq_emits_inline_spans() {
+    syllabify()
+        .args(["--highlight-letters", "bdpq", "dépit"])
+        .assert()
+        .success()
+        .stdout(contains("color:#1e8e3e")) // d
+        .stdout(contains("color:#d93025")); // p
+}
+
+#[test]
+fn highlight_letters_pir_pri() {
+    syllabify()
+        .args(["--highlight-letters", "pir-pri", "pirate"])
+        .assert()
+        .success()
+        .stdout(contains("color:#1a73e8"))
+        .stdout(contains(">pir</span>"));
+}
+
+#[test]
+fn highlight_letters_rejects_unknown_preset() {
+    syllabify()
+        .args(["--highlight-letters", "nope", "mot"])
+        .assert()
+        .failure();
+}
