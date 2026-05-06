@@ -4,8 +4,9 @@
 use std::io::{self, BufRead, Write};
 use std::process::ExitCode;
 
-use clap::{CommandFactory, Parser};
+use clap::{CommandFactory, Parser, ValueEnum};
 use clap_complete::{generate, Shell};
+use syllabify_fr::letters::{match_letters, presets, render_letters_html, LetterRule, RenderMode};
 use syllabify_fr::{syllabify_text, syllables_with, AssembleMode, SyllableMode, TextChunk};
 
 #[derive(Parser, Debug)]
@@ -39,6 +40,29 @@ struct Cli {
     /// Génère les completions shell sur stdout, puis quitte.
     #[arg(long, value_enum, value_name = "SHELL", exclusive = true)]
     completions: Option<Shell>,
+
+    /// Met en évidence des lettres confondues (sortie HTML inline).
+    /// Cf. doc LC6 `utilisations.md` § confusions de lettres.
+    #[arg(long = "highlight-letters", value_enum, value_name = "PRESET")]
+    highlight_letters: Option<HighlightPreset>,
+}
+
+#[derive(Copy, Clone, Debug, ValueEnum)]
+enum HighlightPreset {
+    /// Confusion classique b / d / p / q (4 couleurs).
+    Bdpq,
+    /// Confusion m / n / u (jambages).
+    Mnu,
+    /// Distinction des séquences `pir` / `pri`.
+    PirPri,
+}
+
+fn rules_for(preset: HighlightPreset) -> Vec<LetterRule> {
+    match preset {
+        HighlightPreset::Bdpq => presets::bdpq(),
+        HighlightPreset::Mnu => presets::mnu(),
+        HighlightPreset::PirPri => presets::pir_pri(),
+    }
 }
 
 fn syllable_mode(oral: bool) -> SyllableMode {
@@ -121,6 +145,20 @@ fn main() -> ExitCode {
         Cli::command().print_help().ok();
         println!();
         return ExitCode::from(2);
+    }
+
+    if let Some(preset) = cli.highlight_letters {
+        let rules = rules_for(preset);
+        let outs: Vec<String> = cli
+            .words
+            .iter()
+            .map(|w| {
+                let spans = match_letters(w, &rules);
+                render_letters_html(w, &spans, &rules, RenderMode::Inline)
+            })
+            .collect();
+        println!("{}", outs.join(" "));
+        return ExitCode::SUCCESS;
     }
 
     if cli.json {

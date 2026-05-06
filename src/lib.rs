@@ -23,6 +23,7 @@ pub(crate) mod data;
 pub(crate) mod decoder;
 pub(crate) mod homographs;
 pub mod html;
+pub mod letters;
 pub mod liaisons;
 pub(crate) mod parser;
 pub(crate) mod phoneme;
