@@ -71,6 +71,16 @@ jobs:
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
       - name: Build WASM
         run: wasm-pack build wasm/ --target bundler --scope dyscolor --release
+      - name: Include README in package.json files
+        # wasm-pack copies README.md into pkg/ but forgets to list it in
+        # package.json's `files` array. Without this, npm registry stores
+        # an empty `readme` field at the version level and npmjs.org
+        # displays "no README" even though the file is in the tarball.
+        working-directory: wasm/pkg
+        run: |
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));p.files=[...new Set([...(p.files||[]),'README.md'])];fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');"
+          test -f README.md
+          grep -q '"README.md"' package.json
       - uses: actions/setup-node@v4
         with:
           node-version: '24'   # ships with npm 11.x natively (required for OIDC)
