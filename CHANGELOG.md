@@ -6,6 +6,28 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.8.1] — 2026-05-07
+
+### Added
+- **Bindings** : la fonction `letters` arrivée en 0.8.0 est désormais
+  exposée dans les 4 bindings (oubli en 0.8.0). Une seule fonction par
+  binding, qui prend un préset nommé (`"bdpq"`, `"mnu"`, `"pir-pri"`)
+  et un mode optionnel (`"inline"` par défaut, `"classes"`) :
+  - **WASM** : `highlightLetters(word, preset, mode?)` → `string`
+  - **FFI C** : `syllabify_highlight_letters(word, preset, mode)` → `*mut c_char`
+    (mode peut être NULL ; libérer avec `syllabify_free`)
+  - **Python** : `highlight_letters(word, preset, mode="inline")` → `str`
+    (lève `ValueError` sur preset/mode inconnu)
+  - **JNI** : `SyllabifyFr.highlightLetters(word, preset, mode)` → `String`
+
+### Notes
+- Aucun changement d'API côté lib `syllabify-fr` (déjà exposée en 0.8.0).
+- Pour les utilisateurs avec règles `LetterRule` custom, l'API reste
+  accessible en Rust uniquement ; un binding « power-user » sera ajouté
+  si la demande remonte.
+
+---
+
 ## [0.8.0] — 2026-05-06
 
 ### Added
