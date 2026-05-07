@@ -6,6 +6,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.8.2] — 2026-05-07
+
+### Fixed
+- **npm publish** : le `README.md` était bien copié dans `wasm/pkg/`
+  par `wasm-pack` mais pas listé dans le champ `files` du
+  `package.json` généré. Conséquence : le registre npm stockait un
+  `readme` vide au niveau de la version, et npmjs.org affichait « no
+  README » sur toutes les versions du package
+  `@dyscolor/syllabify-fr-wasm` depuis v0.5.0.
+  Fix : nouveau step dans `release.yml` qui patche
+  `wasm/pkg/package.json` pour ajouter `"README.md"` à `files` avant
+  `npm publish`. Aucun changement de code ou d'API ; pure release CI.
+
+---
+
 ## [0.8.1] — 2026-05-07
 
 ### Added
