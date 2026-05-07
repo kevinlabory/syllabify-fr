@@ -2,6 +2,7 @@
 use jni::objects::{JClass, JObjectArray, JString};
 use jni::sys::{jobjectArray, jstring};
 use jni::JNIEnv;
+use syllabify_fr::letters::{match_letters, presets, render_letters_html, LetterRule, RenderMode};
 use syllabify_fr::{phonemes, render_html, render_word_html, syllabify_text, syllables, TextChunk};
 
 // --- JSON helpers (same approach as the FFI crate, no serde dependency) ---
@@ -161,6 +162,52 @@ pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_renderHtml<'local
         None => return std::ptr::null_mut(),
     };
     jni_output(&mut env, render_html(&text))
+}
+
+fn preset_rules(name: &str) -> Vec<LetterRule> {
+    match name {
+        "bdpq" => presets::bdpq(),
+        "mnu" => presets::mnu(),
+        "pir-pri" | "pir_pri" => presets::pir_pri(),
+        _ => Vec::new(),
+    }
+}
+
+fn parse_mode(mode: &str) -> RenderMode {
+    match mode {
+        "classes" => RenderMode::Classes,
+        _ => RenderMode::Inline,
+    }
+}
+
+/// `SyllabifyFr.highlightLetters(word, preset, mode)` → HTML `String`
+///
+/// `preset` accepts `"bdpq"`, `"mnu"`, or `"pir-pri"`.
+/// `mode` accepts `"inline"` (default) or `"classes"`.
+/// On unknown preset the word is returned HTML-escaped without spans.
+#[no_mangle]
+pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_highlightLetters<'local>(
+    mut env: JNIEnv<'local>,
+    _class: JClass<'local>,
+    word: JString<'local>,
+    preset: JString<'local>,
+    mode: JString<'local>,
+) -> jstring {
+    let word = match jni_input(&mut env, &word) {
+        Some(w) => w,
+        None => return std::ptr::null_mut(),
+    };
+    let preset = match jni_input(&mut env, &preset) {
+        Some(p) => p,
+        None => return std::ptr::null_mut(),
+    };
+    let mode = jni_input(&mut env, &mode).unwrap_or_else(|| "inline".to_string());
+    let rules = preset_rules(&preset);
+    let spans = match_letters(&word, &rules);
+    jni_output(
+        &mut env,
+        render_letters_html(&word, &spans, &rules, parse_mode(&mode)),
+    )
 }
 
 #[cfg(test)]

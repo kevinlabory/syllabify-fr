@@ -61,6 +61,27 @@ Five-stage pipeline, fidelity to LC6 is the design constraint at every stage:
 - `AssembleMode::Std` (default, pedagogical — `homme → hom-me`) vs `Lc` (phonological — `ho-mme`). `Lc` is no longer 100%-aligned with LC6; treat it as a legacy option.
 - `SyllableMode::Written` vs `Oral` (final `q_caduc` fused with preceding syllable: `école → é-cole`).
 
+## Bindings parity (mandatory checklist)
+
+Toute modification de la **surface publique** de `syllabify-fr` (nouveau
+`pub mod`, `pub fn`, `pub struct` re-exporté, nouvelle fonction de la
+crate root) **doit** être propagée aux 4 bindings *avant* de bumper la
+workspace version :
+
+- `wasm/src/lib.rs` — `#[wasm_bindgen]`
+- `ffi/src/lib.rs` — `pub unsafe extern "C"` (returning `*mut c_char`, free with `syllabify_free`)
+- `py/src/lib.rs` — `#[pyfunction]` + `m.add_function(...)` dans `#[pymodule]`
+- `jni/src/lib.rs` — `pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_…`
+
+Choisir une signature uniforme (presets/strings plutôt que types Rust
+custom) pour réduire le coût marginal par binding. Les bindings n'ont
+pas de gate clippy/coverage côté CI (`ci.yml` clippe la root crate
+seulement) — c'est cette règle qui fait office de checklist.
+
+Précédent concret : v0.8.0 a livré `letters` côté lib + CLI mais a
+oublié les 4 bindings, rendant le `.d.ts` npm v0.8.0 identique au
+v0.7.0. Corrigé en v0.8.1.
+
 ## What is explicitly **not** ported
 
 See NOTES-v6.md §"Points non portés". `regle_en_final` and `dernierTraitement` remain out of scope — don't add these without confirming. `liaisonAmont`/`liaisonAval` are now ported in `src/liaisons.rs` as pure predicates (no syllabic side-effect).
