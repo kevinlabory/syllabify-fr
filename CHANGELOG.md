@@ -18,6 +18,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   Fix : nouveau step dans `release.yml` qui patche
   `wasm/pkg/package.json` pour ajouter `"README.md"` à `files` avant
   `npm publish`. Aucun changement de code ou d'API ; pure release CI.
+- **wasm/README.md** : le lien relatif `[syllabify-fr](../README.md)`
+  donnait un 404 sur npmjs.org (qui résout les liens relatifs dans son
+  propre domaine). Remplacé par l'URL GitHub absolue. Idem pour la
+  référence au workflow CI (corrigée au passage : `release.yml`, pas
+  `publish-npm.yml`).
 
 ---
 

@@ -1,6 +1,6 @@
 # syllabify-fr-wasm
 
-WebAssembly bindings for [`syllabify-fr`](../README.md) — French syllabification for reading instruction, port of [LireCouleur 6](https://lirecouleur.forge.apps.education.fr/).
+WebAssembly bindings for [`syllabify-fr`](https://github.com/kevinlabory/syllabify-fr) — French syllabification for reading instruction, port of [LireCouleur 6](https://lirecouleur.forge.apps.education.fr/).
 
 ## Licence
 
@@ -26,9 +26,8 @@ cd wasm/pkg
 npm publish --access public
 ```
 
-Publication is automated via GitHub Actions (`.github/workflows/publish-npm.yml`)
-on every `v*` tag push. Requires the `NPM_TOKEN` secret to be set in the repository
-(Settings → Secrets and variables → Actions).
+Publication is automated via GitHub Actions ([`release.yml`](https://github.com/kevinlabory/syllabify-fr/blob/main/.github/workflows/release.yml))
+on every `v*` tag push, using npm OIDC trusted publishing (no token required).
 
 ## Usage (ESM / browser)
 
