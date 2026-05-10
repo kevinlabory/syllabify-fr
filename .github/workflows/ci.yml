@@ -118,7 +118,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@nightly
       - uses: Swatinem/rust-cache@v2
       - name: Install cargo-fuzz
-        run: cargo install cargo-fuzz --locked
+        # No `--locked`: cargo-fuzz 0.13.1 pins rustix 0.36.5 which fails to
+        # compile on current nightly (`cfg(rustc_attrs)` gate is broken).
+        # Letting cargo resolve deps in semver-compatible mode picks a
+        # working rustix. cargo-fuzz is a CI tool, not project code, so
+        # reproducibility matters less here.
+        run: cargo install cargo-fuzz
       - name: Smoke fuzz each target (60s)
         working-directory: fuzz
         run: |
