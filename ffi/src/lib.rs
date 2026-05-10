@@ -76,6 +76,13 @@ fn rust_string_to_c(s: String) -> *mut c_char {
 
 /// Free a string previously returned by a `syllabify_*` function.
 /// Passing NULL is a no-op.
+///
+/// # Safety
+///
+/// `ptr` must be NULL or a pointer previously returned by one of the
+/// `syllabify_*` functions in this crate. Calling on any other pointer,
+/// or calling twice on the same pointer (double-free), is undefined
+/// behavior. After this call, `ptr` must not be dereferenced.
 #[no_mangle]
 pub unsafe extern "C" fn syllabify_free(ptr: *mut c_char) {
     if !ptr.is_null() {
@@ -89,6 +96,12 @@ pub unsafe extern "C" fn syllabify_free(ptr: *mut c_char) {
 ///
 /// Returns NULL on NULL input or invalid UTF-8.
 /// The caller must free the result with `syllabify_free()`.
+///
+/// # Safety
+///
+/// `word` must be NULL or point to a NUL-terminated C string valid for
+/// the duration of the call. The returned pointer is owned by the caller
+/// and must be freed exactly once via `syllabify_free`.
 #[no_mangle]
 pub unsafe extern "C" fn syllabify_syllables(word: *const c_char) -> *mut c_char {
     let word = match c_str_to_rust(word) {
@@ -105,6 +118,12 @@ pub unsafe extern "C" fn syllabify_syllables(word: *const c_char) -> *mut c_char
 ///
 /// Returns NULL on NULL input.
 /// The caller must free the result with `syllabify_free()`.
+///
+/// # Safety
+///
+/// `text` must be NULL or point to a NUL-terminated C string valid for
+/// the duration of the call. The returned pointer is owned by the caller
+/// and must be freed exactly once via `syllabify_free`.
 #[no_mangle]
 pub unsafe extern "C" fn syllabify_text_json(text: *const c_char) -> *mut c_char {
     let text = match c_str_to_rust(text) {
@@ -120,6 +139,12 @@ pub unsafe extern "C" fn syllabify_text_json(text: *const c_char) -> *mut c_char
 ///
 /// Returns NULL on NULL input.
 /// The caller must free the result with `syllabify_free()`.
+///
+/// # Safety
+///
+/// `word` must be NULL or point to a NUL-terminated C string valid for
+/// the duration of the call. The returned pointer is owned by the caller
+/// and must be freed exactly once via `syllabify_free`.
 #[no_mangle]
 pub unsafe extern "C" fn syllabify_phonemes(word: *const c_char) -> *mut c_char {
     let word = match c_str_to_rust(word) {
@@ -133,6 +158,12 @@ pub unsafe extern "C" fn syllabify_phonemes(word: *const c_char) -> *mut c_char 
 ///
 /// Returns NULL on NULL input.
 /// The caller must free the result with `syllabify_free()`.
+///
+/// # Safety
+///
+/// `word` must be NULL or point to a NUL-terminated C string valid for
+/// the duration of the call. The returned pointer is owned by the caller
+/// and must be freed exactly once via `syllabify_free`.
 #[no_mangle]
 pub unsafe extern "C" fn syllabify_render_word_html(word: *const c_char) -> *mut c_char {
     let word = match c_str_to_rust(word) {
@@ -146,6 +177,12 @@ pub unsafe extern "C" fn syllabify_render_word_html(word: *const c_char) -> *mut
 ///
 /// Returns NULL on NULL input.
 /// The caller must free the result with `syllabify_free()`.
+///
+/// # Safety
+///
+/// `text` must be NULL or point to a NUL-terminated C string valid for
+/// the duration of the call. The returned pointer is owned by the caller
+/// and must be freed exactly once via `syllabify_free`.
 #[no_mangle]
 pub unsafe extern "C" fn syllabify_render_html(text: *const c_char) -> *mut c_char {
     let text = match c_str_to_rust(text) {
@@ -179,6 +216,13 @@ fn parse_mode(mode: Option<&str>) -> RenderMode {
 ///
 /// Returns NULL on NULL `word` or `preset`, or on invalid UTF-8.
 /// The caller must free the result with `syllabify_free()`.
+///
+/// # Safety
+///
+/// `word` and `preset` must be NULL or point to NUL-terminated C strings
+/// valid for the duration of the call. `mode` may additionally be NULL
+/// (= inline default). The returned pointer is owned by the caller and
+/// must be freed exactly once via `syllabify_free`.
 #[no_mangle]
 pub unsafe extern "C" fn syllabify_highlight_letters(
     word: *const c_char,
