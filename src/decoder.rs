@@ -108,7 +108,7 @@ pub fn post_process_e(pp: &mut [DecodedPhoneme]) {
         return;
     }
     let codes: Vec<&str> = pp.iter().map(|p| p.code.as_str()).collect();
-    if !codes.iter().any(|c| *c == "x") {
+    if !codes.contains(&"x") {
         return;
     }
 
@@ -146,7 +146,7 @@ pub fn post_process_o(pp: &mut [DecodedPhoneme]) {
         return;
     }
     let codes: Vec<&str> = pp.iter().map(|p| p.code.as_str()).collect();
-    if !codes.iter().any(|c| *c == "o") {
+    if !codes.contains(&"o") {
         return;
     }
 
@@ -401,12 +401,17 @@ pub fn assemble_syllables(
     // Important : pas un HashSet sur tous les non-consommés, sinon on ré-agrège des phonèmes
     // délibérément laissés entre deux syllabes (ex: le 'r' central de "frère").
     for sp in &sylph[j..nb_sylph] {
-        sylls.last_mut().unwrap().extend(sp.indices.iter().copied());
+        sylls
+            .last_mut()
+            .expect("invariant: sylls non-vide (early-return ligne 396)")
+            .extend(sp.indices.iter().copied());
     }
 
     // 8. Mode oral : fusionner la dernière syllabe qui finit en q_caduc
     if syl_mode == SyllableMode::Oral && sylls.len() > 1 {
-        let last = sylls.last().unwrap();
+        let last = sylls
+            .last()
+            .expect("invariant: sylls.len() > 1 (test ligne précédente)");
         let mut k = last.len() as isize - 1;
         while k > 0 {
             let code = &nphonemes[last[k as usize]].code;
@@ -416,8 +421,13 @@ pub fn assemble_syllables(
             k -= 1;
         }
         if k >= 0 && nphonemes[last[k as usize]].code.ends_with("q_caduc") {
-            let last_syl = sylls.pop().unwrap();
-            sylls.last_mut().unwrap().extend(last_syl);
+            let last_syl = sylls
+                .pop()
+                .expect("invariant: sylls.len() > 1 (test du if englobant)");
+            sylls
+                .last_mut()
+                .expect("invariant: sylls.len() >= 1 après pop (était > 1)")
+                .extend(last_syl);
         }
     }
 
