@@ -3,20 +3,20 @@ use syllabify_fr::{syllabify_text, syllables};
 
 fn bench_syllables_short(c: &mut Criterion) {
     c.bench_function("syllables/chocolat", |b| {
-        b.iter(|| syllables(black_box("chocolat")))
+        b.iter(|| syllables(black_box("chocolat")));
     });
 }
 
 fn bench_syllables_long(c: &mut Criterion) {
     c.bench_function("syllables/anticonstitutionnellement", |b| {
-        b.iter(|| syllables(black_box("anticonstitutionnellement")))
+        b.iter(|| syllables(black_box("anticonstitutionnellement")));
     });
 }
 
 fn bench_syllabify_text(c: &mut Criterion) {
     let text = "Le petit chat noir dort sur le canapé bleu et rêve de souris.";
     c.bench_function("syllabify_text/sentence", |b| {
-        b.iter(|| syllabify_text(black_box(text)))
+        b.iter(|| syllabify_text(black_box(text)));
     });
 }
 
@@ -41,7 +41,7 @@ fn bench_syllabify_text_cold(c: &mut Criterion) {
             for w in &words {
                 black_box(syllables(black_box(w)));
             }
-        })
+        });
     });
 }
 

@@ -9,6 +9,9 @@ use clap_complete::{generate, Shell};
 use syllabify_fr::letters::{match_letters, presets, render_letters_html, LetterRule, RenderMode};
 use syllabify_fr::{syllabify_text, syllables_with, AssembleMode, SyllableMode, TextChunk};
 
+// Plus de 3 booléens dans Cli, c'est attendu : chaque flag CLI mappe vers
+// une option clap distincte. Bitflags casserait l'ergonomie clap derive.
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Parser, Debug)]
 #[command(
     name = "syllabify",
@@ -103,10 +106,7 @@ fn run_stdin(novice: bool, oral: bool) {
     let stdout = io::stdout();
     let mut out = stdout.lock();
     for line in stdin.lock().lines() {
-        let line = match line {
-            Ok(l) => l,
-            Err(_) => break,
-        };
+        let Ok(line) = line else { break };
         let word = line.trim();
         if word.is_empty() {
             writeln!(out).ok();

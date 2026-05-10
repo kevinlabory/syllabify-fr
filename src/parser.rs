@@ -93,7 +93,7 @@ fn lookup_letter(letter: char) -> Option<&'static LetterEntry> {
 /// `pos_mot` est la position (1-indexée comme dans le Python : la lettre actuelle est word[pos_mot-1]).
 ///
 /// Reproduit la logique de `Parser.check` : pour `-` qui commence par `^` sans préfixe,
-/// test que pos_mot == 1 ; pour `-` qui commence par `^...`, test pattern qui mange tout le préfixe ;
+/// test que `pos_mot` == 1 ; pour `-` qui commence par `^...`, test pattern qui mange tout le préfixe ;
 /// pour `-` ordinaire, test que le pattern s'ajuste au bord droit du préfixe (boucle k).
 fn check_context(
     plus: &str,
@@ -181,14 +181,11 @@ fn check_special(sp: Special, word: &[char], pos_mot: usize) -> bool {
 /// Retour (String vide, 1) signifie "caractère non décodable", on avance d'un cran.
 fn one_step(word: &[char], pos: usize) -> Phoneme {
     let letter = word[pos];
-    let entry = match lookup_letter(letter) {
-        Some(e) => e,
-        None => {
-            return Phoneme {
-                code: String::new(),
-                step: 1,
-            }
-        }
+    let Some(entry) = lookup_letter(letter) else {
+        return Phoneme {
+            code: String::new(),
+            step: 1,
+        };
     };
 
     for rule in entry.rules {

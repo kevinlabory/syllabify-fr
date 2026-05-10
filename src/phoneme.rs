@@ -11,13 +11,16 @@ pub enum PhonClass {
     Consonant,
     /// Semi-voyelle (yod, etc.)
     SemiVowel,
-    /// Silencieux ('#') ou marqueur verbe 3e p. pluriel ('verb_3p')
+    /// Silencieux ('#') ou marqueur verbe 3e p. pluriel ('`verb_3p`')
     Silent,
 }
 
 /// Retourne la classe d'un phonème.
 /// Les phonèmes composés (`j_a`, `w_o`, `y_i`) sont considérés comme voyelles
 /// (ils sont constitués par les post-traitements yod/w).
+// L'arm explicite `"#" | "#_h_muet" | "verb_3p"` documente les codes silencieux
+// connus ; le wildcard est un fallback défensif. Intent != valeur.
+#[allow(clippy::match_same_arms)]
 pub fn classify(phon: &str) -> PhonClass {
     if phon.starts_with("j_") || phon.starts_with("w_") || phon.starts_with("y_") {
         return PhonClass::Vowel;

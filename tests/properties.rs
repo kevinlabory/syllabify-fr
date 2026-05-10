@@ -75,14 +75,10 @@ proptest! {
     fn syllabify_text_never_panics(s in realistic_text()) {
         let chunks = syllabify_text(&s);
         for chunk in &chunks {
-            match chunk {
-                TextChunk::Word(syls) => {
-                    for syl in syls {
-                        prop_assert!(!syl.is_empty(), "syllable vide dans {:?}: {:?}", s, chunks);
-                    }
+            if let TextChunk::Word(syls) = chunk {
+                for syl in syls {
+                    prop_assert!(!syl.is_empty(), "syllable vide dans {:?}: {:?}", s, chunks);
                 }
-                TextChunk::Raw(_) => {}
-                _ => {}
             }
         }
     }

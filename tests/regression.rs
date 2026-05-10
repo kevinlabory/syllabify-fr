@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! Test de régression : vérifie que `syllabify_fr::syllabify_text()` produit exactement
 //! la même sortie que pylirecouleur 0.0.5 sur un corpus représentatif.
+#![allow(clippy::format_push_string, clippy::cast_precision_loss)]
 
 use serde_json::Value;
 use std::fs;
@@ -25,7 +26,7 @@ fn fmt_chunks(chunks: &[TextChunk]) -> String {
     for c in chunks {
         match c {
             TextChunk::Word(syls) => s.push_str(&syls.join("|")),
-            TextChunk::Raw(r) => s.push_str(&format!("[{}]", r)),
+            TextChunk::Raw(r) => s.push_str(&format!("[{r}]")),
             _ => {}
         }
         s.push(' ');
@@ -45,7 +46,7 @@ fn fmt_oracle_chunks(chunks: &Value) -> String {
                 .collect();
             s.push_str(&ss.join("|"));
         } else if let Some(raw) = c.as_str() {
-            s.push_str(&format!("[{}]", raw));
+            s.push_str(&format!("[{raw}]"));
         }
         s.push(' ');
     }
@@ -90,16 +91,13 @@ fn regression_syllabes() {
     if !mismatches.is_empty() {
         // Écrit aussi dans un fichier pour diagnostic offline
         let mut report = String::new();
-        report.push_str(&format!("=== {} échecs / {} ===\n", nb, total));
+        report.push_str(&format!("=== {nb} échecs / {total} ===\n"));
         for m in &mismatches {
             let line = format!("{:30} attendu={} obtenu={}\n", m.word, m.expected, m.actual);
             eprintln!("{}", line.trim_end());
             report.push_str(&line);
         }
         let _ = fs::write("/tmp/syllabify_mismatches.txt", &report);
-        panic!(
-            "{} cas divergent de pylirecouleur (détails dans /tmp/syllabify_mismatches.txt)",
-            nb
-        );
+        panic!("{nb} cas divergent de pylirecouleur (détails dans /tmp/syllabify_mismatches.txt)");
     }
 }

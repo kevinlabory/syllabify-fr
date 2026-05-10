@@ -34,7 +34,7 @@ pub enum SyllableMode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum AssembleMode {
-    /// **Mode historique — non aligné avec LireCouleur 6 v6.**
+    /// **Mode historique — non aligné avec `LireCouleur` 6 v6.**
     ///
     /// En mode phonologique, les consonnes doubles restent dans la même syllabe
     /// (ex : `homme` → `ho-mme`). Ce mode n'est plus maintenu en conformité avec
@@ -233,6 +233,11 @@ pub fn post_process_yod(pp: &mut [DecodedPhoneme], _mode: SyllableMode) {
 /// Assemblage des phonèmes en syllabes.
 /// Retourne la liste des syllabes (chaque syllabe = indices des phonèmes la composant)
 /// et la liste de phonèmes (potentiellement modifiée en mode STD avec duplication).
+// La taille (>100 lignes) est délibérée : portage 1:1 du `assemblerSyllabes`
+// de LC6 (`module.js`). Couper en sous-fonctions casserait la traçabilité
+// section-par-section avec l'original. Les noms `phon_i_idx`/`phon_i1_idx`
+// reflètent les variables JS d'origine.
+#[allow(clippy::too_many_lines, clippy::similar_names)]
 pub fn assemble_syllables(
     phonemes: &[DecodedPhoneme],
     assemble_mode: AssembleMode,
@@ -412,15 +417,23 @@ pub fn assemble_syllables(
         let last = sylls
             .last()
             .expect("invariant: sylls.len() > 1 (test ligne précédente)");
-        let mut k = last.len() as isize - 1;
-        while k > 0 {
-            let code = &nphonemes[last[k as usize]].code;
-            if code != "#" && code != "verb_3p" {
-                break;
+        // Trouver l'indice du dernier phonème non-muet à partir de la fin (skip
+        // '#' et 'verb_3p'). Si tout est muet, on retombe sur l'indice 0
+        // (équivalent du `while k > 0` de l'original qui ne décrémente pas k=0).
+        let cutoff = if last.is_empty() {
+            None
+        } else {
+            let mut k = last.len() - 1;
+            while k > 0 {
+                let code = &nphonemes[last[k]].code;
+                if code != "#" && code != "verb_3p" {
+                    break;
+                }
+                k -= 1;
             }
-            k -= 1;
-        }
-        if k >= 0 && nphonemes[last[k as usize]].code.ends_with("q_caduc") {
+            Some(k)
+        };
+        if cutoff.is_some_and(|k| nphonemes[last[k]].code.ends_with("q_caduc")) {
             let last_syl = sylls
                 .pop()
                 .expect("invariant: sylls.len() > 1 (test du if englobant)");
@@ -442,7 +455,7 @@ pub fn extract_phonemes_word(
 ) -> Vec<DecodedPhoneme> {
     // Le parser travaille en minuscules (l'automate est défini en minuscules).
     // On préserve la casse originale dans les `letters` de sortie.
-    let lower: String = word.chars().flat_map(|c| c.to_lowercase()).collect();
+    let lower: String = word.chars().flat_map(char::to_lowercase).collect();
     let raw_phons = parse(&lower);
     let chars_orig: Vec<char> = word.chars().collect();
     // On suppose que lower préserve le nombre de caractères (vrai pour le français ;
@@ -485,6 +498,10 @@ pub enum TextChunk {
     Raw(String),
 }
 
+// Les noms `p_text` (position courante) et `pp_text` (position trouvée du mot
+// suivant) reflètent les variables JS d'origine (`p`, `pp`) et restent les
+// plus parlants.
+#[allow(clippy::similar_names)]
 pub fn extract_syllables(
     text: &str,
     novice_reader: bool,
@@ -505,9 +522,8 @@ pub fn extract_syllables(
     for word in &words {
         let wlen = word.chars().count();
         let word_chars: Vec<char> = word.chars().collect();
-        let pp_text = match find_subseq(&ultext_chars, &word_chars, p_text) {
-            Some(p) => p,
-            None => continue,
+        let Some(pp_text) = find_subseq(&ultext_chars, &word_chars, p_text) else {
+            continue;
         };
 
         if pp_text > p_text {

@@ -30,6 +30,7 @@
 
 use crate::decoder::TextChunk;
 use crate::{liaison_possible, syllabify_text, syllables};
+use std::fmt::Write as _;
 
 /// Rend un mot unique en HTML avec syllabes enveloppées par des `<span>` alternés.
 ///
@@ -70,10 +71,10 @@ pub fn render_html(text: &str) -> String {
                 if let Some(prev) = &previous_word_raw {
                     if liaison_possible(prev, &word_raw) {
                         let consonant = liaison_consonant_for(prev);
-                        out.push_str(&format!(
-                            r#"<span class="liaison" data-with="{}"></span>"#,
-                            consonant
-                        ));
+                        let _ = write!(
+                            out,
+                            r#"<span class="liaison" data-with="{consonant}"></span>"#
+                        );
                     }
                 }
                 out.push_str(&render_word_spans(sylls));
@@ -86,17 +87,13 @@ pub fn render_html(text: &str) -> String {
 }
 
 fn render_word_spans(sylls: &[String]) -> String {
-    if sylls.iter().all(|s| s.is_empty()) {
+    if sylls.iter().all(std::string::String::is_empty) {
         return String::new();
     }
     let mut s = String::from(r#"<span class="word">"#);
     for (i, syl) in sylls.iter().enumerate() {
         let class = if i % 2 == 0 { "syl syl-a" } else { "syl syl-b" };
-        s.push_str(&format!(
-            r#"<span class="{}">{}</span>"#,
-            class,
-            escape(syl)
-        ));
+        let _ = write!(s, r#"<span class="{class}">{}</span>"#, escape(syl));
     }
     s.push_str("</span>");
     s
@@ -106,11 +103,14 @@ fn render_word_spans(sylls: &[String]) -> String {
 /// lettre. Retourne `"z"` par défaut (cas majoritaire : `-s`, `-x`, `-z` et
 /// déterminants pluriels), ce qui correspond à la majorité des mots de la
 /// liste `LIAISONS_AVAL`.
+// L'arm explicite `'s' | 'x' | 'z' => "z"` documente le cas canonique ;
+// le wildcard est le fallback défensif (default = liaison-z). Intent != valeur.
+#[allow(clippy::match_same_arms)]
 fn liaison_consonant_for(prev: &str) -> &'static str {
     let last = prev
         .chars()
         .rev()
-        .flat_map(|c| c.to_lowercase())
+        .flat_map(char::to_lowercase)
         .next()
         .unwrap_or(' ');
     match last {
@@ -161,9 +161,9 @@ mod tests {
     #[test]
     fn texte_preserve_ponctuation() {
         let html = render_html("le chat,");
-        assert!(html.contains(r#">le</span>"#));
-        assert!(html.contains(" "));
-        assert!(html.ends_with(","));
+        assert!(html.contains(r">le</span>"));
+        assert!(html.contains(' '));
+        assert!(html.ends_with(','));
     }
 
     #[test]
@@ -171,8 +171,7 @@ mod tests {
         let html = render_html("les hôtels");
         assert!(
             html.contains(r#"<span class="liaison" data-with="z"></span>"#),
-            "liaison 'z' attendue, got: {}",
-            html
+            "liaison 'z' attendue, got: {html}"
         );
         // Ordre : mot1, espace, span liaison, mot2
         let pos_first_word = html.find("les").unwrap();
@@ -199,21 +198,21 @@ mod tests {
     fn liaison_consonne_t_pour_tout() {
         // 'tout' est dans LIAISONS_AVAL et finit par 't' → liaison en 't'
         let html = render_html("tout ami");
-        assert!(html.contains(r#"data-with="t""#), "got: {}", html);
+        assert!(html.contains(r#"data-with="t""#), "got: {html}");
     }
 
     #[test]
     fn liaison_consonne_n_pour_en() {
         // 'en' → liaison en 'n' (denasalisation — attestée en français)
         let html = render_html("en automne");
-        assert!(html.contains(r#"data-with="n""#), "got: {}", html);
+        assert!(html.contains(r#"data-with="n""#), "got: {html}");
     }
 
     #[test]
     fn liaison_bloquee_par_virgule() {
         // 'les, hôtels' : virgule entre les deux → pas de liaison
         let html = render_html("les, hôtels");
-        assert!(!html.contains(r#"class="liaison""#), "got: {}", html);
+        assert!(!html.contains(r#"class="liaison""#), "got: {html}");
     }
 
     #[test]
@@ -225,8 +224,7 @@ mod tests {
         // nom : deux syllabes cou/vent
         assert!(
             html_nom.contains(r#">cou</span><span class="syl syl-b">vent</span>"#),
-            "got: {}",
-            html_nom
+            "got: {html_nom}"
         );
         // verbe : la 2e syllabe 'vent' est prononcée muet, mais la graphie reste 'vent'
         // (la différence est phonétique, pas graphique — donc même rendu textuel).

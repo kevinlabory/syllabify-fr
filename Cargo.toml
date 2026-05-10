@@ -68,6 +68,12 @@ harness = false
 unsafe_code = "forbid"
 
 [lints.clippy]
+# Plus stricte que default pour éviter la dette idiomatique. Voir
+# CLAUDE.md « Idiomes Rust attendus » — pedantic capture la majorité
+# des frictions cataloguées par l'audit. Scope = root crate uniquement,
+# les bindings restent en clippy::default (les patterns wasm/PyO3/JNI
+# ont leurs propres conventions souvent incompatibles avec pedantic).
+pedantic = { level = "warn", priority = -1 }
 dbg_macro = "warn"
 todo = "warn"
 unimplemented = "warn"

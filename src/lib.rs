@@ -34,7 +34,7 @@ pub use html::{render_html, render_word_html};
 pub use liaisons::{liaison_amont, liaison_aval, liaison_possible};
 
 /// Syllabifie un mot seul avec les paramètres par défaut
-/// (mode STD comme LireCouleur 6, syllabes écrites).
+/// (mode STD comme `LireCouleur` 6, syllabes écrites).
 ///
 /// ```
 /// use syllabify_fr::syllables;
