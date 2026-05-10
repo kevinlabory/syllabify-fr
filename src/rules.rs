@@ -18,12 +18,11 @@ fn no_accent(s: &str) -> String {
     s.chars()
         .map(|c| match c {
             'à' | 'ä' | 'â' => 'a',
-            'é' | 'è' | 'ê' | 'ë' => 'e',
+            'é' | 'è' | 'ê' | 'ë' | 'œ' => 'e',
             'î' | 'ï' => 'i',
             'ô' | 'ö' => 'o',
             'û' | 'ù' => 'u',
             'ç' => 'c',
-            'œ' => 'e',
             other => other.to_lowercase().next().unwrap_or(other),
         })
         .collect()

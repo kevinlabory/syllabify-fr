@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! Test de régression : vérifie que `syllabify_fr::syllabify_text()` produit exactement
 //! la même sortie que pylirecouleur 0.0.5 sur un corpus représentatif.
+#![allow(clippy::format_push_string, clippy::cast_precision_loss)]
 
 use serde_json::Value;
 use std::fs;
@@ -97,8 +98,6 @@ fn regression_syllabes() {
             report.push_str(&line);
         }
         let _ = fs::write("/tmp/syllabify_mismatches.txt", &report);
-        panic!(
-            "{nb} cas divergent de pylirecouleur (détails dans /tmp/syllabify_mismatches.txt)"
-        );
+        panic!("{nb} cas divergent de pylirecouleur (détails dans /tmp/syllabify_mismatches.txt)");
     }
 }

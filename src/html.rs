@@ -30,6 +30,7 @@
 
 use crate::decoder::TextChunk;
 use crate::{liaison_possible, syllabify_text, syllables};
+use std::fmt::Write as _;
 
 /// Rend un mot unique en HTML avec syllabes enveloppées par des `<span>` alternés.
 ///
@@ -70,9 +71,10 @@ pub fn render_html(text: &str) -> String {
                 if let Some(prev) = &previous_word_raw {
                     if liaison_possible(prev, &word_raw) {
                         let consonant = liaison_consonant_for(prev);
-                        out.push_str(&format!(
+                        let _ = write!(
+                            out,
                             r#"<span class="liaison" data-with="{consonant}"></span>"#
-                        ));
+                        );
                     }
                 }
                 out.push_str(&render_word_spans(sylls));
@@ -91,11 +93,7 @@ fn render_word_spans(sylls: &[String]) -> String {
     let mut s = String::from(r#"<span class="word">"#);
     for (i, syl) in sylls.iter().enumerate() {
         let class = if i % 2 == 0 { "syl syl-a" } else { "syl syl-b" };
-        s.push_str(&format!(
-            r#"<span class="{}">{}</span>"#,
-            class,
-            escape(syl)
-        ));
+        let _ = write!(s, r#"<span class="{class}">{}</span>"#, escape(syl));
     }
     s.push_str("</span>");
     s
@@ -105,6 +103,9 @@ fn render_word_spans(sylls: &[String]) -> String {
 /// lettre. Retourne `"z"` par défaut (cas majoritaire : `-s`, `-x`, `-z` et
 /// déterminants pluriels), ce qui correspond à la majorité des mots de la
 /// liste `LIAISONS_AVAL`.
+// L'arm explicite `'s' | 'x' | 'z' => "z"` documente le cas canonique ;
+// le wildcard est le fallback défensif (default = liaison-z). Intent != valeur.
+#[allow(clippy::match_same_arms)]
 fn liaison_consonant_for(prev: &str) -> &'static str {
     let last = prev
         .chars()

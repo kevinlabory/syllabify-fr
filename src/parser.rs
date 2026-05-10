@@ -181,14 +181,11 @@ fn check_special(sp: Special, word: &[char], pos_mot: usize) -> bool {
 /// Retour (String vide, 1) signifie "caractère non décodable", on avance d'un cran.
 fn one_step(word: &[char], pos: usize) -> Phoneme {
     let letter = word[pos];
-    let entry = match lookup_letter(letter) {
-        Some(e) => e,
-        None => {
-            return Phoneme {
-                code: String::new(),
-                step: 1,
-            }
-        }
+    let Some(entry) = lookup_letter(letter) else {
+        return Phoneme {
+            code: String::new(),
+            step: 1,
+        };
     };
 
     for rule in entry.rules {

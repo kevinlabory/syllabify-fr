@@ -39,6 +39,10 @@ use std::borrow::Cow;
 /// `underline` → `text-decoration:underline`.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 #[non_exhaustive]
+// Les 4 booléens (bold/italic/stroke/underline) reflètent 1:1 les flags de
+// style LC6 (`functionlc6.js`). Les regrouper en bitflags casserait le mapping
+// et l'ergonomie côté binding (presets/struct literals).
+#[allow(clippy::struct_excessive_bools)]
 pub struct LetterStyle {
     /// Couleur du texte (CSS, par ex. `"#ff0000"`).
     pub color: Option<String>,
