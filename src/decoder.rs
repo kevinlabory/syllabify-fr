@@ -59,6 +59,35 @@ struct SylPh {
 }
 
 /// Retourne tous les indices des phonèmes dont le code est parmi `values` dans `codes[..=limit]`.
+/// Consonnes orthographiques utilisées par `assemble_syllables` pour décider
+/// d'une coda intersyllabique. Strict ASCII + `ç` (les voyelles
+/// accentuées et `y` n'en font pas partie côté LC6).
+const fn is_consonne(c: char) -> bool {
+    matches!(
+        c,
+        'b' | 'c'
+            | 'd'
+            | 'f'
+            | 'g'
+            | 'h'
+            | 'j'
+            | 'k'
+            | 'l'
+            | 'm'
+            | 'n'
+            | 'p'
+            | 'q'
+            | 'r'
+            | 's'
+            | 't'
+            | 'v'
+            | 'w'
+            | 'x'
+            | 'z'
+            | 'ç'
+    )
+}
+
 fn indices_of(codes: &[&str], values: &[&str], limit: usize) -> Vec<usize> {
     let mut out = Vec::new();
     for (i, c) in codes.iter().enumerate() {
@@ -351,12 +380,13 @@ pub fn assemble_syllables(
         // Si la consonne qui suit est elle-même suivie d'une autre consonne,
         // on la rattache à la syllabe courante (coda).
         if i + 1 < nb_sylph {
-            let phon_i_idx = *sylph[i].indices.last().unwrap();
+            let phon_i_idx = *sylph[i].indices.last().expect(
+                "invariant: sylph[i] non vide — produit par boucle phon_to_sylph plus haut",
+            );
             let phon_i1_idx = sylph[i + 1].indices[0];
             let last_letter = nphonemes[phon_i_idx].letters.chars().last().unwrap_or(' ');
             let first_letter = nphonemes[phon_i1_idx].letters.chars().next().unwrap_or(' ');
-            let consonnes = "bcdfghjklmnpqrstvwxzç";
-            if consonnes.contains(last_letter) && consonnes.contains(first_letter) {
+            if is_consonne(last_letter) && is_consonne(first_letter) {
                 if let Some(last) = sylls.last_mut() {
                     last.extend(sylph[i].indices.iter().copied());
                 }
