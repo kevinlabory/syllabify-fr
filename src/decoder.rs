@@ -314,9 +314,8 @@ pub fn assemble_syllables(
             let phon0 = &nphonemes[sylph[i].indices[0]].code;
             let phon1 = &nphonemes[sylph[i + 1].indices[0]].code;
             if (phon1 == "l" || phon1 == "r") && attaque_premiere.contains(&phon0.as_str()) {
-                let indices1 = sylph[i + 1].indices.clone();
-                sylph[i].indices.extend(indices1);
-                sylph.remove(i + 1);
+                let removed = sylph.remove(i + 1);
+                sylph[i].indices.extend(removed.indices);
                 // ne pas incrémenter
                 continue;
             }
@@ -333,9 +332,8 @@ pub fn assemble_syllables(
             let merge = (phon1 == "y" && phon2 == "i")
                 || (phon1 == "u" && (phon2 == "i" || phon2 == "e~" || phon2 == "o~"));
             if merge {
-                let indices1 = sylph[i + 1].indices.clone();
-                sylph[i].indices.extend(indices1);
-                sylph.remove(i + 1);
+                let removed = sylph.remove(i + 1);
+                sylph[i].indices.extend(removed.indices);
                 continue;
             }
         }
@@ -346,9 +344,8 @@ pub fn assemble_syllables(
     let mut i = 0;
     while i + 1 < sylph.len() {
         if sylph[i + 1].class == PhonClass::Silent {
-            let indices1 = sylph[i + 1].indices.clone();
-            sylph[i].indices.extend(indices1);
-            sylph.remove(i + 1);
+            let removed = sylph.remove(i + 1);
+            sylph[i].indices.extend(removed.indices);
             continue;
         }
         i += 1;
