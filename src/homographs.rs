@@ -8,7 +8,7 @@
 //! - `fils` : "les fils" (fibres, fil) vs "le fils" (enfant, fis)
 //! - `violent` : "un violent éclat" (adj, vjɔlɑ̃) vs "ils violent" (verbe, vjɔl)
 //!
-//! Port de `testeHomographeNonHomophone` de LireCouleur 6.
+//! Port de `testeHomographeNonHomophone` de `LireCouleur` 6.
 
 use crate::data::HOMOGRAPHES;
 

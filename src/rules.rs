@@ -3,7 +3,7 @@
 //!
 //! Toutes ces règles prennent :
 //! - `word`: le mot à analyser, sous forme de chars (pour l'indexation unicode-safe)
-//! - `pos_mot`: position 1-indexée (Python : la lettre actuelle est word[pos_mot - 1])
+//! - `pos_mot`: position 1-indexée (Python : la lettre actuelle est word[`pos_mot` - 1])
 //!
 //! Elles renvoient `true` si la règle s'applique (donc que la lettre courante doit produire
 //! le phonème spécial associé).
@@ -62,7 +62,7 @@ fn strip_final_s(s: &str) -> String {
     }
 }
 
-/// `regle_ient` : le mot se termine par `[consonne]ient` et son infinitif (-ier) est dans verbes_ier ?
+/// `regle_ient` : le mot se termine par `[consonne]ient` et son infinitif (-ier) est dans `verbes_ier` ?
 pub fn regle_ient(word: &[char], pos_mot: usize) -> bool {
     // Le mot se termine-t-il par "[consonne]ient" ?
     if word.len() < 5 {
@@ -129,7 +129,7 @@ pub fn regle_mots_ent(word: &[char], pos_mot: usize) -> bool {
     if MOTS_ENT.binary_search(&comparateur.as_str()).is_ok() {
         return true;
     }
-    let pseudo_verbe = format!("{}er", comparateur);
+    let pseudo_verbe = format!("{comparateur}er");
     VERBES_ENTER.binary_search(&pseudo_verbe.as_str()).is_ok()
 }
 
@@ -144,7 +144,7 @@ pub fn regle_ment(word: &[char], pos_mot: usize) -> bool {
 
     // pseudo_infinitif = no_accent(mot[:-2] + 'r')
     let base: String = word[..word.len() - 2].iter().collect();
-    let mut pseudo = no_accent(&format!("{}r", base));
+    let mut pseudo = no_accent(&format!("{base}r"));
     if pseudo.chars().nth(1) == Some('@') {
         pseudo = pseudo.chars().skip(2).collect();
     }
@@ -158,7 +158,7 @@ pub fn regle_ment(word: &[char], pos_mot: usize) -> bool {
     true
 }
 
-/// `regle_verbe_mer` : l'inverse de regle_ment.
+/// `regle_verbe_mer` : l'inverse de `regle_ment`.
 pub fn regle_verbe_mer(word: &[char], pos_mot: usize) -> bool {
     if !ends_with(word, "ment") {
         return false;

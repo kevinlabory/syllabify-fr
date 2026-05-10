@@ -93,7 +93,7 @@ fn lookup_letter(letter: char) -> Option<&'static LetterEntry> {
 /// `pos_mot` est la position (1-indexée comme dans le Python : la lettre actuelle est word[pos_mot-1]).
 ///
 /// Reproduit la logique de `Parser.check` : pour `-` qui commence par `^` sans préfixe,
-/// test que pos_mot == 1 ; pour `-` qui commence par `^...`, test pattern qui mange tout le préfixe ;
+/// test que `pos_mot` == 1 ; pour `-` qui commence par `^...`, test pattern qui mange tout le préfixe ;
 /// pour `-` ordinaire, test que le pattern s'ajuste au bord droit du préfixe (boucle k).
 fn check_context(
     plus: &str,

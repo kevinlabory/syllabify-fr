@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! Possibilités de liaison inter-mots. Port de `liaisonAmont` / `liaisonAval`
-//! de LireCouleur 6 (`module.js` ll. 1041-1057).
+//! de `LireCouleur` 6 (`module.js` ll. 1041-1057).
 //!
 //! Deux prédicats purs, sans transformation phonologique :
 //!
@@ -42,7 +42,7 @@ pub fn liaison_amont(word: &str) -> bool {
 /// pronoms sujets, adverbes, prépositions, numéraux). Insensible à la casse.
 #[must_use]
 pub fn liaison_aval(word: &str) -> bool {
-    let lower: String = word.chars().flat_map(|c| c.to_lowercase()).collect();
+    let lower: String = word.chars().flat_map(char::to_lowercase).collect();
     LIAISONS_AVAL.iter().any(|w| *w == lower)
 }
 

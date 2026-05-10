@@ -10,7 +10,7 @@ use syllabify_fr::{phonemes, syllabify_text, syllables};
 fn empty_string_returns_one_empty_syllable() {
     // Comportement défini : une chaîne vide produit une syllabe vide,
     // pas un Vec vide, car le pipeline consomme toujours au moins un token.
-    assert_eq!(syllables(""), vec!["".to_string()]);
+    assert_eq!(syllables(""), vec![String::new()]);
 }
 
 #[test]

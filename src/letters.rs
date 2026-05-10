@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! Mise en évidence de lettres (ou successions de lettres) dans un mot.
 //!
-//! Port fidèle de la fonction `lettres` de LireCouleur 6
+//! Port fidèle de la fonction `lettres` de `LireCouleur` 6
 //! (`functionlc6.js:222-296`). Cas d'usage typique : limiter les
 //! confusions de lettres (b/d/p/q, m/n/u…) ou différencier des
 //! séquences proches comme `pir` / `pri`.
@@ -71,7 +71,7 @@ impl LetterStyle {
 ///
 /// Les patterns peuvent être de simples lettres (`"b"`, `"q"`) ou des
 /// séquences (`"pir"`, `"qu"`). Aucune syntaxe regex n'est interprétée
-/// (par fidélité à LC6 et par sécurité — pas de ReDoS possible côté API).
+/// (par fidélité à LC6 et par sécurité — pas de `ReDoS` possible côté API).
 #[derive(Debug, Clone)]
 pub struct LetterRule {
     /// Pattern à matcher.
@@ -269,10 +269,10 @@ pub fn render_letters_html(
 fn inline_style(s: &LetterStyle) -> String {
     let mut parts: Vec<String> = Vec::new();
     if let Some(c) = &s.color {
-        parts.push(format!("color:{}", c));
+        parts.push(format!("color:{c}"));
     }
     if let Some(b) = &s.background {
-        parts.push(format!("background-color:{}", b));
+        parts.push(format!("background-color:{b}"));
     }
     if s.stroke {
         // LC6 functionlc6.js:36-37 — bold + webkit text-stroke.
@@ -293,7 +293,7 @@ fn inline_style(s: &LetterStyle) -> String {
 fn class_for(s: &LetterStyle, rule_id: usize) -> String {
     s.class
         .clone()
-        .unwrap_or_else(|| format!("lc-letter-{}", rule_id))
+        .unwrap_or_else(|| format!("lc-letter-{rule_id}"))
 }
 
 fn escape(s: &str) -> String {

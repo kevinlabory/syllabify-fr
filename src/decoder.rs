@@ -34,7 +34,7 @@ pub enum SyllableMode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum AssembleMode {
-    /// **Mode historique — non aligné avec LireCouleur 6 v6.**
+    /// **Mode historique — non aligné avec `LireCouleur` 6 v6.**
     ///
     /// En mode phonologique, les consonnes doubles restent dans la même syllabe
     /// (ex : `homme` → `ho-mme`). Ce mode n'est plus maintenu en conformité avec
@@ -442,7 +442,7 @@ pub fn extract_phonemes_word(
 ) -> Vec<DecodedPhoneme> {
     // Le parser travaille en minuscules (l'automate est défini en minuscules).
     // On préserve la casse originale dans les `letters` de sortie.
-    let lower: String = word.chars().flat_map(|c| c.to_lowercase()).collect();
+    let lower: String = word.chars().flat_map(char::to_lowercase).collect();
     let raw_phons = parse(&lower);
     let chars_orig: Vec<char> = word.chars().collect();
     // On suppose que lower préserve le nombre de caractères (vrai pour le français ;

@@ -11,7 +11,7 @@ pub enum PhonClass {
     Consonant,
     /// Semi-voyelle (yod, etc.)
     SemiVowel,
-    /// Silencieux ('#') ou marqueur verbe 3e p. pluriel ('verb_3p')
+    /// Silencieux ('#') ou marqueur verbe 3e p. pluriel ('`verb_3p`')
     Silent,
 }
 
