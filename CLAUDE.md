@@ -74,13 +74,55 @@ workspace version :
 - `jni/src/lib.rs` — `pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_…`
 
 Choisir une signature uniforme (presets/strings plutôt que types Rust
-custom) pour réduire le coût marginal par binding. Les bindings n'ont
-pas de gate clippy/coverage côté CI (`ci.yml` clippe la root crate
-seulement) — c'est cette règle qui fait office de checklist.
+custom) pour réduire le coût marginal par binding. Côté CI : `clippy`
+tourne désormais en `--workspace` (cf. `ci.yml`/`release.yml`), donc
+les régressions style sur les bindings sont attrapées. La couverture
+codecov reste exclue des bindings (testés dans leur écosystème natif).
 
 Précédent concret : v0.8.0 a livré `letters` côté lib + CLI mais a
 oublié les 4 bindings, rendant le `.d.ts` npm v0.8.0 identique au
 v0.7.0. Corrigé en v0.8.1.
+
+## Idiomes Rust attendus
+
+Règles passives, vérifiées à la lecture (pas de tooling automatique
+au-delà de `clippy::default`). Issues d'un audit B+ dont les frictions
+nommées ci-dessous sont à corriger plutôt qu'à reproduire.
+
+- **Pas de `Vec<String>` intermédiaire pour scanner des codes phonèmes** —
+  préférer `Vec<&str>` ou itérer.
+  Anti-exemple : `decoder.rs:81,120` `pp.iter().map(|p| p.code.clone()).collect()`.
+- **`unwrap()` interdit en code prod sans commentaire d'invariant** —
+  préférer `let-else { unreachable!("invariant: …") }` ou `.expect("…")`
+  documentant la pré-condition. Cf. `decoder.rs:347, 370, 375` à refactorer.
+- **Bindings = uniformité de signature, pas de logique métier** — si un
+  binding doit transformer/normaliser, factoriser dans la lib core.
+  Anti-exemple : `preset_rules` dupliqué dans les 4 bindings ; meilleur
+  emplacement = `letters::preset_by_name`.
+- **API publique : `Cow<'static, str>` plutôt que `String` quand la
+  donnée est statique.** Modèle : `LetterRule::pattern` (`letters.rs:78`).
+  Anti-exemple : `DecodedPhoneme::code: String` qui force des `to_string()`
+  partout dans `decoder.rs`.
+- **`#[non_exhaustive]` sur tout enum/struct public exposé via le
+  pipeline.** Déjà appliqué à `TextChunk`, `AssembleMode`, `SyllableMode`,
+  `RenderMode`, `LetterStyle` — ne pas régresser.
+- **`#[must_use]` sur toute fonction pure.** Pattern présent
+  (`lib.rs:43, 54, 80, 98`). Manque sur `homographs::lookup` (à corriger
+  hors-scope).
+- **Hot path = pas d'alloc.** `parser::one_step`, `decoder::assemble_syllables`
+  tournent par mot. Tout `String::new()`, `Vec::new()`, `format!()`
+  ajouté ici doit être justifié en commentaire.
+- **Pipeline modifié → `cargo test --test regression` avant ET après.**
+  L'oracle 4830 mots est non-négociable. Si une optimisation idiomatique
+  change le résultat sur 1 mot, c'est l'optimisation qui perd.
+- **Pas de `Result`/`thiserror` sur la lib core, c'est volontaire.** La
+  lib est *totale* : seuls les `expect()` sur AUTOMATON statique
+  (`parser.rs:52, 56`) peuvent échouer, et c'est un bug data, pas une
+  erreur runtime à propager.
+- **Idiomes 2024/2025 préférés** : `let-else` plutôt que
+  `match { Some(x) => x, None => return }` ; `if let && chain`
+  (Rust 1.85+, dispo) plutôt que `if let { if let { … } }` imbriqué ;
+  `OnceLock` plutôt que `Mutex<…>` pour cache lazy lecture-fréquente.
 
 ## What is explicitly **not** ported
 
