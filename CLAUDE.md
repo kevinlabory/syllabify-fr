@@ -74,9 +74,10 @@ workspace version :
 - `jni/src/lib.rs` — `pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_…`
 
 Choisir une signature uniforme (presets/strings plutôt que types Rust
-custom) pour réduire le coût marginal par binding. Les bindings n'ont
-pas de gate clippy/coverage côté CI (`ci.yml` clippe la root crate
-seulement) — c'est cette règle qui fait office de checklist.
+custom) pour réduire le coût marginal par binding. Côté CI : `clippy`
+tourne désormais en `--workspace` (cf. `ci.yml`/`release.yml`), donc
+les régressions style sur les bindings sont attrapées. La couverture
+codecov reste exclue des bindings (testés dans leur écosystème natif).
 
 Précédent concret : v0.8.0 a livré `letters` côté lib + CLI mais a
 oublié les 4 bindings, rendant le `.d.ts` npm v0.8.0 identique au
