@@ -18,7 +18,13 @@ use crate::data::HOMOGRAPHES;
 ///
 /// La comparaison sur `previous_word` ignore la casse et les apostrophes
 /// typographiques.
-pub fn lookup(word: &str, previous_word: Option<&str>) -> Option<Vec<(String, String)>> {
+///
+/// Les codes et lettres retournés sont des `&'static str` issus de
+/// `data::HOMOGRAPHES` ; aucune allocation côté homographs.
+pub fn lookup(
+    word: &str,
+    previous_word: Option<&str>,
+) -> Option<Vec<(&'static str, &'static str)>> {
     let prev = previous_word?.to_lowercase();
     // Normaliser l'apostrophe typographique
     let prev = prev.replace('\u{2019}', "'");
@@ -29,12 +35,7 @@ pub fn lookup(word: &str, previous_word: Option<&str>) -> Option<Vec<(String, St
         }
         for v in *variants {
             if v.precedent.iter().any(|p| *p == prev) {
-                return Some(
-                    v.codage
-                        .iter()
-                        .map(|(p, l)| (p.to_string(), l.to_string()))
-                        .collect(),
-                );
+                return Some(v.codage.to_vec());
             }
         }
         // Mot reconnu comme homographe mais pas de contexte matchant :
@@ -61,7 +62,7 @@ mod tests {
         assert!(r.is_some());
         let phons = r.unwrap();
         // Le dernier phonème doit être verb_3p (marqueur -ent muet)
-        assert_eq!(phons.last().map(|p| p.0.as_str()), Some("verb_3p"));
+        assert_eq!(phons.last().map(|p| p.0), Some("verb_3p"));
     }
 
     #[test]

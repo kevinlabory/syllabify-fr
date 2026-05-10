@@ -6,6 +6,34 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.8.3] — 2026-05-10
+
+### Performance
+- Pipeline parser/decoder/homographs : élimine les allocations
+  `String` pour les codes phonémiques qui proviennent de données
+  statiques (`data.rs`). Détail :
+  - `parser::Phoneme.code` : `String` → `Cow<'static, str>`. Tous
+    les `rule.phoneme.to_string()` deviennent `Cow::Borrowed`. Hot
+    path du parser : zéro alloc côté code.
+  - `decoder::DecodedPhoneme.code` : idem. Les post-traitements qui
+    réécrivent (`x^`, `o_ouvert`, `j`) construisent maintenant un
+    `Cow::Borrowed` sur littéral, donc également sans alloc.
+  - `homographs::lookup() -> Option<Vec<(&'static str, &'static str)>>`
+    (était `Option<Vec<(String, String)>>`). Les pairs codes/lettres
+    viennent directement de `HOMOGRAPHES` ; plus de `to_string()`
+    inutile.
+  - L'API publique `phonemes() -> Vec<(String, String)>` reste
+    inchangée — la conversion en `String` n'a lieu qu'à la frontière
+    publique. Aucun breaking pour les consommateurs.
+
+### Notes
+- Compatible avec `Phoneme`/`DecodedPhoneme` : ces types sont
+  `pub(crate)` (lib.rs:23-29), donc le changement de type du champ
+  `code` n'est pas observable hors-crate.
+- Oracle 4830 mots : toujours à 100%.
+
+---
+
 ## [0.8.2] — 2026-05-07
 
 ### Fixed

@@ -81,7 +81,7 @@ pub fn syllables_with(
 pub fn phonemes(word: &str) -> Vec<(String, String)> {
     decoder::extract_phonemes_word(word, false, SyllableMode::Written)
         .into_iter()
-        .map(|p| (p.code, p.letters))
+        .map(|p| (p.code.into_owned(), p.letters))
         .collect()
 }
 

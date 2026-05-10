@@ -6,6 +6,7 @@ use crate::cleaner::clean;
 use crate::data::MOTS_OSSE;
 use crate::parser::parse;
 use crate::phoneme::{classify, PhonClass};
+use std::borrow::Cow;
 
 /// Un phonème décoré avec la chaîne de lettres du mot d'origine qui le produit.
 ///
@@ -15,7 +16,11 @@ use crate::phoneme::{classify, PhonClass};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DecodedPhoneme {
     /// Code phonétique LC6 (cf. [`crate::parser::Phoneme::code`]).
-    pub code: String,
+    /// `Cow` permet à la majorité des codes (issus de `data.rs`) de
+    /// rester en `&'static str` ; seuls les post-traitements qui réécrivent
+    /// (`x^`, `o_ouvert`, `j`) construisent un `Cow::Borrowed` sur
+    /// littéral, donc toujours sans alloc.
+    pub code: Cow<'static, str>,
     /// Segment de lettres du mot d'origine qui produit ce phonème.
     pub letters: String,
 }
@@ -107,7 +112,7 @@ pub fn post_process_e(pp: &mut [DecodedPhoneme]) {
     if pp.len() <= 1 {
         return;
     }
-    let codes: Vec<&str> = pp.iter().map(|p| p.code.as_str()).collect();
+    let codes: Vec<&str> = pp.iter().map(|p| p.code.as_ref()).collect();
     if !codes.contains(&"x") {
         return;
     }
@@ -130,13 +135,13 @@ pub fn post_process_e(pp: &mut [DecodedPhoneme]) {
 
     if i_ph == nb_ph {
         // Dernier phonème prononcé = 'eu' → fermé
-        pp[i_ph].code = "x^".to_string();
+        pp[i_ph].code = Cow::Borrowed("x^");
         return;
     }
 
     let consonnes_eu_ferme = ["z", "z_s", "t"];
     if consonnes_eu_ferme.contains(&codes[i_ph + 1]) && codes[nb_ph] == "q_caduc" {
-        pp[i_ph].code = "x^".to_string();
+        pp[i_ph].code = Cow::Borrowed("x^");
     }
 }
 
@@ -145,7 +150,7 @@ pub fn post_process_o(pp: &mut [DecodedPhoneme]) {
     if pp.len() <= 1 {
         return;
     }
-    let codes: Vec<&str> = pp.iter().map(|p| p.code.as_str()).collect();
+    let codes: Vec<&str> = pp.iter().map(|p| p.code.as_ref()).collect();
     if !codes.contains(&"o") {
         return;
     }
@@ -166,7 +171,7 @@ pub fn post_process_o(pp: &mut [DecodedPhoneme]) {
 
     if MOTS_OSSE.binary_search(&mot.as_str()).is_ok() {
         if let Some(&last_o) = i_o.last() {
-            pp[last_o].code = "o_ouvert".to_string();
+            pp[last_o].code = Cow::Borrowed("o_ouvert");
         }
         return;
     }
@@ -198,7 +203,7 @@ pub fn post_process_o(pp: &mut [DecodedPhoneme]) {
     }
     drop(codes);
     for i_ph in to_open {
-        pp[i_ph].code = "o_ouvert".to_string();
+        pp[i_ph].code = Cow::Borrowed("o_ouvert");
     }
 }
 
@@ -224,8 +229,8 @@ pub fn post_process_yod(pp: &mut [DecodedPhoneme], _mode: SyllableMode) {
     ];
 
     for i in 0..pp.len() - 1 {
-        if pp[i].code == "i" && phon_suivant.contains(&pp[i + 1].code.as_str()) {
-            pp[i].code = "j".to_string();
+        if pp[i].code == "i" && phon_suivant.contains(&pp[i + 1].code.as_ref()) {
+            pp[i].code = Cow::Borrowed("j");
         }
     }
 }
@@ -318,7 +323,7 @@ pub fn assemble_syllables(
         if sylph[i].class == PhonClass::Consonant && sylph[i + 1].class == PhonClass::Consonant {
             let phon0 = &nphonemes[sylph[i].indices[0]].code;
             let phon1 = &nphonemes[sylph[i + 1].indices[0]].code;
-            if (phon1 == "l" || phon1 == "r") && attaque_premiere.contains(&phon0.as_str()) {
+            if (phon1 == "l" || phon1 == "r") && attaque_premiere.contains(&phon0.as_ref()) {
                 let removed = sylph.remove(i + 1);
                 sylph[i].indices.extend(removed.indices);
                 // ne pas incrémenter
@@ -539,7 +544,10 @@ pub fn extract_syllables(
             match crate::homographs::lookup(&lower_word, previous_word.as_deref()) {
                 Some(coded) => coded
                     .into_iter()
-                    .map(|(code, letters)| DecodedPhoneme { code, letters })
+                    .map(|(code, letters)| DecodedPhoneme {
+                        code: Cow::Borrowed(code),
+                        letters: letters.to_string(),
+                    })
                     .collect(),
                 None => extract_phonemes_word(&original_word, novice_reader, syl_mode),
             };
