@@ -59,13 +59,13 @@ struct SylPh {
 }
 
 /// Retourne tous les indices des phonèmes dont le code est parmi `values` dans `codes[..=limit]`.
-fn indices_of(codes: &[String], values: &[&str], limit: usize) -> Vec<usize> {
+fn indices_of(codes: &[&str], values: &[&str], limit: usize) -> Vec<usize> {
     let mut out = Vec::new();
     for (i, c) in codes.iter().enumerate() {
         if i > limit {
             break;
         }
-        if values.contains(&c.as_str()) {
+        if values.contains(c) {
             out.push(i);
         }
     }
@@ -78,8 +78,8 @@ pub fn post_process_e(pp: &mut [DecodedPhoneme]) {
     if pp.len() <= 1 {
         return;
     }
-    let codes: Vec<String> = pp.iter().map(|p| p.code.clone()).collect();
-    if !codes.iter().any(|c| c == "x") {
+    let codes: Vec<&str> = pp.iter().map(|p| p.code.as_str()).collect();
+    if !codes.iter().any(|c| *c == "x") {
         return;
     }
 
@@ -90,10 +90,9 @@ pub fn post_process_e(pp: &mut [DecodedPhoneme]) {
     }
 
     let i_x = indices_of(&codes, &["x"], nb_ph);
-    if i_x.is_empty() {
+    let Some(&i_ph) = i_x.last() else {
         return;
-    }
-    let i_ph = *i_x.last().unwrap();
+    };
 
     // Pas dans les 3 derniers phonèmes prononcés : on ne peut rien décider
     if i_ph + 2 < nb_ph {
@@ -107,7 +106,7 @@ pub fn post_process_e(pp: &mut [DecodedPhoneme]) {
     }
 
     let consonnes_eu_ferme = ["z", "z_s", "t"];
-    if consonnes_eu_ferme.contains(&codes[i_ph + 1].as_str()) && codes[nb_ph] == "q_caduc" {
+    if consonnes_eu_ferme.contains(&codes[i_ph + 1]) && codes[nb_ph] == "q_caduc" {
         pp[i_ph].code = "x^".to_string();
     }
 }
@@ -117,8 +116,8 @@ pub fn post_process_o(pp: &mut [DecodedPhoneme]) {
     if pp.len() <= 1 {
         return;
     }
-    let codes: Vec<String> = pp.iter().map(|p| p.code.clone()).collect();
-    if !codes.iter().any(|c| c == "o") {
+    let codes: Vec<&str> = pp.iter().map(|p| p.code.as_str()).collect();
+    if !codes.iter().any(|c| *c == "o") {
         return;
     }
 
@@ -148,21 +147,29 @@ pub fn post_process_o(pp: &mut [DecodedPhoneme]) {
         "k_qu", "z^_g", "g_u", "s_c", "s_t", "z_s", "ks", "gz",
     ];
 
+    // Collecter d'abord les indices à passer en o_ouvert, appliquer ensuite :
+    // `codes` emprunte `pp`, donc on ne peut pas muter `pp[i_ph].code` pendant
+    // que la boucle lit encore depuis `codes`.
+    let mut to_open: Vec<usize> = Vec::new();
     for &i_ph in &i_o {
         if i_ph == nb_ph {
-            return; // syllabe tonique ouverte en fin de mot : o fermé (sortie fonction)
+            break; // syllabe tonique ouverte en fin de mot : o fermé
         }
         if pp[i_ph].letters != "ô" {
-            let next = codes.get(i_ph + 1).map(String::as_str).unwrap_or("");
-            let next2 = codes.get(i_ph + 2).map(String::as_str).unwrap_or("");
+            let next = codes.get(i_ph + 1).copied().unwrap_or("");
+            let next2 = codes.get(i_ph + 2).copied().unwrap_or("");
 
             if (i_ph + 2 == nb_ph && consonnes_syllabe_fermee.contains(&next) && next2 == "q_caduc")
                 || ["r", "z^_g", "v"].contains(&next)
                 || (i_ph + 2 < nb_ph && consonnes.contains(&next) && consonnes.contains(&next2))
             {
-                pp[i_ph].code = "o_ouvert".to_string();
+                to_open.push(i_ph);
             }
         }
+    }
+    drop(codes);
+    for i_ph in to_open {
+        pp[i_ph].code = "o_ouvert".to_string();
     }
 }
 
