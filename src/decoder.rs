@@ -59,13 +59,42 @@ struct SylPh {
 }
 
 /// Retourne tous les indices des phonèmes dont le code est parmi `values` dans `codes[..=limit]`.
-fn indices_of(codes: &[String], values: &[&str], limit: usize) -> Vec<usize> {
+/// Consonnes orthographiques utilisées par `assemble_syllables` pour décider
+/// d'une coda intersyllabique. Strict ASCII + `ç` (les voyelles
+/// accentuées et `y` n'en font pas partie côté LC6).
+const fn is_consonne(c: char) -> bool {
+    matches!(
+        c,
+        'b' | 'c'
+            | 'd'
+            | 'f'
+            | 'g'
+            | 'h'
+            | 'j'
+            | 'k'
+            | 'l'
+            | 'm'
+            | 'n'
+            | 'p'
+            | 'q'
+            | 'r'
+            | 's'
+            | 't'
+            | 'v'
+            | 'w'
+            | 'x'
+            | 'z'
+            | 'ç'
+    )
+}
+
+fn indices_of(codes: &[&str], values: &[&str], limit: usize) -> Vec<usize> {
     let mut out = Vec::new();
     for (i, c) in codes.iter().enumerate() {
         if i > limit {
             break;
         }
-        if values.contains(&c.as_str()) {
+        if values.contains(c) {
             out.push(i);
         }
     }
@@ -78,8 +107,8 @@ pub fn post_process_e(pp: &mut [DecodedPhoneme]) {
     if pp.len() <= 1 {
         return;
     }
-    let codes: Vec<String> = pp.iter().map(|p| p.code.clone()).collect();
-    if !codes.iter().any(|c| c == "x") {
+    let codes: Vec<&str> = pp.iter().map(|p| p.code.as_str()).collect();
+    if !codes.contains(&"x") {
         return;
     }
 
@@ -90,10 +119,9 @@ pub fn post_process_e(pp: &mut [DecodedPhoneme]) {
     }
 
     let i_x = indices_of(&codes, &["x"], nb_ph);
-    if i_x.is_empty() {
+    let Some(&i_ph) = i_x.last() else {
         return;
-    }
-    let i_ph = *i_x.last().unwrap();
+    };
 
     // Pas dans les 3 derniers phonèmes prononcés : on ne peut rien décider
     if i_ph + 2 < nb_ph {
@@ -107,7 +135,7 @@ pub fn post_process_e(pp: &mut [DecodedPhoneme]) {
     }
 
     let consonnes_eu_ferme = ["z", "z_s", "t"];
-    if consonnes_eu_ferme.contains(&codes[i_ph + 1].as_str()) && codes[nb_ph] == "q_caduc" {
+    if consonnes_eu_ferme.contains(&codes[i_ph + 1]) && codes[nb_ph] == "q_caduc" {
         pp[i_ph].code = "x^".to_string();
     }
 }
@@ -117,8 +145,8 @@ pub fn post_process_o(pp: &mut [DecodedPhoneme]) {
     if pp.len() <= 1 {
         return;
     }
-    let codes: Vec<String> = pp.iter().map(|p| p.code.clone()).collect();
-    if !codes.iter().any(|c| c == "o") {
+    let codes: Vec<&str> = pp.iter().map(|p| p.code.as_str()).collect();
+    if !codes.contains(&"o") {
         return;
     }
 
@@ -148,21 +176,29 @@ pub fn post_process_o(pp: &mut [DecodedPhoneme]) {
         "k_qu", "z^_g", "g_u", "s_c", "s_t", "z_s", "ks", "gz",
     ];
 
+    // Collecter d'abord les indices à passer en o_ouvert, appliquer ensuite :
+    // `codes` emprunte `pp`, donc on ne peut pas muter `pp[i_ph].code` pendant
+    // que la boucle lit encore depuis `codes`.
+    let mut to_open: Vec<usize> = Vec::new();
     for &i_ph in &i_o {
         if i_ph == nb_ph {
-            return; // syllabe tonique ouverte en fin de mot : o fermé (sortie fonction)
+            break; // syllabe tonique ouverte en fin de mot : o fermé
         }
         if pp[i_ph].letters != "ô" {
-            let next = codes.get(i_ph + 1).map(String::as_str).unwrap_or("");
-            let next2 = codes.get(i_ph + 2).map(String::as_str).unwrap_or("");
+            let next = codes.get(i_ph + 1).copied().unwrap_or("");
+            let next2 = codes.get(i_ph + 2).copied().unwrap_or("");
 
             if (i_ph + 2 == nb_ph && consonnes_syllabe_fermee.contains(&next) && next2 == "q_caduc")
                 || ["r", "z^_g", "v"].contains(&next)
                 || (i_ph + 2 < nb_ph && consonnes.contains(&next) && consonnes.contains(&next2))
             {
-                pp[i_ph].code = "o_ouvert".to_string();
+                to_open.push(i_ph);
             }
         }
+    }
+    drop(codes);
+    for i_ph in to_open {
+        pp[i_ph].code = "o_ouvert".to_string();
     }
 }
 
@@ -278,9 +314,8 @@ pub fn assemble_syllables(
             let phon0 = &nphonemes[sylph[i].indices[0]].code;
             let phon1 = &nphonemes[sylph[i + 1].indices[0]].code;
             if (phon1 == "l" || phon1 == "r") && attaque_premiere.contains(&phon0.as_str()) {
-                let indices1 = sylph[i + 1].indices.clone();
-                sylph[i].indices.extend(indices1);
-                sylph.remove(i + 1);
+                let removed = sylph.remove(i + 1);
+                sylph[i].indices.extend(removed.indices);
                 // ne pas incrémenter
                 continue;
             }
@@ -297,9 +332,8 @@ pub fn assemble_syllables(
             let merge = (phon1 == "y" && phon2 == "i")
                 || (phon1 == "u" && (phon2 == "i" || phon2 == "e~" || phon2 == "o~"));
             if merge {
-                let indices1 = sylph[i + 1].indices.clone();
-                sylph[i].indices.extend(indices1);
-                sylph.remove(i + 1);
+                let removed = sylph.remove(i + 1);
+                sylph[i].indices.extend(removed.indices);
                 continue;
             }
         }
@@ -310,9 +344,8 @@ pub fn assemble_syllables(
     let mut i = 0;
     while i + 1 < sylph.len() {
         if sylph[i + 1].class == PhonClass::Silent {
-            let indices1 = sylph[i + 1].indices.clone();
-            sylph[i].indices.extend(indices1);
-            sylph.remove(i + 1);
+            let removed = sylph.remove(i + 1);
+            sylph[i].indices.extend(removed.indices);
             continue;
         }
         i += 1;
@@ -344,12 +377,13 @@ pub fn assemble_syllables(
         // Si la consonne qui suit est elle-même suivie d'une autre consonne,
         // on la rattache à la syllabe courante (coda).
         if i + 1 < nb_sylph {
-            let phon_i_idx = *sylph[i].indices.last().unwrap();
+            let phon_i_idx = *sylph[i].indices.last().expect(
+                "invariant: sylph[i] non vide — produit par boucle phon_to_sylph plus haut",
+            );
             let phon_i1_idx = sylph[i + 1].indices[0];
             let last_letter = nphonemes[phon_i_idx].letters.chars().last().unwrap_or(' ');
             let first_letter = nphonemes[phon_i1_idx].letters.chars().next().unwrap_or(' ');
-            let consonnes = "bcdfghjklmnpqrstvwxzç";
-            if consonnes.contains(last_letter) && consonnes.contains(first_letter) {
+            if is_consonne(last_letter) && is_consonne(first_letter) {
                 if let Some(last) = sylls.last_mut() {
                     last.extend(sylph[i].indices.iter().copied());
                 }
@@ -367,12 +401,17 @@ pub fn assemble_syllables(
     // Important : pas un HashSet sur tous les non-consommés, sinon on ré-agrège des phonèmes
     // délibérément laissés entre deux syllabes (ex: le 'r' central de "frère").
     for sp in &sylph[j..nb_sylph] {
-        sylls.last_mut().unwrap().extend(sp.indices.iter().copied());
+        sylls
+            .last_mut()
+            .expect("invariant: sylls non-vide (early-return ligne 396)")
+            .extend(sp.indices.iter().copied());
     }
 
     // 8. Mode oral : fusionner la dernière syllabe qui finit en q_caduc
     if syl_mode == SyllableMode::Oral && sylls.len() > 1 {
-        let last = sylls.last().unwrap();
+        let last = sylls
+            .last()
+            .expect("invariant: sylls.len() > 1 (test ligne précédente)");
         let mut k = last.len() as isize - 1;
         while k > 0 {
             let code = &nphonemes[last[k as usize]].code;
@@ -382,8 +421,13 @@ pub fn assemble_syllables(
             k -= 1;
         }
         if k >= 0 && nphonemes[last[k as usize]].code.ends_with("q_caduc") {
-            let last_syl = sylls.pop().unwrap();
-            sylls.last_mut().unwrap().extend(last_syl);
+            let last_syl = sylls
+                .pop()
+                .expect("invariant: sylls.len() > 1 (test du if englobant)");
+            sylls
+                .last_mut()
+                .expect("invariant: sylls.len() >= 1 après pop (était > 1)")
+                .extend(last_syl);
         }
     }
 
