@@ -2,41 +2,38 @@
 use jni::objects::{JClass, JObjectArray, JString};
 use jni::sys::{jobjectArray, jstring};
 use jni::JNIEnv;
+use serde_json::{json, Value};
 use syllabify_fr::letters::{match_letters, presets, render_letters_html, LetterRule, RenderMode};
 use syllabify_fr::{phonemes, render_html, render_word_html, syllabify_text, syllables, TextChunk};
 
-// --- JSON helpers (same approach as the FFI crate, no serde dependency) ---
+// --- JSON helpers via serde_json ---
+//
+// Échappement RFC 8259-conforme par construction (caractères de contrôle
+// U+0000..U+001F sérialisés en `\uXXXX`, `\b`/`\f` en formes courtes).
+// Remplace les helpers maison antérieurs qui ne couvraient que
+// `" \ \n \r \t` (cf. audit #3 / hand-rolled JSON).
 
-fn json_escape(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    for c in s.chars() {
-        match c {
-            '"' => out.push_str("\\\""),
-            '\\' => out.push_str("\\\\"),
-            '\n' => out.push_str("\\n"),
-            '\r' => out.push_str("\\r"),
-            '\t' => out.push_str("\\t"),
-            c => out.push(c),
-        }
-    }
-    out
-}
-
-fn json_str(s: &str) -> String {
-    format!("\"{}\"", json_escape(s))
-}
-
-fn json_chunk(chunk: &TextChunk) -> String {
+fn chunk_to_value(chunk: &TextChunk) -> Value {
     match chunk {
-        TextChunk::Word(syls) => {
-            let items: Vec<String> = syls.iter().map(|s| json_str(s)).collect();
-            format!("{{\"kind\":\"word\",\"syllables\":[{}]}}", items.join(","))
-        }
-        TextChunk::Raw(text) => {
-            format!("{{\"kind\":\"raw\",\"text\":{}}}", json_str(text))
-        }
-        _ => "{\"kind\":\"unknown\"}".to_string(),
+        TextChunk::Word(syls) => json!({ "kind": "word", "syllables": syls }),
+        TextChunk::Raw(text) => json!({ "kind": "raw", "text": text }),
+        _ => json!({ "kind": "unknown" }),
     }
+}
+
+fn chunks_to_json(chunks: &[TextChunk]) -> String {
+    let values: Vec<Value> = chunks.iter().map(chunk_to_value).collect();
+    // `to_string` ne peut échouer que sur `Map<NonString, _>` ou erreur d'IO —
+    // aucun des deux cas n'est possible sur des `Value` construits ici.
+    serde_json::to_string(&values).expect("serde_json::to_string never fails for owned Values")
+}
+
+fn phonemes_to_json(pairs: &[(String, String)]) -> String {
+    let values: Vec<Value> = pairs
+        .iter()
+        .map(|(code, letters)| json!([code, letters]))
+        .collect();
+    serde_json::to_string(&values).expect("serde_json::to_string never fails for owned Values")
 }
 
 // --- JNI helpers ---
@@ -106,8 +103,7 @@ pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_syllabifyText<'lo
         None => return std::ptr::null_mut(),
     };
     let chunks = syllabify_text(&text);
-    let items: Vec<String> = chunks.iter().map(json_chunk).collect();
-    jni_output(&mut env, format!("[{}]", items.join(",")))
+    jni_output(&mut env, chunks_to_json(&chunks))
 }
 
 /// `SyllabifyFr.phonemes(word)` → JSON `String`
@@ -125,11 +121,7 @@ pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_phonemes<'local>(
         None => return std::ptr::null_mut(),
     };
     let pairs = phonemes(&word);
-    let items: Vec<String> = pairs
-        .iter()
-        .map(|(code, letters)| format!("[{},{}]", json_str(code), json_str(letters)))
-        .collect();
-    jni_output(&mut env, format!("[{}]", items.join(",")))
+    jni_output(&mut env, phonemes_to_json(&pairs))
 }
 
 /// `SyllabifyFr.renderWordHtml(word)` → HTML `String`
@@ -215,23 +207,38 @@ mod tests {
     use super::*;
 
     #[test]
-    fn json_escape_special_chars() {
-        assert_eq!(json_str("a\"b"), "\"a\\\"b\"");
-        assert_eq!(json_str("a\\b"), "\"a\\\\b\"");
-    }
-
-    #[test]
-    fn json_chunk_word() {
-        let chunk = TextChunk::Word(vec!["cho".into(), "co".into(), "lat".into()]);
+    fn chunks_to_json_word() {
+        let chunks = vec![TextChunk::Word(vec![
+            "cho".into(),
+            "co".into(),
+            "lat".into(),
+        ])];
         assert_eq!(
-            json_chunk(&chunk),
-            r#"{"kind":"word","syllables":["cho","co","lat"]}"#
+            chunks_to_json(&chunks),
+            r#"[{"kind":"word","syllables":["cho","co","lat"]}]"#
         );
     }
 
     #[test]
-    fn json_chunk_raw() {
-        let chunk = TextChunk::Raw(" ".into());
-        assert_eq!(json_chunk(&chunk), r#"{"kind":"raw","text":" "}"#);
+    fn chunks_to_json_raw() {
+        let chunks = vec![TextChunk::Raw(" ".into())];
+        assert_eq!(chunks_to_json(&chunks), r#"[{"kind":"raw","text":" "}]"#);
+    }
+
+    /// Audit #3 — caractères de contrôle correctement échappés (RFC 8259).
+    /// Régression du bug pré-serde_json où U+0001..U+001F sortaient bruts.
+    #[test]
+    fn chunks_to_json_escapes_control_chars() {
+        let control = "a\u{0001}\u{0008}\u{000C}\u{001F}b";
+        let chunks = vec![TextChunk::Raw(control.into())];
+        let out = chunks_to_json(&chunks);
+        // Aucun caractère de contrôle brut U+0000..U+001F ne doit subsister.
+        assert!(
+            !out.chars().any(|c| (c as u32) < 0x20),
+            "control char brut dans {out:?}"
+        );
+        // Reparse → JSON syntaxiquement valide ET contenu préservé.
+        let parsed: serde_json::Value = serde_json::from_str(&out).expect("invalid JSON produced");
+        assert_eq!(parsed[0]["text"], control);
     }
 }

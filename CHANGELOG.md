@@ -6,6 +6,40 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.8.4] — 2026-06-15
+
+### Fixed
+- **Sortie JSON RFC 8259-conforme dans CLI / FFI / JNI** : les
+  trois bindings exposant du JSON (`syllabify --json`,
+  `syllabify_text_json` / `syllabify_phonemes` côté FFI,
+  `SyllabifyFr.syllabifyText` / `phonemes` côté JNI) utilisaient
+  chacun un échappement hand-rolled incomplet (couvrait au mieux
+  `" \ \n \r \t`, au pire seulement `" \`). Conséquence : tout
+  caractère de contrôle U+0000..U+001F en entrée (via `TextChunk::Raw`)
+  ressortait brut → JSON syntaxiquement invalide rejeté par
+  `serde_json::from_str`, `JSON.parse`, `json.loads`.
+  Migration vers `serde_json` comme backend unique d'échappement.
+  RFC 8259-conforme par construction.
+- 3 nouveaux tests de régression (un par surface) qui pinnent la
+  non-régression sur 6 caractères de contrôle adversariaux + parse
+  round-trip via `serde_json::Value`.
+
+### Changed
+- `serde_json` ajouté en dépendance optionnelle sous feature `cli`
+  (auparavant en dev-dependency seulement), et en dépendance prod
+  des crates `syllabify-fr-ffi` et `syllabify-fr-jni`. Coût binaire
+  estimé : ~30-50 KB sur les `cdylib`, négligeable pour des bindings
+  Rust standards.
+- ~150 lignes d'helpers JSON maison supprimées sur les 3 surfaces.
+
+### Notes
+- L'échappement HTML hand-rolled (5 entités : `& < > " '`) reste
+  inchangé : ergonomiquement complet pour les contextes HTML5 texte
+  et attribut, pas de bug observé.
+- Oracle 4830 mots : toujours à 100%.
+
+---
+
 ## [0.8.3] — 2026-05-10
 
 ### Performance

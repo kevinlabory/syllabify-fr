@@ -1,60 +1,37 @@
+use serde_json::{json, Value};
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use syllabify_fr::letters::{match_letters, presets, render_letters_html, LetterRule, RenderMode};
 use syllabify_fr::{phonemes, render_html, render_word_html, syllabify_text, syllables, TextChunk};
 
-// --- JSON helpers (no serde dependency) ---
+// --- JSON helpers via serde_json ---
+//
+// Échappement RFC 8259-conforme par construction : caractères de contrôle
+// U+0000..U+001F sérialisés en `\uXXXX`, `\b`/`\f` en formes courtes, etc.
+// Remplace les helpers maison antérieurs qui ne couvraient que `" \ \n \r \t`
+// (cf. audit #3 / NOTES-v6.md « hand-rolled JSON »).
 
-fn json_escape(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    for c in s.chars() {
-        match c {
-            '"' => out.push_str("\\\""),
-            '\\' => out.push_str("\\\\"),
-            '\n' => out.push_str("\\n"),
-            '\r' => out.push_str("\\r"),
-            '\t' => out.push_str("\\t"),
-            c => out.push(c),
-        }
-    }
-    out
-}
-
-fn json_str(s: &str) -> String {
-    format!("\"{}\"", json_escape(s))
-}
-
-fn json_syllables_array(syls: &[String]) -> String {
-    let items: Vec<String> = syls.iter().map(|s| json_str(s)).collect();
-    format!("[{}]", items.join(","))
-}
-
-fn json_chunk(chunk: &TextChunk) -> String {
+fn chunk_to_value(chunk: &TextChunk) -> Value {
     match chunk {
-        TextChunk::Word(syls) => {
-            format!(
-                "{{\"kind\":\"word\",\"syllables\":{}}}",
-                json_syllables_array(syls)
-            )
-        }
-        TextChunk::Raw(text) => {
-            format!("{{\"kind\":\"raw\",\"text\":{}}}", json_str(text))
-        }
-        _ => "{\"kind\":\"unknown\"}".to_string(),
+        TextChunk::Word(syls) => json!({ "kind": "word", "syllables": syls }),
+        TextChunk::Raw(text) => json!({ "kind": "raw", "text": text }),
+        _ => json!({ "kind": "unknown" }),
     }
 }
 
-fn json_chunks(chunks: &[TextChunk]) -> String {
-    let items: Vec<String> = chunks.iter().map(json_chunk).collect();
-    format!("[{}]", items.join(","))
+fn chunks_to_json(chunks: &[TextChunk]) -> String {
+    let values: Vec<Value> = chunks.iter().map(chunk_to_value).collect();
+    // `to_string` ne peut échouer que sur `Map<NonString, _>` ou erreur d'IO
+    // — aucun des deux cas n'est possible sur des `Value` construits ici.
+    serde_json::to_string(&values).expect("serde_json::to_string never fails for owned Values")
 }
 
-fn json_phonemes(pairs: &[(String, String)]) -> String {
-    let items: Vec<String> = pairs
+fn phonemes_to_json(pairs: &[(String, String)]) -> String {
+    let values: Vec<Value> = pairs
         .iter()
-        .map(|(code, letters)| format!("[{},{}]", json_str(code), json_str(letters)))
+        .map(|(code, letters)| json!([code, letters]))
         .collect();
-    format!("[{}]", items.join(","))
+    serde_json::to_string(&values).expect("serde_json::to_string never fails for owned Values")
 }
 
 // --- Helpers for safe string conversion ---
@@ -130,7 +107,7 @@ pub unsafe extern "C" fn syllabify_text_json(text: *const c_char) -> *mut c_char
         Some(s) => s,
         None => return std::ptr::null_mut(),
     };
-    rust_string_to_c(json_chunks(&syllabify_text(text)))
+    rust_string_to_c(chunks_to_json(&syllabify_text(text)))
 }
 
 /// Get phonemes for a word as a JSON array of `[code, letters]` pairs.
@@ -151,7 +128,7 @@ pub unsafe extern "C" fn syllabify_phonemes(word: *const c_char) -> *mut c_char 
         Some(s) => s,
         None => return std::ptr::null_mut(),
     };
-    rust_string_to_c(json_phonemes(&phonemes(word)))
+    rust_string_to_c(phonemes_to_json(&phonemes(word)))
 }
 
 /// Render HTML for a single word with `<span class="syl-a/b">` syllable spans.
@@ -374,5 +351,30 @@ mod tests {
         let result = unsafe { CStr::from_ptr(ptr).to_str().unwrap().to_owned() };
         unsafe { syllabify_free(ptr) };
         assert_eq!(result, "bonjour");
+    }
+
+    /// Audit #3 — la sortie JSON ne doit contenir aucun caractère de contrôle
+    /// brut (U+0000..U+001F) après round-trip via `syllabify_text_json`.
+    /// Pré-serde_json, ces caractères passaient tels quels → JSON invalide.
+    #[test]
+    fn test_syllabify_text_json_escapes_control_chars() {
+        let probes = [
+            "a\u{0001}b",
+            "a\u{0007}b", // BEL
+            "a\u{0008}b", // BS
+            "a\u{000B}b", // VT
+            "a\u{000C}b", // FF
+            "a\u{001F}b", // US
+        ];
+        for input in &probes {
+            let result = unsafe { round_trip(syllabify_text_json, input) };
+            assert!(
+                !result.chars().any(|c| (c as u32) < 0x20),
+                "raw control char in output for input={input:?}: {result:?}"
+            );
+            // Round-trip parse — preuve définitive que c'est un JSON valide.
+            let _parsed: serde_json::Value = serde_json::from_str(&result)
+                .unwrap_or_else(|e| panic!("invalid JSON for input={input:?}: {e} :: {result:?}"));
+        }
     }
 }

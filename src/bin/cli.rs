@@ -82,11 +82,10 @@ fn syllabify_to_dashes(word: &str, novice: bool, oral: bool) -> String {
 
 fn syllabify_to_json(word: &str, novice: bool, oral: bool) -> String {
     let s = syllables_with(word, novice, AssembleMode::Std, syllable_mode(oral));
-    let escaped: Vec<String> = s
-        .iter()
-        .map(|s| format!("\"{}\"", s.replace('\\', "\\\\").replace('"', "\\\"")))
-        .collect();
-    format!("[{}]", escaped.join(","))
+    // Échappement RFC 8259-conforme via serde_json (couvre les caractères de
+    // contrôle U+0000..U+001F que l'ancien implémentation maison laissait
+    // passer bruts — cf. audit #3).
+    serde_json::to_string(&s).expect("serde_json::to_string never fails for Vec<String>")
 }
 
 fn syllabify_text_to_string(text: &str) -> String {
