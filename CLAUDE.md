@@ -42,7 +42,14 @@ Five-stage pipeline, fidelity to LC6 is the design constraint at every stage:
 
 ### Data (`src/data.rs`, ~66KB, generated)
 
-- `AUTOMATON`: 43 letters × ~480 rules total
+- `AUTOMATON`: 43 letters × ~480 rules total. **Alphabet effectif** :
+  a-z + `'` + `@` + `_` + à â ç è é ê ë î ï ô ö ù û œ. **Pas** dans
+  `AUTOMATON` : ä ÿ æ ü (rares en français, loanwords type *müesli*).
+  Pour ces caractères, `cleaner::est_significatif` les retient mais le
+  parser produit un phonème vide qui se fait silencieusement filtrer
+  → la lettre disparaît du résultat (cf.
+  `tests/edge_cases.rs::chars_outside_automaton_are_dropped`,
+  `tests/properties.rs::syllables_preserve_letter_count_for_french`).
 - 15 word lists (~1200 entries): `MOTS_ENT`, `VERBES_IER`, `VERBES_MER`, `EXCEPTIONS_FINAL_ER`, `POSSIBLES_AVOIR`, etc.
 - `HOMOGRAPHES`: 16 entries with ~30 context variants
 - `DETERMINANT` / `PRONOM`: used by homograph context matching

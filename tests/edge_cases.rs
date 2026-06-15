@@ -62,3 +62,23 @@ fn single_punctuation_is_raw_chunk() {
     let chunks = syllabify_text("!");
     assert!(matches!(&chunks[0], TextChunk::Raw(s) if s == "!"));
 }
+
+#[test]
+fn chars_outside_automaton_are_dropped() {
+    // `AUTOMATON` couvre a-z + à â ç è é ê ë î ï ô ö ù û œ. Les autres
+    // caractères français étendus (ä, ÿ, æ, ü) sont marqués significatifs
+    // par `cleaner::est_significatif` mais n'ont pas de règle de parsing
+    // → le parser produit un phonème vide, silencieusement filtré en
+    // aval (cf. NOTES-v6.md Piège 2).
+    //
+    // Conséquence observable : ces caractères disparaissent du résultat.
+    // Test ici pour pinner ce comportement (révélé par property test
+    // `syllables_preserve_letter_count_for_french`). Si on décide un jour
+    // de préserver ces caractères (identity-map), ce test doit être mis
+    // à jour.
+    // `ä` n'est pas dans AUTOMATON → perdu (mais `œ` y est et reste).
+    assert_eq!(syllables("äœ"), vec!["œ"]);
+    // `ü` n'est pas dans AUTOMATON → perdu (mais `ï` ne l'est pas, donc
+    // `naïveté` est intégralement préservé : `["na", "ï", "ve", "té"]`).
+    assert_eq!(syllables("müesli"), vec!["mes", "li"]);
+}
