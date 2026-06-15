@@ -86,6 +86,28 @@ jobs:
           command: check all
           # `check all` runs : advisories, licenses, bans, sources
 
+  semver:
+    name: SemVer (public API)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      # Compare la surface publique de la crate `syllabify-fr` à la dernière
+      # version publiée sur crates.io et échoue si un changement cassant
+      # n'est pas accompagné d'un bump de version adéquat. cargo-semver-checks
+      # est conscient du pré-1.0 : 0.x.y → 0.(x+1).0 autorise les ruptures,
+      # 0.x.y → 0.x.(y+1) ne les autorise pas.
+      #
+      # Scope = `package: syllabify-fr` uniquement : les 4 bindings ne sont
+      # PAS publiés sur crates.io (npm/PyPI/Maven), donc aucune baseline n'y
+      # existe. Leur parité reste couverte par la checklist manuelle de
+      # CLAUDE.md (« Bindings parity »).
+      - name: Check public API semver vs crates.io baseline
+        uses: obi1kenobi/cargo-semver-checks-action@v2
+        with:
+          package: syllabify-fr
+
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
