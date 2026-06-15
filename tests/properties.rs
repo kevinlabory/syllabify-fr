@@ -48,6 +48,52 @@ proptest! {
             "longueur changée pour {:?}: {:?}", w, result);
     }
 
+    /// **Invariant `lower()` français** : `cleaner::clean` utilise `char::to_lowercase`
+    /// qui peut multi-étendre (ex : `İ` turc → `i\u{307}`, `ß` allemand → `ss`).
+    /// Sur l'alphabet réellement décrit par `AUTOMATON` (a-z + à â ç è é ê ë î ï
+    /// ô ö ù û œ), `to_lowercase` est 1-pour-1 et chaque caractère a une règle —
+    /// l'hypothèse implicite portée par `decoder::extract_phonemes_word` tient.
+    ///
+    /// Note : `ä`, `ÿ`, `æ`, `ü` ne sont **pas** dans `AUTOMATON` et seraient
+    /// perdus à la syllabation (cf. `tests/edge_cases.rs::chars_outside_automaton_are_dropped`).
+    #[test]
+    fn syllables_preserve_letter_count_for_french(
+        w in "[a-zàâçèéêëîïôöùûœ]{1,30}"
+    ) {
+        let result = syllables(&w);
+        let joined: String = result.iter().flat_map(|s| s.chars()).collect();
+        prop_assert_eq!(joined.chars().count(), w.chars().count(),
+            "longueur changée pour {:?}: {:?}", w, result);
+    }
+
+    /// Idem en casse mixte : `char::to_lowercase` doit aussi être 1-pour-1 sur
+    /// les majuscules françaises de l'alphabet `AUTOMATON` (ex : `É` → `é`).
+    #[test]
+    fn syllables_preserve_letter_count_for_mixed_case_french(
+        w in "[a-zA-ZàâçèéêëîïôöùûœÀÂÇÈÉÊËÎÏÔÖÙÛŒ]{1,30}"
+    ) {
+        let result = syllables(&w);
+        let joined: String = result.iter().flat_map(|s| s.chars()).collect();
+        prop_assert_eq!(joined.chars().count(), w.chars().count(),
+            "longueur changée pour {:?}: {:?}", w, result);
+    }
+
+    /// **Invariant `step`** : la somme des longueurs des `letters` retournées
+    /// par `phonemes()` égale le nombre de caractères du mot d'entrée
+    /// (sur l'alphabet `AUTOMATON`).
+    ///
+    /// Concrètement : chaque phonème consomme `step` caractères, la concaténation
+    /// des `letters` reconstruit le mot. Documentation : `parser::Phoneme.step`.
+    #[test]
+    fn phonemes_letters_partition_input_length(
+        w in "[a-zàâçèéêëîïôöùûœ]{1,30}"
+    ) {
+        let pairs = phonemes(&w);
+        let total: usize = pairs.iter().map(|(_, letters)| letters.chars().count()).sum();
+        prop_assert_eq!(total, w.chars().count(),
+            "somme des step != nb chars pour {:?}: {:?}", w, pairs);
+    }
+
     /// `syllables` ne panique jamais sur n'importe quelle `String` UTF-8 valide.
     /// C'est le test "adversarial" : émojis, contrôles, surrogates, etc.
     #[test]

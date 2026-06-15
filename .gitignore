@@ -12,3 +12,7 @@ __pycache__/
 /fuzz/corpus
 /fuzz/artifacts
 /fuzz/coverage
+
+# proptest persisted regressions (local debugging artifact ; replaying
+# a saved seed against a tightened strategy would fail spuriously)
+*.proptest-regressions
