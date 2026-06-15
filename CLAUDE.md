@@ -86,6 +86,16 @@ tourne désormais en `--workspace` (cf. `ci.yml`/`release.yml`), donc
 les régressions style sur les bindings sont attrapées. La couverture
 codecov reste exclue des bindings (testés dans leur écosystème natif).
 
+**Garantie de stabilité d'API — partage des responsabilités.** La surface
+publique de la *crate core* `syllabify-fr` est gardée **automatiquement**
+par le job `semver` de `ci.yml` (`cargo-semver-checks` vs baseline
+crates.io) : un changement cassant sans bump de version adéquat fait
+échouer la PR. Les **4 bindings** ne sont pas sur crates.io (npm / PyPI /
+Maven), donc `cargo-semver-checks` ne les voit pas — leur parité reste
+garantie par la **checklist manuelle ci-dessus**. Règle pratique : un
+nouvel item `pub` dans la lib core → semver-checks t'oblige à un bump
+correct ; le propager aux bindings reste de ta responsabilité.
+
 Précédent concret : v0.8.0 a livré `letters` côté lib + CLI mais a
 oublié les 4 bindings, rendant le `.d.ts` npm v0.8.0 identique au
 v0.7.0. Corrigé en v0.8.1.
