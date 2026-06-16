@@ -4,7 +4,7 @@ default-members = ["."]
 resolver = "2"
 
 [workspace.package]
-version = "0.8.3"
+version = "0.8.4"
 edition = "2021"
 license = "GPL-3.0-or-later"
 authors = ["Kevin Labory <kevin@dyscolor.com>"]
@@ -37,13 +37,14 @@ required-features = ["cli"]
 default = ["regex-full", "cli"]
 regex-full = ["dep:regex"]
 regex-lite = ["dep:regex-lite"]
-cli = ["regex-full", "dep:clap", "dep:clap_complete"]
+cli = ["regex-full", "dep:clap", "dep:clap_complete", "dep:serde_json"]
 
 [dependencies]
 regex = { version = "1", optional = true }
 regex-lite = { version = "0.1", optional = true }
 clap = { version = "4", features = ["derive"], optional = true }
 clap_complete = { version = "4", optional = true }
+serde_json = { version = "1", optional = true }
 
 [dev-dependencies]
 serde_json = "1"

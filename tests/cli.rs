@@ -163,3 +163,30 @@ fn highlight_letters_rejects_unknown_preset() {
         .assert()
         .failure();
 }
+
+/// Audit #3 — `--json` produit du JSON RFC 8259-conforme sur entrées
+/// adversariales (caractères de contrôle, guillemets, backslashes).
+/// La sortie doit être parseable par `serde_json`.
+#[test]
+fn json_output_is_valid_on_adversarial_inputs() {
+    // On utilise stdin pour pouvoir injecter les caractères de contrôle
+    // sans qu'ils soient interprétés par le shell.
+    let adversarial = "a\u{0001}\u{0007}\u{0008}\u{000B}\u{000C}\u{001F}\"\\b";
+    let output = syllabify()
+        .args(["--json", adversarial])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let stdout = String::from_utf8(output).expect("stdout not utf-8");
+    let trimmed = stdout.trim_end();
+    // Aucun control char brut.
+    assert!(
+        !trimmed.chars().any(|c| (c as u32) < 0x20),
+        "raw control char in --json output: {trimmed:?}"
+    );
+    // Round-trip via serde_json.
+    let _: serde_json::Value = serde_json::from_str(trimmed)
+        .unwrap_or_else(|e| panic!("invalid JSON from --json: {e} :: {trimmed:?}"));
+}
