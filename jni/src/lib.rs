@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+use jni::errors::{ErrorPolicy, Result as JniResult};
 use jni::objects::{JClass, JObjectArray, JString};
 use jni::sys::{jobjectArray, jstring};
-use jni::JNIEnv;
+use jni::{jni_str, Env, EnvUnowned};
 use serde_json::{json, Value};
 use syllabify_fr::letters::{match_letters, presets, render_letters_html, LetterRule, RenderMode};
 use syllabify_fr::{phonemes, render_html, render_word_html, syllabify_text, syllables, TextChunk};
 
-// --- JSON helpers via serde_json ---
-//
-// Échappement RFC 8259-conforme par construction (caractères de contrôle
-// U+0000..U+001F sérialisés en `\uXXXX`, `\b`/`\f` en formes courtes).
-// Remplace les helpers maison antérieurs qui ne couvraient que
-// `" \ \n \r \t` (cf. audit #3 / hand-rolled JSON).
+// --- JSON helpers via serde_json (RFC 8259-conforme par construction) ---
 
 fn chunk_to_value(chunk: &TextChunk) -> Value {
     match chunk {
@@ -23,8 +19,6 @@ fn chunk_to_value(chunk: &TextChunk) -> Value {
 
 fn chunks_to_json(chunks: &[TextChunk]) -> String {
     let values: Vec<Value> = chunks.iter().map(chunk_to_value).collect();
-    // `to_string` ne peut échouer que sur `Map<NonString, _>` ou erreur d'IO —
-    // aucun des deux cas n'est possible sur des `Value` construits ici.
     serde_json::to_string(&values).expect("serde_json::to_string never fails for owned Values")
 }
 
@@ -36,16 +30,35 @@ fn phonemes_to_json(pairs: &[(String, String)]) -> String {
     serde_json::to_string(&values).expect("serde_json::to_string never fails for owned Values")
 }
 
-// --- JNI helpers ---
+// --- ErrorPolicy : préserve le contrat « null sur erreur » de jni 0.21 ---
+//
+// jni 0.22 oblige à choisir une politique pour mapper les erreurs/panics vers
+// la valeur de retour. `ThrowRuntimeExAndDefault` jetterait une RuntimeException
+// côté Java, ce qui changerait le contrat observable. `SilentDefault` retombe
+// silencieusement sur `T::default()` (jstring/jobjectArray => null_mut), reproduisant
+// le comportement pré-0.22 où une UTF-8 invalide ou allocation Java échouée
+// résultait en `return std::ptr::null_mut()`.
 
-fn jni_input<'a>(env: &mut JNIEnv<'a>, s: &JString<'a>) -> Option<String> {
-    env.get_string(s).ok().map(|js| js.into())
-}
+struct SilentDefault;
 
-fn jni_output(env: &mut JNIEnv, s: String) -> jstring {
-    env.new_string(s)
-        .map(|js| js.into_raw())
-        .unwrap_or(std::ptr::null_mut())
+impl<T: Default, E: std::error::Error> ErrorPolicy<T, E> for SilentDefault {
+    type Captures<'unowned_env_local: 'native_method, 'native_method> = ();
+
+    fn on_error<'unowned_env_local: 'native_method, 'native_method>(
+        _env: &mut Env<'unowned_env_local>,
+        _cap: &mut Self::Captures<'unowned_env_local, 'native_method>,
+        _err: E,
+    ) -> JniResult<T> {
+        Ok(T::default())
+    }
+
+    fn on_panic<'unowned_env_local: 'native_method, 'native_method>(
+        _env: &mut Env<'unowned_env_local>,
+        _cap: &mut Self::Captures<'unowned_env_local, 'native_method>,
+        _payload: Box<dyn std::any::Any + Send + 'static>,
+    ) -> JniResult<T> {
+        Ok(T::default())
+    }
 }
 
 // --- Public JNI API ---
@@ -57,35 +70,28 @@ fn jni_output(env: &mut JNIEnv, s: String) -> jstring {
 /// Returns the syllables of a single French word.
 /// Example: `"chocolat"` → `["cho", "co", "lat"]`
 #[no_mangle]
+#[allow(deprecated)] // `find_class` / `new_object_array` / `set_object_array_element`
+                     // — migration vers `JObjectArray::<T>::new` / `set_element`
+                     // à programmer (refactor type-generic non-trivial, hors-scope
+                     // du bump jni 0.21 → 0.22).
 pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_syllables<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _class: JClass<'local>,
     word: JString<'local>,
 ) -> jobjectArray {
-    let word = match jni_input(&mut env, &word) {
-        Some(w) => w,
-        None => return std::ptr::null_mut(),
-    };
-    let syls = syllables(&word);
-    let string_class = match env.find_class("java/lang/String") {
-        Ok(c) => c,
-        Err(_) => return std::ptr::null_mut(),
-    };
-    let arr: JObjectArray =
-        match env.new_object_array(syls.len() as i32, string_class, JString::default()) {
-            Ok(a) => a,
-            Err(_) => return std::ptr::null_mut(),
-        };
-    for (i, syl) in syls.iter().enumerate() {
-        let js = match env.new_string(syl) {
-            Ok(s) => s,
-            Err(_) => return std::ptr::null_mut(),
-        };
-        if env.set_object_array_element(&arr, i as i32, js).is_err() {
-            return std::ptr::null_mut();
+    env.with_env(|env| -> JniResult<jobjectArray> {
+        let word: String = word.try_to_string(env)?;
+        let syls = syllables(&word);
+        let string_class = env.find_class(jni_str!("java/lang/String"))?;
+        let arr: JObjectArray<'local> =
+            env.new_object_array(syls.len() as i32, string_class, JString::default())?;
+        for (i, syl) in syls.iter().enumerate() {
+            let js = env.new_string(syl)?;
+            env.set_object_array_element(&arr, i, js)?;
         }
-    }
-    arr.into_raw()
+        Ok(arr.into_raw())
+    })
+    .resolve::<SilentDefault>()
 }
 
 /// `SyllabifyFr.syllabifyText(text)` → JSON `String`
@@ -94,16 +100,16 @@ pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_syllables<'local>
 /// Example: `"le chat"` → `[{"kind":"word","syllables":["le"]},{"kind":"raw","text":" "},{"kind":"word","syllables":["chat"]}]`
 #[no_mangle]
 pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_syllabifyText<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _class: JClass<'local>,
     text: JString<'local>,
 ) -> jstring {
-    let text = match jni_input(&mut env, &text) {
-        Some(t) => t,
-        None => return std::ptr::null_mut(),
-    };
-    let chunks = syllabify_text(&text);
-    jni_output(&mut env, chunks_to_json(&chunks))
+    env.with_env(|env| -> JniResult<jstring> {
+        let text: String = text.try_to_string(env)?;
+        let chunks = syllabify_text(&text);
+        Ok(env.new_string(chunks_to_json(&chunks))?.into_raw())
+    })
+    .resolve::<SilentDefault>()
 }
 
 /// `SyllabifyFr.phonemes(word)` → JSON `String`
@@ -112,16 +118,16 @@ pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_syllabifyText<'lo
 /// Example: `"chat"` → `[["s^","ch"],["a","a"],["#","t"]]`
 #[no_mangle]
 pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_phonemes<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _class: JClass<'local>,
     word: JString<'local>,
 ) -> jstring {
-    let word = match jni_input(&mut env, &word) {
-        Some(w) => w,
-        None => return std::ptr::null_mut(),
-    };
-    let pairs = phonemes(&word);
-    jni_output(&mut env, phonemes_to_json(&pairs))
+    env.with_env(|env| -> JniResult<jstring> {
+        let word: String = word.try_to_string(env)?;
+        let pairs = phonemes(&word);
+        Ok(env.new_string(phonemes_to_json(&pairs))?.into_raw())
+    })
+    .resolve::<SilentDefault>()
 }
 
 /// `SyllabifyFr.renderWordHtml(word)` → HTML `String`
@@ -129,15 +135,15 @@ pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_phonemes<'local>(
 /// Returns HTML with `<span class="syl syl-a/b">` syllable spans for a single word.
 #[no_mangle]
 pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_renderWordHtml<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _class: JClass<'local>,
     word: JString<'local>,
 ) -> jstring {
-    let word = match jni_input(&mut env, &word) {
-        Some(w) => w,
-        None => return std::ptr::null_mut(),
-    };
-    jni_output(&mut env, render_word_html(&word))
+    env.with_env(|env| -> JniResult<jstring> {
+        let word: String = word.try_to_string(env)?;
+        Ok(env.new_string(render_word_html(&word))?.into_raw())
+    })
+    .resolve::<SilentDefault>()
 }
 
 /// `SyllabifyFr.renderHtml(text)` → HTML `String`
@@ -145,15 +151,15 @@ pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_renderWordHtml<'l
 /// Returns HTML with syllable spans and liaison markers for full text.
 #[no_mangle]
 pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_renderHtml<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _class: JClass<'local>,
     text: JString<'local>,
 ) -> jstring {
-    let text = match jni_input(&mut env, &text) {
-        Some(t) => t,
-        None => return std::ptr::null_mut(),
-    };
-    jni_output(&mut env, render_html(&text))
+    env.with_env(|env| -> JniResult<jstring> {
+        let text: String = text.try_to_string(env)?;
+        Ok(env.new_string(render_html(&text))?.into_raw())
+    })
+    .resolve::<SilentDefault>()
 }
 
 fn preset_rules(name: &str) -> Vec<LetterRule> {
@@ -179,27 +185,26 @@ fn parse_mode(mode: &str) -> RenderMode {
 /// On unknown preset the word is returned HTML-escaped without spans.
 #[no_mangle]
 pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_highlightLetters<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _class: JClass<'local>,
     word: JString<'local>,
     preset: JString<'local>,
     mode: JString<'local>,
 ) -> jstring {
-    let word = match jni_input(&mut env, &word) {
-        Some(w) => w,
-        None => return std::ptr::null_mut(),
-    };
-    let preset = match jni_input(&mut env, &preset) {
-        Some(p) => p,
-        None => return std::ptr::null_mut(),
-    };
-    let mode = jni_input(&mut env, &mode).unwrap_or_else(|| "inline".to_string());
-    let rules = preset_rules(&preset);
-    let spans = match_letters(&word, &rules);
-    jni_output(
-        &mut env,
-        render_letters_html(&word, &spans, &rules, parse_mode(&mode)),
-    )
+    env.with_env(|env| -> JniResult<jstring> {
+        let word: String = word.try_to_string(env)?;
+        let preset: String = preset.try_to_string(env)?;
+        // `mode` est optionnel côté Java (peut être null). On retombe sur "inline"
+        // si la conversion échoue (typiquement parce que `mode` est null).
+        let mode_str = mode
+            .try_to_string(env)
+            .unwrap_or_else(|_| "inline".to_string());
+        let rules = preset_rules(&preset);
+        let spans = match_letters(&word, &rules);
+        let html = render_letters_html(&word, &spans, &rules, parse_mode(&mode_str));
+        Ok(env.new_string(html)?.into_raw())
+    })
+    .resolve::<SilentDefault>()
 }
 
 #[cfg(test)]
