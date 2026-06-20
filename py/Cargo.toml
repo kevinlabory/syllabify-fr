@@ -19,4 +19,4 @@ extension-module = ["pyo3/extension-module"]
 
 [dependencies]
 syllabify-fr = { path = ".." }
-pyo3 = { version = "0.23" }
+pyo3 = { version = "0.29" }
