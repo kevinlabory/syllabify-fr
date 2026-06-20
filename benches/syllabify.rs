@@ -1,4 +1,5 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
+use std::hint::black_box;
 use syllabify_fr::{syllabify_text, syllables};
 
 fn bench_syllables_short(c: &mut Criterion) {
