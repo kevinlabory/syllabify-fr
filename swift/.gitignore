@@ -1,0 +1,8 @@
+# Build artifacts (rebuilt by scripts/build-xcframework.sh on each release).
+.build/
+XCFramework/*.xcframework
+DerivedData/
+
+# Apple-specific noise
+.DS_Store
+*.xcuserdata*
