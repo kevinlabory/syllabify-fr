@@ -6,6 +6,38 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.8.5] — 2026-06-20
+
+### Changed
+- **Bumps deps majeurs** (toutes les majors disponibles prises en une
+  passe, audit deps clos) :
+  - `criterion` 0.5 → 0.8 (dev-dep, benches uniquement). Migration
+    `criterion::black_box` → `std::hint::black_box` (déprécié 0.6+).
+  - `jni` 0.21 → 0.22 (binding Android). Refactor vers la nouvelle
+    API `EnvUnowned` + closure `with_env`, avec politique d'erreur
+    custom `SilentDefault` qui **préserve le contrat null-sur-erreur**
+    pré-0.22 (pas de RuntimeException jetée côté Java). Migration
+    `env.get_string(...).into()` → `JString::try_to_string(env)?`,
+    `find_class("...")` → `find_class(jni_str!("..."))` (compile-time
+    JNI string).
+  - `pyo3` 0.23 → 0.29 (binding Python). Aucun changement de code
+    applicatif nécessaire — le binding utilisait déjà les patterns
+    modernes Bound API depuis le départ.
+
+### Notes
+- Aucun changement d'API publique observable (le contrat de chaque
+  binding est préservé). `cargo-semver-checks` gate validé sur les
+  3 PRs.
+- L'app Android consommatrice (binding JNI) bénéficie maintenant
+  des améliorations de sécurité 0.22 (séparation `EnvUnowned`/`Env`).
+- Cargo méthodes deprecated `find_class` / `new_object_array` /
+  `set_object_array_element` en jni 0.22 sont conservées avec
+  `#[allow(deprecated)]` localement — leur migration vers
+  `JObjectArray::<T>::new` / `set_element` reste à programmer dans
+  une PR isolée (refactor type-generic non-trivial).
+
+---
+
 ## [0.8.4] — 2026-06-15
 
 ### Fixed
