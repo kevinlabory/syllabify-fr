@@ -63,6 +63,18 @@ char *syllabify_render_word_html(const char *word);
  */
 char *syllabify_render_html(const char *text);
 
+/**
+ * Highlight confusable letters in `word` using a named preset.
+ *
+ * `preset` accepts "bdpq", "mnu", or "pir-pri".
+ * `mode` accepts "inline" or "classes" (NULL = inline default).
+ * On unknown preset the word is returned HTML-escaped without spans.
+ *
+ * Returns NULL on NULL `word` or `preset`, or on invalid UTF-8.
+ * The caller must free the result with syllabify_free().
+ */
+char *syllabify_highlight_letters(const char *word, const char *preset, const char *mode);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
