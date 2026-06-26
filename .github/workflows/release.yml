@@ -14,7 +14,7 @@ jobs:
     name: Verify
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
@@ -29,7 +29,7 @@ jobs:
     needs: verify
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Extract release notes from CHANGELOG
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
@@ -51,7 +51,7 @@ jobs:
     needs: verify
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Publish syllabify-fr
@@ -62,7 +62,7 @@ jobs:
     needs: verify
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
@@ -81,7 +81,7 @@ jobs:
           node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));p.files=[...new Set([...(p.files||[]),'README.md'])];fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');"
           test -f README.md
           grep -q '"README.md"' package.json
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '24'   # ships with npm 11.x natively (required for OIDC)
           # No registry-url: prevents setup-node from injecting NODE_AUTH_TOKEN,
