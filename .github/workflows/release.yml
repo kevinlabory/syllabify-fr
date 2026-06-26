@@ -20,7 +20,7 @@ jobs:
           components: clippy, rustfmt
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
-      - run: cargo test --workspace
+      - run: cargo test --workspace --locked
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo fmt --check
 
@@ -55,7 +55,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Publish syllabify-fr
-        run: cargo publish -p syllabify-fr --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p syllabify-fr --locked --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
   publish-npm:
     name: Publish @dyscolor/syllabify-fr-wasm

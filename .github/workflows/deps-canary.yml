@@ -1,0 +1,36 @@
+name: Deps canary
+
+# Filet d'alerte précoce : ré-résout toutes les dépendances au plus récent
+# compatible (`cargo update`) puis relance les tests. Sert à détecter une
+# rupture upstream AVANT qu'elle ne morde — sans rendre la CI des PR
+# non-reproductible (le `Cargo.lock` committé garde les PR déterministes).
+#
+# Non-bloquant par construction : rien ne dépend de ce workflow, aucune PR
+# n'attend dessus. Un run rouge = signal à investiguer, pas une porte de merge.
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # tous les lundis à 06:00 UTC
+  workflow_dispatch: {} # déclenchable à la main depuis l'onglet Actions
+
+env:
+  CARGO_TERM_COLOR: always
+  # Warnings-as-errors : on VEUT être alerté des dépréciations dès qu'une dep
+  # les introduit (cf. criterion::black_box déprécié, détecté tardivement).
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+  latest:
+    name: Tests vs latest deps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Re-resolve every dependency to latest compatible
+        run: cargo update
+      - name: Run test suite against the refreshed lock
+        # Exclut wasm (cible wasm32 requise) et py (link libpython requis) —
+        # mêmes exclusions que la validation locale ; ffi + jni + core couvrent
+        # les deps risquées (regex, serde_json, jni…).
+        run: cargo test --workspace --exclude syllabify-fr-wasm --exclude syllabify-fr-py
