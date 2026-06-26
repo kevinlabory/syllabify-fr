@@ -1,19 +1,20 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Dependabot — github-actions uniquement.
+# Dependabot — github-actions + cargo.
 #
-# Pourquoi pas l'écosystème `cargo` :
-#   - Cargo.lock est gitignored (lib publiée sur crates.io) → dependabot
-#     cargo ne verrait pas les dépendances transitives et ne déclencherait
-#     que sur les bumps MAJEURS, déjà gérés par l'audit deps manuel.
-#   - Les advisories CVE sont déjà couvertes par `cargo-deny check advisories`
-#     (job `deny` de ci.yml) qui fait échouer la CI.
-#   - Le job `semver` (cargo-semver-checks) garde la stabilité d'API.
+# github-actions : le seul angle mort « actions » (personne ne surveille les
+# versions ; cf. le warning « Node.js 20 actions are deprecated » apparu dans
+# les logs CI). 1 PR groupée mensuelle.
 #
-# github-actions est le seul angle mort réel : personne ne surveille les
-# versions des actions (cf. le warning « Node.js 20 actions are deprecated »
-# apparu dans les logs CI). On groupe en une seule PR mensuelle pour limiter
-# le bruit et le coût CI (chaque PR relance les 11 jobs).
+# cargo : devenu pertinent depuis que `Cargo.lock` est committé (cf. PR #39).
+# Dependabot voit désormais l'arbre transitif complet et peut :
+#   - rafraîchir le lock (patch + minor) en une PR groupée mensuelle,
+#   - surtout, fournir la remédiation CVE ciblée (complète `cargo-deny` qui
+#     ne fait que détecter/échouer, sans proposer le fix).
+# Les bumps MAJEURS sont volontairement ignorés ici : ils restent gérés par
+# l'audit deps manuel délibéré (migrations type criterion/jni/pyo3), pour
+# éviter le double-emploi et le bruit. Le job `semver` garde la stabilité
+# d'API quoi qu'il arrive.
 
 version: 2
 updates:
@@ -30,3 +31,25 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+
+  - package-ecosystem: "cargo"
+    directory: "/" # un seul Cargo.lock à la racine couvre tout le workspace
+    schedule:
+      interval: "monthly"
+    groups:
+      cargo:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Majors laissés à l'audit deps manuel (migration délibérée).
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+    commit-message:
+      prefix: "deps"
+    labels:
+      - "dependencies"
+      - "rust"
