@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Dependabot — github-actions uniquement.
+#
+# Pourquoi pas l'écosystème `cargo` :
+#   - Cargo.lock est gitignored (lib publiée sur crates.io) → dependabot
+#     cargo ne verrait pas les dépendances transitives et ne déclencherait
+#     que sur les bumps MAJEURS, déjà gérés par l'audit deps manuel.
+#   - Les advisories CVE sont déjà couvertes par `cargo-deny check advisories`
+#     (job `deny` de ci.yml) qui fait échouer la CI.
+#   - Le job `semver` (cargo-semver-checks) garde la stabilité d'API.
+#
+# github-actions est le seul angle mort réel : personne ne surveille les
+# versions des actions (cf. le warning « Node.js 20 actions are deprecated »
+# apparu dans les logs CI). On groupe en une seule PR mensuelle pour limiter
+# le bruit et le coût CI (chaque PR relance les 11 jobs).
+
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "github-actions"
