@@ -12,8 +12,9 @@ Swift Package for [`syllabify-fr`](https://github.com/kevinlabory/syllabify-fr) 
 # Xcode CLI tools (provides xcodebuild + lipo)
 xcode-select --install
 
-# Rust toolchains for iOS
-rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
+# Rust toolchains: iOS (product) + macOS (host-side `swift test`)
+rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios \
+                  aarch64-apple-darwin x86_64-apple-darwin
 ```
 
 ## Build the XCFramework
@@ -22,13 +23,13 @@ rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
 bash swift/scripts/build-xcframework.sh
 ```
 
-This produces `swift/XCFramework/SyllabifyFr.xcframework`, bundling three slices :
+This produces `swift/XCFramework/SyllabifyFr.xcframework`, bundling :
 
 | Slice | Use |
 |---|---|
 | `aarch64-apple-ios` | Physical iPhone / iPad (arm64 device) |
-| `aarch64-apple-ios-sim` | Simulator on Apple Silicon Mac |
-| `x86_64-apple-ios` | Simulator on Intel Mac (legacy) |
+| `aarch64-apple-ios-sim` + `x86_64-apple-ios` (lipo) | iOS Simulator (Apple Silicon + Intel) |
+| macOS universal (arm64 + x86_64) | **Dev-only** : lets `swift test` run on the Mac host — the shipped product stays iOS-only |
 
 The XCFramework is **not committed** to the repo (`.gitignore`) — it is a build artifact rebuilt per release.
 
@@ -91,10 +92,24 @@ All entry points are pure functions; no shared state, safe to call from any thre
 
 ## Testing
 
+The XCFramework must be built first (see above), since it bundles the macOS
+slice that hosts the tests.
+
 ```bash
+# On the Mac host (macOS slice) — fastest, validates the wrapper logic:
 cd swift
-swift test    # requires the XCFramework to be present (run build-xcframework.sh first)
+swift test
+
+# On an iOS Simulator (validates the actual shipping slices):
+xcodebuild test -scheme SyllabifyFr \
+  -destination 'platform=iOS Simulator,name=iPhone 16'
+# list your simulators with: xcrun simctl list devices available
 ```
+
+`swift test` runs against the macOS slice (host), which fully exercises the
+platform-independent wrapper logic (JSON parsing, memory management, enum
+mapping). The `xcodebuild ... -destination 'iOS Simulator'` path validates the
+exact slices the iOS app links against.
 
 ## Distribution
 

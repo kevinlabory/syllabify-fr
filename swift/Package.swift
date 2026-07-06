@@ -16,13 +16,17 @@ let package = Package(
     name: "SyllabifyFr",
     platforms: [
         .iOS(.v13),
+        // macOS déclaré UNIQUEMENT pour permettre `swift test` sur l'hôte
+        // (la slice macOS de l'XCFramework est un artefact de dev). Le produit
+        // reste iOS-only — aucune app macOS n'est ciblée.
+        .macOS(.v11),
     ],
     products: [
         .library(name: "SyllabifyFr", targets: ["SyllabifyFr"]),
     ],
     targets: [
         // Pre-built binary: the XCFramework produced by build-xcframework.sh
-        // (bundles arm64-device + arm64-simulator + x86_64-simulator slices).
+        // (bundles arm64-device + arm64/x86_64-simulator + macOS-universal slices).
         .binaryTarget(
             name: "CSyllabifyFr",
             path: "XCFramework/SyllabifyFr.xcframework"
