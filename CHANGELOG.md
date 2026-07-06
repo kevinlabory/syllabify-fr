@@ -6,6 +6,55 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.9.0] — 2026-07-06
+
+### Added
+- **Binding Swift / iOS** (`swift/`, 5ᵉ binding). Swift Package local
+  posé au-dessus du C ABI de `syllabify-fr-ffi` — pas de nouveau code
+  Rust, juste un consumer Swift idiomatique + harness de build
+  XCFramework.
+  - API idiomatique : `SyllabifyFr.syllables(_) -> [String]`,
+    `syllabifyText(_) -> [TextChunk]` (enum `.word/.raw`),
+    `phonemes(_) -> [Phoneme]`, `renderHtml`, `renderWordHtml`,
+    `highlightLetters(_:preset:mode:)` (enums `HighlightPreset` /
+    `RenderMode`). Gestion mémoire C transparente (`withCString` +
+    `defer { syllabify_free }`).
+  - `scripts/build-xcframework.sh` produit un XCFramework 5 slices :
+    iOS device (arm64), iOS simulator (arm64 + x86_64 lipo), et macOS
+    universel (dev-only, pour `swift test` sur l'hôte). Le produit
+    reste iOS-only.
+  - Validé de bout en bout : `swift test` (host macOS) + `xcodebuild
+    test` (simulateur iOS), 8 XCTest verts.
+  - Distribution **locale** pour l'instant (`.package(path: …)`), pas
+    de publication CocoaPods / SwiftPM registry.
+- `ffi/include/syllabify_fr.h` complété avec `syllabify_highlight_letters`
+  (manquait depuis 0.8.1) ; `ffi/cbindgen.toml` aligné.
+
+### Changed
+- **CI reproductible** : `Cargo.lock` désormais committé (le workspace
+  est un hybride lib + binaire CLI + 4 cdylibs, et on avait été mordu
+  par la non-reproductibilité). `--locked` ajouté aux jobs test /
+  regression / release. Le job MSRV garde son `rm -f Cargo.lock`
+  (teste volontairement le MSRV contre les deps les plus récentes).
+- **Alerte précoce** : nouveau workflow `deps-canary.yml` (cron hebdo +
+  manuel, non-bloquant) — `cargo update && cargo test` pour capter une
+  rupture upstream sans polluer la CI des PR.
+- **Dependabot** activé : `github-actions` (groupé mensuel) + `cargo`
+  (minor/patch groupés, majors laissés à l'audit manuel).
+- Bumps via dependabot : `actions/checkout` 4→7, `codecov-action` 4→7,
+  `setup-node` 4→6, `clap_complete` 4.6.5→4.6.6.
+
+### Notes
+- **Aucun changement de l'API publique de la crate core** ni des
+  bindings publiés (wasm/py/jni) depuis 0.8.5 — le binding Swift est le
+  seul ajout fonctionnel, et il est local. Le core republié sur
+  crates.io est identique à 0.8.5.
+- `CLAUDE.md` : section « Parité bindings » passe à 5 bindings (ajout
+  swift).
+- Oracle 4830 mots : toujours à 100%.
+
+---
+
 ## [0.8.5] — 2026-06-20
 
 ### Changed
