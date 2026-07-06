@@ -10,4 +10,5 @@ include = [
     "syllabify_phonemes",
     "syllabify_render_word_html",
     "syllabify_render_html",
+    "syllabify_highlight_letters",
 ]

@@ -124,16 +124,23 @@ Les modules `parser`, `decoder`, `homographs`, `phoneme`, `cleaner`, `data`,
 
 Toute modification de la **surface publique** de `syllabify-fr` (nouveau
 `pub mod`, `pub fn`, `pub struct` re-exporté, nouvelle fonction de la crate
-root) **doit** être propagée aux 4 bindings *avant* de bumper la version
+root) **doit** être propagée aux bindings *avant* de bumper la version
 du workspace :
 
 - `wasm/src/lib.rs` — `#[wasm_bindgen]`
 - `ffi/src/lib.rs` — `pub unsafe extern "C"` (renvoie `*mut c_char`,
-  libérer avec `syllabify_free`)
+  libérer avec `syllabify_free`). En cas de nouvelle export :
+  ajouter à `ffi/cbindgen.toml` `[export].include` et au header
+  manuel `ffi/include/syllabify_fr.h`.
 - `py/src/lib.rs` — `#[pyfunction]` + `m.add_function(...)` dans
   `#[pymodule]`
 - `jni/src/lib.rs` —
   `pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_…`
+- `swift/Sources/SyllabifyFr/SyllabifyFr.swift` — wrapper Swift
+  idiomatique au-dessus du C ABI (consomme `ffi/include/syllabify_fr.h`
+  via le module `CSyllabifyFr`). Le binding Swift est **dérivé** du
+  FFI : pas de nouvelle dette JSON/HTML à maintenir, mais une fonction
+  C non exposée côté Swift est invisible aux apps iOS.
 
 Choisir une signature uniforme (presets/strings plutôt que types Rust
 custom) pour réduire le coût marginal par binding. Côté CI : `clippy`
