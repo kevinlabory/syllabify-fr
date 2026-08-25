@@ -81,7 +81,7 @@ jobs:
           node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));p.files=[...new Set([...(p.files||[]),'README.md'])];fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');"
           test -f README.md
           grep -q '"README.md"' package.json
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'   # ships with npm 11.x natively (required for OIDC)
           # No registry-url: prevents setup-node from injecting NODE_AUTH_TOKEN,
