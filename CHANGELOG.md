@@ -6,6 +6,24 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+- **Parser zero-alloc sur le hot path.** `parser::check_context` et les dix
+  règles spéciales de `rules.rs` reconstruisaient des `String` depuis
+  `&[char]` à chaque évaluation de règle — jusqu'à O(n) allocations par
+  règle lookbehind, soit O(n²) par lettre (c'était la cause du « O(n²) ou
+  pire » noté dans `tests/properties.rs`). Le mot est désormais porté par
+  `parser::Word` (texte + table d'offsets caractère → octet, construite une
+  fois par mot) et découpé en `&str` sans copie via `Word::slice`. Les regex
+  reçoivent exactement les mêmes chaînes qu'avant : sémantique inchangée,
+  oracle 4830 mots à 100 %. Les seules allocations restantes dans
+  `rules.rs` construisent un pseudo-infinitif sur les chemins froids
+  (`-ient` / `-ment`) et sont commentées comme telles. Changement interne
+  (`pub(crate)`), aucune API publique touchée.
+
+---
+
 ## [0.9.0] — 2026-07-06
 
 ### Added
