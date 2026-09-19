@@ -36,23 +36,6 @@ pub struct Phoneme {
     pub step: usize,
 }
 
-/// Le pré-filtre `(?:m)$` du lookbehind n'est valide que si `m` ne contient
-/// ni `^` ni `$`.
-///
-/// La boucle de [`check_context`] applique `m` à des **sous-chaînes** du
-/// préfixe : un `^` y désigne le début de la sous-chaîne, pas celui du mot.
-/// Appliqué au préfixe entier, le même `^` désignerait une autre position, et
-/// le pré-filtre écarterait à tort un cas que la boucle accepte — le `^b` de
-/// `(^b|cob|cip)` sur le préfixe `xb` en est un exemple concret présent dans
-/// `data.rs`. Idem pour `$`.
-///
-/// Le test exclut aussi les `[^…]`, où le `^` n'est qu'une négation
-/// inoffensive : les distinguer demanderait de parser le pattern, pour un
-/// gain nul (`[^aefo]` est le seul concerné).
-fn suffix_prefilter_applies(pattern: &str) -> bool {
-    !pattern.contains('^') && !pattern.contains('$')
-}
-
 /// Les regex de l'automate, compilées une fois sous les formes dont le parser
 /// a besoin. Les maps sont immuables une fois construites : les lectures
 /// concurrentes n'ont besoin d'aucun verrou.
@@ -63,10 +46,12 @@ struct Regexes {
     start: HashMap<&'static str, Regex>,
     /// `minus` tel quel — nécessaire pour vérifier qu'un match couvre
     /// *exactement* une sous-chaîne donnée.
+    ///
+    /// Pas de forme ancrée ici. Un pré-filtre `(?:minus)$` a été implémenté
+    /// puis retiré : mesuré, il coûtait plus qu'il ne rapportait sur les mots
+    /// courts — le cas courant — parce qu'il s'ajoute à la boucle au lieu de
+    /// la remplacer (cf. CHANGELOG 0.10.1).
     raw: HashMap<&'static str, Regex>,
-    /// `(?:minus)$` — pré-filtre négatif de la boucle du lookbehind, pour les
-    /// patterns éligibles (cf. [`suffix_prefilter_applies`]).
-    end: HashMap<&'static str, Regex>,
 }
 
 fn regexes() -> &'static Regexes {
@@ -74,7 +59,6 @@ fn regexes() -> &'static Regexes {
     CACHE.get_or_init(|| {
         let mut start = HashMap::new();
         let mut raw = HashMap::new();
-        let mut end = HashMap::new();
         for (_, entry) in AUTOMATON {
             for rule in entry.rules {
                 if let RuleKind::Context {
@@ -93,17 +77,11 @@ fn regexes() -> &'static Regexes {
                         raw.entry(minus).or_insert_with(|| {
                             Regex::new(minus).expect("invalid regex in data.rs")
                         });
-                        if suffix_prefilter_applies(minus) {
-                            end.entry(minus).or_insert_with(|| {
-                                Regex::new(&format!("(?:{minus})$"))
-                                    .expect("invalid regex in data.rs")
-                            });
-                        }
                     }
                 }
             }
         }
-        Regexes { start, raw, end }
+        Regexes { start, raw }
     })
 }
 
@@ -233,26 +211,12 @@ fn check_context(
             // droit du préfixe. Python : boucle k de pos_mot-2 descendant vers -1,
             // pattern.match(mot, k, pos_mot) → le match doit couvrir [k, pos_mot-1].
             //
-            // Pré-filtre : un match couvrant exactement `prefix[k..]` est en
-            // particulier un match qui finit au bord droit du préfixe. Si
-            // `(?:minus)$` ne matche pas, aucun `k` ne peut convenir et la
-            // boucle O(n) est inutile. L'implication ne vaut que dans ce
-            // sens — quand le pré-filtre passe, seule la boucle tranche, car
-            // le leftmost-first peut rendre un match plus court que la
-            // sous-chaîne (`(e?)` sur `ae` en est le cas d'école). Un pattern
-            // sans entrée `end` n'est pas éligible : on déroule la boucle.
-            if cache
-                .end
-                .get(minus)
-                .is_none_or(|prefilter| prefilter.is_match(prefix))
-            {
-                for k in (0..pos_mot - 1).rev() {
-                    let sub = word.slice(k, pos_mot - 1);
-                    if let Some(mat) = re.find(sub) {
-                        if mat.start() == 0 && mat.end() == sub.len() {
-                            found_p = true;
-                            break;
-                        }
+            for k in (0..pos_mot - 1).rev() {
+                let sub = word.slice(k, pos_mot - 1);
+                if let Some(mat) = re.find(sub) {
+                    if mat.start() == 0 && mat.end() == sub.len() {
+                        found_p = true;
+                        break;
                     }
                 }
             }
@@ -419,59 +383,6 @@ mod tests {
                 }
             }
         }
-    }
-
-    /// Solidité du pré-filtre du lookbehind : « la boucle trouve » **doit**
-    /// impliquer « le pré-filtre passe ». L'inverse est permis — le pré-filtre
-    /// est délibérément plus laxiste, la boucle reste l'arbitre. Si cette
-    /// implication tombait, le pré-filtre écarterait des cas valides et
-    /// changerait la syllabation.
-    #[test]
-    fn suffix_prefilter_never_rejects_a_match_the_loop_would_find() {
-        for (_, entry) in AUTOMATON {
-            for rule in entry.rules {
-                let RuleKind::Context {
-                    minus, has_minus, ..
-                } = rule.kind
-                else {
-                    continue;
-                };
-                if !has_minus
-                    || minus.is_empty()
-                    || minus.starts_with('^')
-                    || !suffix_prefilter_applies(minus)
-                {
-                    continue;
-                }
-                let raw = Regex::new(minus).expect("pattern invalide dans data.rs");
-                let prefilter = Regex::new(&format!("(?:{minus})$")).expect("pré-filtre invalide");
-                for s in EQUIV_CORPUS {
-                    let word = Word::new(s);
-                    let n = word.len();
-                    let loop_found = (0..n).rev().any(|k| {
-                        let sub = word.slice(k, n);
-                        raw.find(sub)
-                            .is_some_and(|m| m.start() == 0 && m.end() == sub.len())
-                    });
-                    assert!(
-                        !loop_found || prefilter.is_match(s),
-                        "pré-filtre rejette à tort : pattern={minus:?} input={s:?}"
-                    );
-                }
-            }
-        }
-    }
-
-    /// Les patterns porteurs d'un `^` sont exclus du pré-filtre : dans la
-    /// boucle, `^` désigne le début de la *sous-chaîne*, pas celui du mot.
-    #[test]
-    fn prefilter_excludes_anchor_bearing_patterns() {
-        assert!(!suffix_prefilter_applies("(^b|cob|cip)"));
-        assert!(!suffix_prefilter_applies("(s|^ét|^r)an"));
-        // Négation de classe : inoffensive, mais exclue par prudence.
-        assert!(!suffix_prefilter_applies("[^aefo]"));
-        assert!(suffix_prefilter_applies("oi(n?)"));
-        assert!(suffix_prefilter_applies("(e?)"));
     }
 
     #[test]

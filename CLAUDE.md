@@ -247,18 +247,24 @@ syllabique).
   `parser::check_context` essaie toutes les positions de départ : O(n)
   recherches regex par règle dans le pire cas. Deux passes l'ont attaquée
   sans l'éliminer — 0.10.0 a supprimé les allocations (qui dominaient :
-  −55 % à −73 %), 0.10.1 a ancré le lookahead en `^(?:plus)` et ajouté un
-  pré-filtre `(?:minus)$` qui court-circuite la boucle dans le cas courant.
-  **La boucle subsiste** quand le pré-filtre passe, et pour les 3 patterns
-  qui en sont exclus.
-  Remplacer la boucle par un test unique demanderait de traiter deux
-  obstacles réels, documentés dans les tests de `parser.rs` : un pattern
-  qui matche le vide (`(e?)`) et les `^` internes, qui désignent le début
-  de la sous-chaîne examinée et non celui du mot. Toute tentative doit
-  garder les deux tests d'invariant
-  (`anchored_lookahead_is_equivalent_to_legacy_find`,
-  `suffix_prefilter_never_rejects_a_match_the_loop_would_find`) au vert,
-  en plus de l'oracle.
+  −55 % à −73 %), 0.10.1 a ancré le lookahead en `^(?:plus)`. **La boucle
+  du lookbehind, elle, est intacte.**
+
+  Deux pièges pour qui voudrait s'y attaquer, vérifiés sur les patterns
+  réels de `data.rs` :
+  1. La remplacer par `(?:minus)$` serait un **bug** : `(e?)` matche le
+     vide (la forme ancrée matcherait donc toujours), et le `^` de
+     `(^b|cob|cip)` désigne dans la boucle le début de la *sous-chaîne*
+     examinée, pas celui du mot.
+  2. L'utiliser comme simple pré-filtre négatif est correct — et a été
+     implémenté puis **retiré après mesure** : il s'ajoute à la boucle au
+     lieu de la remplacer, ce qui coûte plus qu'il ne rapporte sur les
+     mots courts (+13 % sur `syllabify_text/sentence`). Cf. CHANGELOG
+     0.10.1.
+
+  Autrement dit : une vraie solution doit *remplacer* la boucle, pas la
+  précéder. Et garder `anchored_lookahead_is_equivalent_to_legacy_find`
+  au vert, en plus de l'oracle.
 - `jni/src/lib.rs` garde `#[allow(deprecated)]` sur `find_class` /
   `new_object_array` / `set_object_array_element` : la migration vers
   `JObjectArray::<T>::new` / `set_element` est un refactor type-generic

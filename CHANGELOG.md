@@ -16,33 +16,34 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   `is_match`. C'est le chemin de loin le plus emprunté — **233 des 249
   règles contextuelles** ont un lookahead.
 
-  L'équivalence est exacte et vaut pour tous les patterns : `^(?:p)` matche
-  si et seulement si un match de `p` démarre en 0, et le leftmost-first
-  décide *quel* match est rendu, jamais s'il en existe un à cette position.
-  Pinné par `anchored_lookahead_is_equivalent_to_legacy_find`, qui compare
-  les deux formes sur l'intégralité des patterns `plus` de l'automate.
-
-- **Pré-filtre du lookbehind.** La boucle `k`, elle, n'a pas pu être
-  remplacée par un simple `(?:minus)$` — ce serait un bug :
-  - `(e?)` matche le vide, donc `(?:(e?))$` matcherait **toujours**, là où
-    la boucle exige que le préfixe finisse par `e` ;
-  - dans la boucle, `^` désigne le début de la **sous-chaîne** examinée, pas
-    celui du mot : sur le préfixe `xb`, le `^b` de `(^b|cob|cip)` est trouvé
-    par la boucle, et ne le serait pas par la forme ancrée.
-
-  `(?:minus)$` sert donc de **pré-filtre négatif** : un match couvrant
-  exactement `prefix[k..]` finit nécessairement au bord droit du préfixe, donc
-  si la forme ancrée ne matche pas, aucun `k` ne peut convenir et la boucle
-  est court-circuitée. L'implication ne vaut que dans ce sens — quand le
-  pré-filtre passe, la boucle reste l'arbitre. Appliqué aux 87 patterns
-  éligibles sur 90 ; les 3 portant un `^` ou un `$` gardent la boucle
-  inconditionnelle. Solidité pinnée par
-  `suffix_prefilter_never_rejects_a_match_the_loop_would_find`.
-
-  Le pire cas du lookbehind reste donc O(n) recherches par règle : ce patch
-  l'évite dans le cas courant, il ne le supprime pas.
+  L'équivalence est exacte et vaut pour tous les patterns, `$` compris :
+  `^(?:p)` matche si et seulement si un match de `p` démarre en 0, et le
+  leftmost-first décide *quel* match est rendu, jamais s'il en existe un à
+  cette position. Pinné par
+  `anchored_lookahead_is_equivalent_to_legacy_find`, qui compare les deux
+  formes sur l'intégralité des patterns `plus` de l'automate.
 
 ### Notes
+- **Un pré-filtre de lookbehind a été implémenté, mesuré, puis retiré.**
+  L'idée : `(?:minus)$` comme filtre négatif devant la boucle `k` — un
+  match couvrant exactement `prefix[k..]` finit nécessairement au bord
+  droit du préfixe, donc si la forme ancrée ne matche pas, aucun `k` ne
+  convient.
+
+  Sémantiquement correct (l'implication ne vaut que dans ce sens, la
+  boucle restait l'arbitre), mais **plus coûteux qu'utile** : il s'ajoute
+  à la boucle au lieu de la remplacer, et sur un mot court la boucle ne
+  fait que deux ou trois tours. Mesuré avec le pré-filtre :
+  `syllabify_text/sentence` **+13 %**, `syllables/chocolat` **+10 %** —
+  contre −40 % sur un mot de 25 lettres. Le cas courant de cette
+  bibliothèque étant du texte ordinaire, le compromis était mauvais.
+
+  À noter pour toute reprise : remplacer purement la boucle par
+  `(?:minus)$` serait un **bug**, et `data.rs` fournit les deux
+  contre-exemples — `(e?)` matche le vide (donc la forme ancrée matcherait
+  toujours), et le `^` de `(^b|cob|cip)` désigne dans la boucle le début
+  de la *sous-chaîne* examinée, pas celui du mot.
+
 - Aucun changement d'API : patch. L'oracle 4830 mots reste à 100 %.
 
 ---
