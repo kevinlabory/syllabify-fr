@@ -22,6 +22,26 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   (`-ient` / `-ment`) et sont commentées comme telles. Changement interne
   (`pub(crate)`), aucune API publique touchée.
 
+  Mesures `cargo bench` (criterion, macOS arm64, baseline = `main`) :
+
+  | Bench | Après | Écart |
+  |---|---|---|
+  | `syllables/chocolat` (8 lettres) | 7,06 µs | **−55,0 %** |
+  | `syllables/anticonstitutionnellement` (25 lettres) | 42,6 µs | **−72,8 %** |
+  | `syllabify_text/sentence` | 44,3 µs | **−47,6 %** |
+  | `syllabify_text/12_words` | 64,1 µs | **−55,8 %** |
+
+  Le gain croît avec la longueur du mot (−55 % à 8 lettres, −73 % à
+  25) : c'est la signature attendue de la suppression d'un coût
+  quadratique. `syllabify_text/sentence` gagne « seulement » 48 % parce
+  que le nettoyage, la désambiguïsation des homographes et l'assemblage
+  syllabique — non touchés ici — pèsent dans ce bench.
+
+  À noter, la boucle lookbehind de `check_context` effectue toujours
+  O(n) recherches regex par règle : seules les allocations ont disparu
+  (elles dominaient). Ancrer les patterns `plus` reste une optimisation
+  ouverte.
+
 ---
 
 ## [0.9.0] — 2026-07-06
