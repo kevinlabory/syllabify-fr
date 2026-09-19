@@ -49,7 +49,10 @@ Pipeline en cinq étapes, la fidélité à LC6 est la contrainte de design à ch
 1. **`cleaner.rs`** — passage en minuscules, apostrophe → `@`, ponctuation →
    espace. Les tirets et underscores sont **conservés en-mot** (changement v6 ;
    cf. NOTES-v6.md Piège 4), donc `grand-père` est un seul token.
-2. **`parser.rs`** — automate à états finis. Pour chaque lettre (indexée à
+2. **`parser.rs`** — automate à états finis. Le mot est porté par
+   `parser::Word` (texte + table d'offsets caractère → octet) : les règles
+   gardent l'indexation par caractère façon Python tout en découpant des
+   `&str` sans allocation via `Word::slice`. Pour chaque lettre (indexée à
    partir de 1 façon Python), sélectionne une règle via regex lookahead
    (`plus`) / lookbehind (`minus`), ou l'une des ~10 règles spéciales
    (`regle_ient`, `regle_mots_ent`, `regle_verbes_ier`, …) dans `rules.rs`.
@@ -106,11 +109,19 @@ Re-exports et modules publics :
     précédent.
   - `render_html`, `render_word_html`, `liaison_amont`, `liaison_aval`,
     `liaison_possible`.
+- Résolution par nom, partagée par les cinq consommateurs (CLI + 4 bindings)
+  depuis 0.10.0 : `letters::presets::by_name(&str) -> Option<Vec<LetterRule>>`
+  et `letters::RenderMode::from_name(&str) -> Option<RenderMode>`. Les deux
+  rendent `None` sur un nom inconnu — c'est délibéré : chaque appelant garde
+  son contrat (`unwrap_or_default()` côté WASM/C/JNI, `ValueError` côté
+  Python). **Ajouter un preset = l'ajouter dans `by_name`**, les bindings
+  en héritent sans modification.
 
 Les modules `parser`, `decoder`, `homographs`, `phoneme`, `cleaner`, `data`,
 `rules` sont `pub(crate)` : leurs types internes (`Phoneme`, `DecodedPhoneme`,
-…) peuvent évoluer sans casser l'API publique (cf. 0.8.3 qui a migré
-`code: String` → `Cow<'static, str>` en interne).
+…) peuvent évoluer sans casser l'API publique — `code` est ainsi passé de
+`String` (≤ 0.8.2) à `Cow<'static, str>` (0.8.3) puis à `&'static str`
+(0.10.0) sans qu'aucune de ces étapes ne soit breaking.
 
 ### Modes
 
@@ -179,18 +190,27 @@ Vérifiées à la lecture (pas de tooling automatique au-delà de
   place dans `decoder::assemble_syllables`.
 - **Bindings = uniformité de signature, pas de logique métier** — si un
   binding doit transformer/normaliser, factoriser dans la lib core.
-  Anti-exemple toujours présent : `preset_rules` est dupliqué dans les
-  4 bindings ; meilleur emplacement = `letters::preset_by_name` (à faire).
-- **API publique : `Cow<'static, str>` plutôt que `String` quand la
-  donnée est statique.** Modèles à suivre : `LetterRule::pattern`
-  (`letters.rs:82`), `Phoneme::code` et `DecodedPhoneme::code` (migrés
-  en 0.8.3 — gains zero-alloc sur le hot path).
+  Cas d'école résolu en 0.10.0 : `preset_rules` était recopié dans les
+  4 bindings, avec des signatures divergentes (`Vec` vide côté C/JNI,
+  `Option` côté Python/WASM) ; tout passe désormais par
+  `letters::presets::by_name`.
+- **Choisir le type le plus simple qui décrit la donnée : `&'static str`
+  si elle est toujours statique, `Cow<'static, str>` seulement si la
+  variante `Owned` est réellement atteignable, `String` en dernier
+  recours.** `LetterRule::pattern` (`letters.rs`) justifie son `Cow` —
+  `LetterRule::new` accepte un preset statique *comme* un `String`
+  construit à l'exécution. `Phoneme::code` / `DecodedPhoneme::code` ne le
+  justifiaient pas : leur `Owned` n'était produit nulle part, d'où le
+  passage à `&'static str` en 0.10.0 (qui a rendu `code` `Copy` et fait
+  tomber au passage quatre `.clone()` et un contournement d'emprunt dans
+  `post_process_o`). Un `Cow` dont `Owned` est inatteignable est un
+  discriminant payé pour rien.
 - **`#[non_exhaustive]` sur tout enum/struct public exposé via le
   pipeline.** Déjà appliqué à `TextChunk`, `AssembleMode`, `SyllableMode`,
   `RenderMode`, `LetterStyle` — ne pas régresser.
 - **`#[must_use]` sur toute fonction pure.** Présent sur les fonctions
-  racine (`lib.rs:43, 54, 80, 98`). Manque encore sur `homographs::lookup`
-  (à corriger hors-scope).
+  racine de `lib.rs`, sur `homographs::lookup`, `presets::by_name` et
+  `RenderMode::from_name`.
 - **Hot path = pas d'alloc.** `parser::one_step`,
   `decoder::assemble_syllables` tournent par mot. Tout `String::new()`,
   `Vec::new()`, `format!()` ajouté ici doit être justifié en commentaire.
@@ -223,9 +243,19 @@ syllabique).
 
 ## Dette technique à connaître
 
-- Rien à traquer pour l'instant. L'ancien cache regex `Mutex<HashMap>`
-  de `parser.rs` est maintenant un `OnceLock<HashMap>` ;
-  `AssembleMode::Lc` porte `#[deprecated]` et sa dérive vis-à-vis de
+- **Complexité résiduelle du lookbehind.** La boucle `k` de
+  `parser::check_context` essaie toutes les positions de départ et fait
+  donc O(n) recherches regex par règle. La passe zero-alloc de 0.10.0 a
+  supprimé les allocations (qui dominaient : −55 % à −73 % au bench, cf.
+  CHANGELOG), **pas** la boucle. Piste ouverte : ancrer les patterns
+  `plus` en `^(?:…)` pour remplacer `find(..).start() == 0` par un test
+  ancré, et réduire la boucle `minus` à un test unique. Ça change les
+  patterns compilés → PR isolée, oracle avant/après obligatoire.
+- `jni/src/lib.rs` garde `#[allow(deprecated)]` sur `find_class` /
+  `new_object_array` / `set_object_array_element` : la migration vers
+  `JObjectArray::<T>::new` / `set_element` est un refactor type-generic
+  non-trivial, resté hors-scope du bump jni 0.21 → 0.22.
+- `AssembleMode::Lc` porte `#[deprecated]` et sa dérive vis-à-vis de
   LC6 v6 est documentée inline.
 
 Toujours consulter **NOTES-v6.md** avant de modifier le comportement du

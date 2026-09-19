@@ -6,7 +6,28 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased]
+## [0.10.0] — 2026-09-19
+
+Version de nettoyage idiomatique : trois passes sur le cœur de la
+bibliothèque — performance, types internes, duplication — **sans aucune
+rupture d'API**.
+
+**Si vous mettez à jour depuis 0.9.0** : rien à changer dans votre code, et
+la syllabification devient **deux à quatre fois plus rapide** (−48 % à
+−73 % selon les cas, détail plus bas). Le gain croît avec la longueur des
+mots. Les bindings WASM, C, Python, JNI et Swift gardent exactement le même
+comportement observable.
+
+### Added
+- `letters::presets::by_name(&str) -> Option<Vec<LetterRule>>` — résout un
+  preset (`"bdpq"`, `"mnu"`, `"pir-pri"`, alias `"pir_pri"`) depuis son nom.
+- `letters::RenderMode::from_name(&str) -> Option<RenderMode>` — idem pour
+  `"inline"` / `"classes"`.
+
+  Les deux rendent `None` sur un nom inconnu plutôt que d'imposer une
+  politique : chaque appelant garde la sienne (`unwrap_or_default()` côté
+  WASM/C/JNI, `ValueError` côté Python). Ajouter un preset au core suffit
+  désormais à le rendre disponible dans les cinq consommateurs.
 
 ### Changed
 - **Parser zero-alloc sur le hot path.** `parser::check_context` et les dix
@@ -59,6 +80,19 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   en `Cow` à juste titre : `LetterRule::new` accepte aussi bien un preset
   statique qu'un `String` construit à l'exécution. La règle utile :
   `Cow` quand `Owned` est réellement possible, `&'static str` sinon.)
+
+- **Fin de la duplication `preset_rules` dans les 4 bindings.** Chacun
+  portait sa copie de la table des presets, avec des signatures qui avaient
+  divergé : `Vec` vide sur preset inconnu côté C et JNI, `Option` côté
+  Python et WASM. Tout passe par `presets::by_name` ; les bindings se
+  réduisent à un `unwrap_or_default()` ou un `ok_or_else()` selon le
+  contrat qu'ils exposent — contrats inchangés. Idem pour `parse_mode` via
+  `RenderMode::from_name`.
+- **`decoder::join_syllables`** factorise la reconstruction des syllabes,
+  qui était recopiée entre `lib.rs` et `decoder.rs` et clonait chaque
+  segment de lettres ; elle les emprunte désormais.
+- **`escape()` HTML** était dupliqué à l'identique dans `html.rs` et
+  `letters.rs` ; déplacé dans un module interne `escape`.
 
 ### Removed
 - `decoder::post_process_w` : no-op depuis le passage à LC6 v6 (la fusion

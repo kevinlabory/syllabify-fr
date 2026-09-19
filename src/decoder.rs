@@ -429,6 +429,18 @@ pub fn assemble_syllables(
     (sylls, nphonemes)
 }
 
+/// Reconstruit les syllabes textuelles depuis les indices rendus par
+/// [`assemble_syllables`].
+///
+/// Chaque syllabe de `sylls` est une liste d'indices dans `nphons` ; on
+/// emprunte les `letters` correspondantes plutôt que de les cloner.
+pub fn join_syllables(sylls: &[Vec<usize>], nphons: &[DecodedPhoneme]) -> Vec<String> {
+    sylls
+        .iter()
+        .map(|syl| syl.iter().map(|&i| nphons[i].letters.as_str()).collect())
+        .collect()
+}
+
 /// Extrait les phonèmes d'un mot unique (après nettoyage).
 pub fn extract_phonemes_word(word: &str, novice_reader: bool) -> Vec<DecodedPhoneme> {
     // Le parser travaille en minuscules (l'automate est défini en minuscules).
@@ -525,16 +537,7 @@ pub fn extract_syllables(
             };
         let (sylls, nphons) = assemble_syllables(&phonemes, assemble_mode, syl_mode);
 
-        let sylls_strings: Vec<String> = sylls
-            .iter()
-            .map(|syl| {
-                syl.iter()
-                    .map(|&i| nphons[i].letters.clone())
-                    .collect::<String>()
-            })
-            .collect();
-
-        out.push(TextChunk::Word(sylls_strings));
+        out.push(TextChunk::Word(join_syllables(&sylls, &nphons)));
         p_text = pp_text + wlen;
 
         // Conserver ce mot (normalisé) comme contexte pour le suivant.

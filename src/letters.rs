@@ -29,6 +29,7 @@
 //! diacritiques (`a` matche `à`, `â`, `ä`…), comme LC6. Les autres
 //! patterns sont comparés littéralement *case-insensitive*.
 
+use crate::escape;
 use std::borrow::Cow;
 
 /// Style typographique appliqué à une règle.
@@ -116,6 +117,23 @@ pub enum RenderMode {
     Inline,
     /// `<span class="lc-letter-N">b</span>` ou la classe custom du `LetterStyle`.
     Classes,
+}
+
+impl RenderMode {
+    /// Résout un mode de rendu depuis son nom : `"inline"` ou `"classes"`.
+    ///
+    /// Rend `None` sur un nom inconnu. Comme pour [`presets::by_name`], le
+    /// traitement du cas inconnu appartient à l'appelant : les bindings WASM,
+    /// C et JNI font `unwrap_or_default()` (donc [`RenderMode::Inline`]), le
+    /// binding Python en fait une `ValueError`.
+    #[must_use]
+    pub fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "inline" => Some(Self::Inline),
+            "classes" => Some(Self::Classes),
+            _ => None,
+        }
+    }
 }
 
 enum Matcher {
@@ -236,10 +254,10 @@ pub fn render_letters_html(
     let mut cursor = 0;
 
     for span in spans {
-        out.push_str(&escape(&word[cursor..span.byte_start]));
+        out.push_str(&escape::html(&word[cursor..span.byte_start]));
 
         let style = &rules[span.rule_id].style;
-        let inner = escape(&word[span.byte_start..span.byte_end]);
+        let inner = escape::html(&word[span.byte_start..span.byte_end]);
 
         match mode {
             RenderMode::Inline => {
@@ -266,7 +284,7 @@ pub fn render_letters_html(
 
         cursor = span.byte_end;
     }
-    out.push_str(&escape(&word[cursor..]));
+    out.push_str(&escape::html(&word[cursor..]));
     out
 }
 
@@ -298,21 +316,6 @@ fn class_for(s: &LetterStyle, rule_id: usize) -> String {
     s.class
         .clone()
         .unwrap_or_else(|| format!("lc-letter-{rule_id}"))
-}
-
-fn escape(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    for c in s.chars() {
-        match c {
-            '&' => out.push_str("&amp;"),
-            '<' => out.push_str("&lt;"),
-            '>' => out.push_str("&gt;"),
-            '"' => out.push_str("&quot;"),
-            '\'' => out.push_str("&#39;"),
-            _ => out.push(c),
-        }
-    }
-    out
 }
 
 /// Presets prêts à l'emploi pour les confusions de lettres les plus courantes.
@@ -352,6 +355,35 @@ pub mod presets {
             LetterRule::new("pir", LetterStyle::color("#1a73e8")),
             LetterRule::new("pri", LetterStyle::color("#d93025")),
         ]
+    }
+
+    /// Résout un preset depuis son nom.
+    ///
+    /// Noms acceptés : `"bdpq"`, `"mnu"` et `"pir-pri"` — ce dernier avec
+    /// `"pir_pri"` en alias, les identifiants transitant par les bindings C
+    /// et JNI s'écrivant souvent sans tiret.
+    ///
+    /// Rend `None` sur un nom inconnu, à charge pour l'appelant de décider :
+    /// les bindings WASM, C et JNI font `unwrap_or_default()` (aucune règle,
+    /// donc le mot rendu échappé mais sans span), le binding Python en fait
+    /// une `ValueError`. Cette fonction existe pour que les cinq
+    /// consommateurs partagent la même table de noms.
+    ///
+    /// ```
+    /// use syllabify_fr::letters::presets;
+    ///
+    /// assert!(presets::by_name("bdpq").is_some());
+    /// assert!(presets::by_name("pir_pri").is_some());
+    /// assert!(presets::by_name("inconnu").is_none());
+    /// ```
+    #[must_use]
+    pub fn by_name(name: &str) -> Option<Vec<LetterRule>> {
+        match name {
+            "bdpq" => Some(bdpq()),
+            "mnu" => Some(mnu()),
+            "pir-pri" | "pir_pri" => Some(pir_pri()),
+            _ => None,
+        }
     }
 }
 

@@ -21,6 +21,7 @@
 pub(crate) mod cleaner;
 pub(crate) mod data;
 pub(crate) mod decoder;
+pub(crate) mod escape;
 pub(crate) mod homographs;
 pub mod html;
 pub mod letters;
@@ -60,14 +61,7 @@ pub fn syllables_with(
 ) -> Vec<String> {
     let phonemes = decoder::extract_phonemes_word(word, novice_reader);
     let (sylls, nphons) = decoder::assemble_syllables(&phonemes, assemble_mode, syl_mode);
-    sylls
-        .iter()
-        .map(|syl| {
-            syl.iter()
-                .map(|&i| nphons[i].letters.clone())
-                .collect::<String>()
-        })
-        .collect()
+    decoder::join_syllables(&sylls, &nphons)
 }
 
 /// Extrait les phonèmes d'un mot : liste de `(code, lettres)`.
