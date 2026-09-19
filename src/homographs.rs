@@ -21,34 +21,21 @@ use crate::data::HOMOGRAPHES;
 ///
 /// Les codes et lettres retournés sont des `&'static str` issus de
 /// `data::HOMOGRAPHES` ; aucune allocation côté homographs.
+#[must_use]
 pub fn lookup(
     word: &str,
     previous_word: Option<&str>,
 ) -> Option<Vec<(&'static str, &'static str)>> {
-    let prev = previous_word?.to_lowercase();
     // Normaliser l'apostrophe typographique
-    let prev = prev.replace('\u{2019}', "'");
+    let prev = previous_word?.to_lowercase().replace('\u{2019}', "'");
 
-    for (key, variants) in HOMOGRAPHES {
-        if *key != word {
-            continue;
-        }
-        for v in *variants {
-            if v.precedent.iter().any(|p| *p == prev) {
-                return Some(v.codage.to_vec());
-            }
-        }
-        // Mot reconnu comme homographe mais pas de contexte matchant :
-        // on laisse l'automate par défaut faire son travail.
-        return None;
-    }
-    None
-}
-
-/// Liste les mots actuellement reconnus comme homographes non homophones.
-#[allow(dead_code)]
-pub fn known_homographs() -> impl Iterator<Item = &'static str> {
-    HOMOGRAPHES.iter().map(|(k, _)| *k)
+    // Un mot absent de la table, ou présent mais dont aucun contexte ne
+    // matche, rend `None` : l'automate par défaut fait alors son travail.
+    let (_, variants) = HOMOGRAPHES.iter().find(|(key, _)| *key == word)?;
+    variants
+        .iter()
+        .find(|v| v.precedent.iter().any(|p| *p == prev))
+        .map(|v| v.codage.to_vec())
 }
 
 #[cfg(test)]

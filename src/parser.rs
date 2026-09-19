@@ -11,7 +11,6 @@ use crate::rules;
 use regex::Regex;
 #[cfg(all(feature = "regex-lite", not(feature = "regex-full")))]
 use regex_lite::Regex;
-use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
@@ -27,10 +26,12 @@ compile_error!("one of the features `regex-full` or `regex-lite` must be enabled
 /// du mot après nettoyage par [`crate::cleaner`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Phoneme {
-    /// Code phonétique LC6. La quasi-totalité des codes provient de
-    /// `data.rs` (`&'static str`) ; l'enveloppe `Cow` évite l'allocation
-    /// dans le hot path du parser.
-    pub code: Cow<'static, str>,
+    /// Code phonétique LC6. Tous les codes sont des littéraux : ceux de
+    /// `data.rs` pour les règles de l'automate, ceux de `decoder.rs` pour
+    /// les réécritures des post-traitements. Aucun n'est construit à
+    /// l'exécution — d'où `&'static str`, plutôt qu'un `Cow` dont la
+    /// variante `Owned` n'était jamais produite.
+    pub code: &'static str,
     /// Nombre de caractères consommés du mot d'entrée.
     pub step: usize,
 }
@@ -226,10 +227,7 @@ fn check_special(sp: Special, word: &Word, pos_mot: usize) -> bool {
 fn one_step(word: &Word, pos: usize) -> Phoneme {
     let letter = word.chars()[pos];
     let Some(entry) = lookup_letter(letter) else {
-        return Phoneme {
-            code: Cow::Borrowed(""),
-            step: 1,
-        };
+        return Phoneme { code: "", step: 1 };
     };
 
     for rule in entry.rules {
@@ -244,7 +242,7 @@ fn one_step(word: &Word, pos: usize) -> Phoneme {
         };
         if applies {
             return Phoneme {
-                code: Cow::Borrowed(rule.phoneme),
+                code: rule.phoneme,
                 step: rule.step,
             };
         }
@@ -253,26 +251,17 @@ fn one_step(word: &Word, pos: usize) -> Phoneme {
     // Fin de mot : règle '@'
     if pos == word.len() - 1 {
         if let Some((phon, step)) = entry.end_of_word {
-            return Phoneme {
-                code: Cow::Borrowed(phon),
-                step,
-            };
+            return Phoneme { code: phon, step };
         }
     }
 
     // Règle par défaut '*'
     if let Some((phon, step)) = entry.default {
-        return Phoneme {
-            code: Cow::Borrowed(phon),
-            step,
-        };
+        return Phoneme { code: phon, step };
     }
 
     // Rien trouvé : caractère non décodable
-    Phoneme {
-        code: Cow::Borrowed(""),
-        step: 1,
-    }
+    Phoneme { code: "", step: 1 }
 }
 
 /// Décode un mot en suite de phonèmes.
@@ -312,14 +301,14 @@ mod tests {
     #[test]
     fn parse_chat() {
         let ph = parse("chat");
-        let codes: Vec<&str> = ph.iter().map(|p| p.code.as_ref()).collect();
+        let codes: Vec<&str> = ph.iter().map(|p| p.code).collect();
         assert_eq!(codes, &["s^", "a", "#"]);
     }
 
     #[test]
     fn parse_ecole() {
         let ph = parse("école");
-        let codes: Vec<&str> = ph.iter().map(|p| p.code.as_ref()).collect();
+        let codes: Vec<&str> = ph.iter().map(|p| p.code).collect();
         // é c o l e → e, k, o, l, q_caduc
         assert_eq!(codes, &["e", "k", "o", "l", "q_caduc"]);
     }

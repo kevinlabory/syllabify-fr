@@ -58,7 +58,7 @@ pub fn syllables_with(
     assemble_mode: AssembleMode,
     syl_mode: SyllableMode,
 ) -> Vec<String> {
-    let phonemes = decoder::extract_phonemes_word(word, novice_reader, syl_mode);
+    let phonemes = decoder::extract_phonemes_word(word, novice_reader);
     let (sylls, nphons) = decoder::assemble_syllables(&phonemes, assemble_mode, syl_mode);
     sylls
         .iter()
@@ -79,9 +79,9 @@ pub fn syllables_with(
 /// ```
 #[must_use]
 pub fn phonemes(word: &str) -> Vec<(String, String)> {
-    decoder::extract_phonemes_word(word, false, SyllableMode::Written)
+    decoder::extract_phonemes_word(word, false)
         .into_iter()
-        .map(|p| (p.code.into_owned(), p.letters))
+        .map(|p| (p.code.to_string(), p.letters))
         .collect()
 }
 

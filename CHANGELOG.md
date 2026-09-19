@@ -42,6 +42,37 @@ Versioning follows [Semantic Versioning](https://semver.org/).
   (elles dominaient). Ancrer les patterns `plus` reste une optimisation
   ouverte.
 
+- **`Phoneme::code` et `DecodedPhoneme::code` : `Cow<'static, str>` →
+  `&'static str`.** La migration `String` → `Cow` de la 0.8.3 était le bon
+  mouvement, mais s'était arrêtée à mi-chemin : la variante `Owned`
+  n'était produite *nulle part*. Tous les codes sont des littéraux — ceux
+  de `data.rs` pour l'automate, ceux de `decoder.rs` pour les
+  réécritures des post-traitements. Le `Cow` ne faisait donc que porter
+  un discriminant et 16 octets pour rien. Effet de bord appréciable :
+  `code` devient `Copy`, ce qui supprime quatre `.clone()` dans
+  `assemble_syllables` et, surtout, permet à `post_process_o` de muter
+  `pp` directement dans sa boucle — le tampon `to_open` + `drop(codes)`
+  n'existait que pour contourner un emprunt que `Cow::as_ref()`
+  imposait. Types `pub(crate)` : aucune API publique touchée.
+
+  (À ne pas confondre avec `letters::LetterRule::pattern`, qui **reste**
+  en `Cow` à juste titre : `LetterRule::new` accepte aussi bien un preset
+  statique qu'un `String` construit à l'exécution. La règle utile :
+  `Cow` quand `Owned` est réellement possible, `&'static str` sinon.)
+
+### Removed
+- `decoder::post_process_w` : no-op depuis le passage à LC6 v6 (la fusion
+  `u + voyelle → w_voyelle` a été supprimée en amont), conservée « pour
+  compat API » alors que le module est `pub(crate)` et qu'aucun appelant
+  externe n'existe.
+- Le paramètre `SyllableMode` de `decoder::post_process_yod`, inutilisé
+  depuis la même migration v6, et par ricochet celui de
+  `extract_phonemes_word` qui ne servait qu'à l'alimenter. L'extraction
+  des phonèmes ne dépend pas du mode syllabique ; sa signature le dit
+  désormais.
+- `homographs::known_homographs`, jamais appelée et masquée par un
+  `#[allow(dead_code)]`.
+
 ---
 
 ## [0.9.0] — 2026-07-06

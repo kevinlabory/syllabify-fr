@@ -6,7 +6,6 @@ use crate::cleaner::clean;
 use crate::data::MOTS_OSSE;
 use crate::parser::parse;
 use crate::phoneme::{classify, PhonClass};
-use std::borrow::Cow;
 
 /// Un phonème décoré avec la chaîne de lettres du mot d'origine qui le produit.
 ///
@@ -16,11 +15,9 @@ use std::borrow::Cow;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DecodedPhoneme {
     /// Code phonétique LC6 (cf. [`crate::parser::Phoneme::code`]).
-    /// `Cow` permet à la majorité des codes (issus de `data.rs`) de
-    /// rester en `&'static str` ; seuls les post-traitements qui réécrivent
-    /// (`x^`, `o_ouvert`, `j`) construisent un `Cow::Borrowed` sur
-    /// littéral, donc toujours sans alloc.
-    pub code: Cow<'static, str>,
+    /// Les réécritures des post-traitements (`x^`, `o_ouvert`, `j`) sont
+    /// elles aussi des littéraux : `&'static str` suffit.
+    pub code: &'static str,
     /// Segment de lettres du mot d'origine qui produit ce phonème.
     pub letters: String,
 }
@@ -112,7 +109,7 @@ pub fn post_process_e(pp: &mut [DecodedPhoneme]) {
     if pp.len() <= 1 {
         return;
     }
-    let codes: Vec<&str> = pp.iter().map(|p| p.code.as_ref()).collect();
+    let codes: Vec<&'static str> = pp.iter().map(|p| p.code).collect();
     if !codes.contains(&"x") {
         return;
     }
@@ -135,13 +132,13 @@ pub fn post_process_e(pp: &mut [DecodedPhoneme]) {
 
     if i_ph == nb_ph {
         // Dernier phonème prononcé = 'eu' → fermé
-        pp[i_ph].code = Cow::Borrowed("x^");
+        pp[i_ph].code = "x^";
         return;
     }
 
     let consonnes_eu_ferme = ["z", "z_s", "t"];
     if consonnes_eu_ferme.contains(&codes[i_ph + 1]) && codes[nb_ph] == "q_caduc" {
-        pp[i_ph].code = Cow::Borrowed("x^");
+        pp[i_ph].code = "x^";
     }
 }
 
@@ -150,7 +147,7 @@ pub fn post_process_o(pp: &mut [DecodedPhoneme]) {
     if pp.len() <= 1 {
         return;
     }
-    let codes: Vec<&str> = pp.iter().map(|p| p.code.as_ref()).collect();
+    let codes: Vec<&'static str> = pp.iter().map(|p| p.code).collect();
     if !codes.contains(&"o") {
         return;
     }
@@ -171,7 +168,7 @@ pub fn post_process_o(pp: &mut [DecodedPhoneme]) {
 
     if MOTS_OSSE.binary_search(&mot.as_str()).is_ok() {
         if let Some(&last_o) = i_o.last() {
-            pp[last_o].code = Cow::Borrowed("o_ouvert");
+            pp[last_o].code = "o_ouvert";
         }
         return;
     }
@@ -181,10 +178,6 @@ pub fn post_process_o(pp: &mut [DecodedPhoneme]) {
         "k_qu", "z^_g", "g_u", "s_c", "s_t", "z_s", "ks", "gz",
     ];
 
-    // Collecter d'abord les indices à passer en o_ouvert, appliquer ensuite :
-    // `codes` emprunte `pp`, donc on ne peut pas muter `pp[i_ph].code` pendant
-    // que la boucle lit encore depuis `codes`.
-    let mut to_open: Vec<usize> = Vec::new();
     for &i_ph in &i_o {
         if i_ph == nb_ph {
             break; // syllabe tonique ouverte en fin de mot : o fermé
@@ -197,30 +190,14 @@ pub fn post_process_o(pp: &mut [DecodedPhoneme]) {
                 || ["r", "z^_g", "v"].contains(&next)
                 || (i_ph + 2 < nb_ph && consonnes.contains(&next) && consonnes.contains(&next2))
             {
-                to_open.push(i_ph);
+                pp[i_ph].code = "o_ouvert";
             }
         }
     }
-    drop(codes);
-    for i_ph in to_open {
-        pp[i_ph].code = Cow::Borrowed("o_ouvert");
-    }
-}
-
-/// Post-traitement `w` : associe `u + voyelle` en phonème composé `w_X`.
-pub fn post_process_w(pp: &mut [DecodedPhoneme]) {
-    if pp.len() <= 1 {
-        return;
-    }
-
-    // v6 : on ne fusionne plus `u + voyelle → w_voyelle`, on garde juste `wa` tel quel.
-    // Le `wa` produit directement par l'automate reste inchangé (c'est une voyelle).
-    // Cette fonction devient quasi no-op en v6 mais est conservée pour compat API.
-    let _ = pp;
 }
 
 /// Post-traitement yod (v6) : remplace `i + voyelle` par `j` simple (plus de fusion `j_V`).
-pub fn post_process_yod(pp: &mut [DecodedPhoneme], _mode: SyllableMode) {
+pub fn post_process_yod(pp: &mut [DecodedPhoneme]) {
     if pp.len() <= 1 {
         return;
     }
@@ -229,8 +206,8 @@ pub fn post_process_yod(pp: &mut [DecodedPhoneme], _mode: SyllableMode) {
     ];
 
     for i in 0..pp.len() - 1 {
-        if pp[i].code == "i" && phon_suivant.contains(&pp[i + 1].code.as_ref()) {
-            pp[i].code = Cow::Borrowed("j");
+        if pp[i].code == "i" && phon_suivant.contains(&pp[i + 1].code) {
+            pp[i].code = "j";
         }
     }
 }
@@ -259,7 +236,7 @@ pub fn assemble_syllables(
     let mut nphonemes: Vec<DecodedPhoneme> = Vec::with_capacity(nb_phon);
     if assemble_mode == AssembleMode::Std {
         for ph in phonemes {
-            let c = classify(&ph.code);
+            let c = classify(ph.code);
             let is_semi_consonne =
                 ph.code.starts_with("j_") || ph.code.starts_with("w_") || ph.code.starts_with("y_");
             let eligible = c == PhonClass::Consonant || is_semi_consonne;
@@ -270,11 +247,11 @@ pub fn assemble_syllables(
                     let prefix: String = chars[..n - 1].iter().collect();
                     let last: String = chars[n - 1..].iter().collect();
                     nphonemes.push(DecodedPhoneme {
-                        code: ph.code.clone(),
+                        code: ph.code,
                         letters: prefix,
                     });
                     nphonemes.push(DecodedPhoneme {
-                        code: ph.code.clone(),
+                        code: ph.code,
                         letters: last,
                     });
                 } else {
@@ -308,7 +285,7 @@ pub fn assemble_syllables(
         {
             PhonClass::Vowel
         } else {
-            classify(&ph.code)
+            classify(ph.code)
         };
         sylph.push(SylPh {
             class,
@@ -321,9 +298,9 @@ pub fn assemble_syllables(
     let mut i = 0;
     while i + 1 < sylph.len() {
         if sylph[i].class == PhonClass::Consonant && sylph[i + 1].class == PhonClass::Consonant {
-            let phon0 = &nphonemes[sylph[i].indices[0]].code;
-            let phon1 = &nphonemes[sylph[i + 1].indices[0]].code;
-            if (phon1 == "l" || phon1 == "r") && attaque_premiere.contains(&phon0.as_ref()) {
+            let phon0 = nphonemes[sylph[i].indices[0]].code;
+            let phon1 = nphonemes[sylph[i + 1].indices[0]].code;
+            if (phon1 == "l" || phon1 == "r") && attaque_premiere.contains(&phon0) {
                 let removed = sylph.remove(i + 1);
                 sylph[i].indices.extend(removed.indices);
                 // ne pas incrémenter
@@ -337,8 +314,8 @@ pub fn assemble_syllables(
     let mut i = 0;
     while i + 1 < sylph.len() {
         if sylph[i].class == PhonClass::Vowel && sylph[i + 1].class == PhonClass::Vowel {
-            let phon1 = nphonemes[sylph[i].indices[0]].code.clone();
-            let phon2 = nphonemes[sylph[i + 1].indices[0]].code.clone();
+            let phon1 = nphonemes[sylph[i].indices[0]].code;
+            let phon2 = nphonemes[sylph[i + 1].indices[0]].code;
             let merge = (phon1 == "y" && phon2 == "i")
                 || (phon1 == "u" && (phon2 == "i" || phon2 == "e~" || phon2 == "o~"));
             if merge {
@@ -430,7 +407,7 @@ pub fn assemble_syllables(
         } else {
             let mut k = last.len() - 1;
             while k > 0 {
-                let code = &nphonemes[last[k]].code;
+                let code = nphonemes[last[k]].code;
                 if code != "#" && code != "verb_3p" {
                     break;
                 }
@@ -453,11 +430,7 @@ pub fn assemble_syllables(
 }
 
 /// Extrait les phonèmes d'un mot unique (après nettoyage).
-pub fn extract_phonemes_word(
-    word: &str,
-    novice_reader: bool,
-    mode: SyllableMode,
-) -> Vec<DecodedPhoneme> {
+pub fn extract_phonemes_word(word: &str, novice_reader: bool) -> Vec<DecodedPhoneme> {
     // Le parser travaille en minuscules (l'automate est défini en minuscules).
     // On préserve la casse originale dans les `letters` de sortie.
     let lower: String = word.chars().flat_map(char::to_lowercase).collect();
@@ -484,8 +457,7 @@ pub fn extract_phonemes_word(
 
     post_process_e(&mut out);
     if !novice_reader {
-        post_process_w(&mut out);
-        post_process_yod(&mut out, mode);
+        post_process_yod(&mut out);
         post_process_o(&mut out);
     }
     out
@@ -545,11 +517,11 @@ pub fn extract_syllables(
                 Some(coded) => coded
                     .into_iter()
                     .map(|(code, letters)| DecodedPhoneme {
-                        code: Cow::Borrowed(code),
+                        code,
                         letters: letters.to_string(),
                     })
                     .collect(),
-                None => extract_phonemes_word(&original_word, novice_reader, syl_mode),
+                None => extract_phonemes_word(&original_word, novice_reader),
             };
         let (sylls, nphons) = assemble_syllables(&phonemes, assemble_mode, syl_mode);
 
