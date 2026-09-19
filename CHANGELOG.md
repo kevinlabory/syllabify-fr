@@ -6,6 +6,44 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+- **Parser zero-alloc sur le hot path.** `parser::check_context` et les dix
+  règles spéciales de `rules.rs` reconstruisaient des `String` depuis
+  `&[char]` à chaque évaluation de règle — jusqu'à O(n) allocations par
+  règle lookbehind, soit O(n²) par lettre (c'était la cause du « O(n²) ou
+  pire » noté dans `tests/properties.rs`). Le mot est désormais porté par
+  `parser::Word` (texte + table d'offsets caractère → octet, construite une
+  fois par mot) et découpé en `&str` sans copie via `Word::slice`. Les regex
+  reçoivent exactement les mêmes chaînes qu'avant : sémantique inchangée,
+  oracle 4830 mots à 100 %. Les seules allocations restantes dans
+  `rules.rs` construisent un pseudo-infinitif sur les chemins froids
+  (`-ient` / `-ment`) et sont commentées comme telles. Changement interne
+  (`pub(crate)`), aucune API publique touchée.
+
+  Mesures `cargo bench` (criterion, macOS arm64, baseline = `main`) :
+
+  | Bench | Après | Écart |
+  |---|---|---|
+  | `syllables/chocolat` (8 lettres) | 7,06 µs | **−55,0 %** |
+  | `syllables/anticonstitutionnellement` (25 lettres) | 42,6 µs | **−72,8 %** |
+  | `syllabify_text/sentence` | 44,3 µs | **−47,6 %** |
+  | `syllabify_text/12_words` | 64,1 µs | **−55,8 %** |
+
+  Le gain croît avec la longueur du mot (−55 % à 8 lettres, −73 % à
+  25) : c'est la signature attendue de la suppression d'un coût
+  quadratique. `syllabify_text/sentence` gagne « seulement » 48 % parce
+  que le nettoyage, la désambiguïsation des homographes et l'assemblage
+  syllabique — non touchés ici — pèsent dans ce bench.
+
+  À noter, la boucle lookbehind de `check_context` effectue toujours
+  O(n) recherches regex par règle : seules les allocations ont disparu
+  (elles dominaient). Ancrer les patterns `plus` reste une optimisation
+  ouverte.
+
+---
+
 ## [0.9.0] — 2026-07-06
 
 ### Added

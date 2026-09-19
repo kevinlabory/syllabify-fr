@@ -90,71 +90,112 @@ fn lookup_letter(letter: char) -> Option<&'static LetterEntry> {
     letter_index().get(&letter).copied()
 }
 
+/// Mot en cours d'analyse : le texte et son index caractère → octet.
+///
+/// Construit une seule fois par [`parse`]. L'automate et les règles
+/// (`rules.rs`) raisonnent en positions de **caractères** (sémantique
+/// Python/LC6 : `pos_mot` 1-indexé), mais les regex consomment des `&str`.
+/// La table `offsets` permet de découper `text` en `&str` sans allocation
+/// via [`Word::slice`] — c'est ce qui rend le hot path du parser zero-alloc.
+#[derive(Debug)]
+pub struct Word<'a> {
+    text: &'a str,
+    chars: Vec<char>,
+    /// `offsets[i]` = octet de début du caractère `i`, plus une sentinelle
+    /// finale `offsets[len] == text.len()` pour que `slice(i, len)` soit valide.
+    offsets: Vec<usize>,
+}
+
+impl<'a> Word<'a> {
+    pub fn new(text: &'a str) -> Self {
+        let mut chars = Vec::with_capacity(text.len());
+        let mut offsets = Vec::with_capacity(text.len() + 1);
+        for (i, c) in text.char_indices() {
+            offsets.push(i);
+            chars.push(c);
+        }
+        offsets.push(text.len());
+        Self {
+            text,
+            chars,
+            offsets,
+        }
+    }
+
+    /// Nombre de caractères.
+    pub fn len(&self) -> usize {
+        self.chars.len()
+    }
+
+    /// Le mot entier.
+    pub fn text(&self) -> &'a str {
+        self.text
+    }
+
+    /// Les caractères, pour l'indexation par position.
+    pub fn chars(&self) -> &[char] {
+        &self.chars
+    }
+
+    /// Sous-chaîne couvrant les caractères `[start, end)`, sans allocation.
+    pub fn slice(&self, start: usize, end: usize) -> &'a str {
+        &self.text[self.offsets[start]..self.offsets[end]]
+    }
+}
+
 /// Évalue une règle contextuelle : lookahead (`plus`) et lookbehind (`minus`).
 ///
-/// `word` est le mot sous forme de chars.
-/// `pos_mot` est la position (1-indexée comme dans le Python : la lettre actuelle est word[pos_mot-1]).
+/// `pos_mot` est la position 1-indexée comme dans le Python : la lettre
+/// actuelle est `word.chars()[pos_mot - 1]`.
 ///
-/// Reproduit la logique de `Parser.check` : pour `-` qui commence par `^` sans préfixe,
-/// test que `pos_mot` == 1 ; pour `-` qui commence par `^...`, test pattern qui mange tout le préfixe ;
-/// pour `-` ordinaire, test que le pattern s'ajuste au bord droit du préfixe (boucle k).
+/// Reproduit la logique de `Parser.check` : pour `-` qui commence par `^` sans
+/// préfixe, test que `pos_mot == 1` ; pour `-` qui commence par `^...`, test
+/// pattern qui mange tout le préfixe ; pour `-` ordinaire, test que le pattern
+/// s'ajuste au bord droit du préfixe (boucle k).
+///
+/// Les regex reçoivent des sous-chaînes de `word` obtenues par
+/// [`Word::slice`] : aucune allocation, et exactement les mêmes chaînes que
+/// l'implémentation historique (qui les reconstruisait depuis `&[char]`).
 fn check_context(
     plus: &str,
     minus: &str,
     has_plus: bool,
     has_minus: bool,
-    word: &[char],
+    word: &Word,
     pos_mot: usize,
 ) -> bool {
     let mut found_s = true;
     let mut found_p = true;
 
-    // La chaîne suffixe à partir de pos_mot
-    let suffix: String = word[pos_mot..].iter().collect();
-
     if has_plus {
-        match get_regex(plus) {
-            Some(re) => {
-                found_s = re.find(&suffix).is_some_and(|m| m.start() == 0);
-            }
-            None => found_s = false,
-        }
+        let suffix = word.slice(pos_mot, word.len());
+        found_s = get_regex(plus).is_some_and(|re| re.find(suffix).is_some_and(|m| m.start() == 0));
     }
 
     if has_minus {
-        let prefix: String = word[..pos_mot - 1].iter().collect();
+        let prefix = word.slice(0, pos_mot - 1);
         found_p = false;
         if minus.starts_with('^') {
-            // ^ = début de chaîne
             if minus.len() == 1 {
-                // minus == "^" : match début du mot vide → pos_mot == 1 veut dire lettre en position 0
+                // minus == "^" : début du mot vide → la lettre est en position 0
                 found_p = pos_mot == 1;
-            } else {
-                // minus == "^...": le début du mot doit matcher tout le préfixe
-                if let Some(re) = get_regex(minus) {
-                    if let Some(mat) = re.find(&prefix) {
-                        // IMPORTANT : mat.start()/end() sont en BYTES, comparer à prefix.len() (bytes).
-                        found_p = mat.start() == 0 && mat.end() == prefix.len();
-                    }
+            } else if let Some(re) = get_regex(minus) {
+                // minus == "^..." : le début du mot doit matcher tout le préfixe.
+                // mat.start()/end() sont en OCTETS, comme prefix.len().
+                if let Some(mat) = re.find(prefix) {
+                    found_p = mat.start() == 0 && mat.end() == prefix.len();
                 }
             }
-        } else {
-            // Pattern sans ^ : on cherche une correspondance qui "finit" au bord droit (= à pos_mot-1)
-            // Dans le Python : boucle k de pos_mot-2 descendant vers -1,
-            //   pattern.match(mot, k, pos_mot) : le match doit couvrir exactement [k, pos_mot-1]
-            if let Some(re) = get_regex(minus) {
-                let prefix_len = prefix.chars().count();
-                // Tester tous les points de départ possibles
-                for k in (0..prefix_len).rev() {
-                    // Construire le slice [k, prefix_len]
-                    let sub: String = word[k..pos_mot - 1].iter().collect();
-                    if let Some(mat) = re.find(&sub) {
-                        // IMPORTANT : mat.start()/end() sont en BYTES.
-                        // On doit donc comparer aux bytes de sub, pas aux chars.
-                        if mat.start() == 0 && mat.end() == sub.len() {
-                            found_p = true;
-                            break;
-                        }
+        } else if let Some(re) = get_regex(minus) {
+            // Pattern sans ^ : on cherche une correspondance qui « finit » au bord
+            // droit du préfixe. Python : boucle k de pos_mot-2 descendant vers -1,
+            // pattern.match(mot, k, pos_mot) → le match doit couvrir [k, pos_mot-1].
+            for k in (0..pos_mot - 1).rev() {
+                let sub = word.slice(k, pos_mot - 1);
+                if let Some(mat) = re.find(sub) {
+                    if mat.start() == 0 && mat.end() == sub.len() {
+                        found_p = true;
+                        break;
                     }
                 }
             }
@@ -165,7 +206,7 @@ fn check_context(
 }
 
 /// Applique une règle spéciale.
-fn check_special(sp: Special, word: &[char], pos_mot: usize) -> bool {
+fn check_special(sp: Special, word: &Word, pos_mot: usize) -> bool {
     match sp {
         Special::RegleIent => rules::regle_ient(word, pos_mot),
         Special::RegleMotsEnt => rules::regle_mots_ent(word, pos_mot),
@@ -181,9 +222,9 @@ fn check_special(sp: Special, word: &[char], pos_mot: usize) -> bool {
 }
 
 /// Une étape : retourne le phonème produit et le nombre de caractères consommés.
-/// Retour (String vide, 1) signifie "caractère non décodable", on avance d'un cran.
-fn one_step(word: &[char], pos: usize) -> Phoneme {
-    let letter = word[pos];
+/// Retour (code vide, 1) signifie « caractère non décodable », on avance d'un cran.
+fn one_step(word: &Word, pos: usize) -> Phoneme {
+    let letter = word.chars()[pos];
     let Some(entry) = lookup_letter(letter) else {
         return Phoneme {
             code: Cow::Borrowed(""),
@@ -236,7 +277,7 @@ fn one_step(word: &[char], pos: usize) -> Phoneme {
 
 /// Décode un mot en suite de phonèmes.
 pub fn parse(word: &str) -> Vec<Phoneme> {
-    let chars: Vec<char> = word.chars().collect();
+    let word = Word::new(word);
     let mut code: Vec<Phoneme> = Vec::new();
     let mut pos = 0;
 
@@ -244,8 +285,8 @@ pub fn parse(word: &str) -> Vec<Phoneme> {
     // a été supprimé ; les cas sont désormais gérés par des règles d'automate
     // ou par le mécanisme `HOMOGRAPHES` (utilisé au niveau texte).
 
-    while pos < chars.len() {
-        let ph = one_step(&chars, pos);
+    while pos < word.len() {
+        let ph = one_step(&word, pos);
         pos += ph.step;
         code.push(ph);
     }
@@ -256,6 +297,17 @@ pub fn parse(word: &str) -> Vec<Phoneme> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn word_slice_is_char_indexed_and_zero_copy() {
+        let w = Word::new("école");
+        assert_eq!(w.len(), 5);
+        assert_eq!(w.slice(0, 1), "é");
+        assert_eq!(w.slice(1, 5), "cole");
+        assert_eq!(w.slice(5, 5), "");
+        assert_eq!(w.slice(0, 5), w.text());
+        assert_eq!(Word::new("").len(), 0);
+    }
 
     #[test]
     fn parse_chat() {
