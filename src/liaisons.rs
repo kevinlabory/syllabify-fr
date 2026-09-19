@@ -19,7 +19,7 @@
 //! ```
 
 use crate::data::LIAISONS_AVAL;
-use crate::decoder::{extract_phonemes_word, SyllableMode};
+use crate::decoder::extract_phonemes_word;
 use crate::phoneme::{classify, PhonClass};
 
 /// Le mot *peut-il recevoir* une liaison en amont ?
@@ -28,10 +28,10 @@ use crate::phoneme::{classify, PhonClass};
 /// Faux pour un h aspiré (phonème `#`) ou une consonne initiale.
 #[must_use]
 pub fn liaison_amont(word: &str) -> bool {
-    let phonemes = extract_phonemes_word(word, false, SyllableMode::Written);
+    let phonemes = extract_phonemes_word(word, false);
     match phonemes.first() {
         Some(p) if p.code == "#_h_muet" => true,
-        Some(p) => classify(&p.code) == PhonClass::Vowel,
+        Some(p) => classify(p.code) == PhonClass::Vowel,
         None => false,
     }
 }
