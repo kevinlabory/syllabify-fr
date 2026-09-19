@@ -6,6 +6,47 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.10.1] — 2026-09-19
+
+### Performance
+- **Lookahead ancré.** `check_context` testait le lookahead par
+  `find(suffix).start() == 0` : le moteur balayait tout le suffixe à la
+  recherche d'un match, pour le rejeter ensuite s'il ne démarrait pas en 0.
+  Les patterns sont désormais compilés en `^(?:plus)` et testés par
+  `is_match`. C'est le chemin de loin le plus emprunté — **233 des 249
+  règles contextuelles** ont un lookahead.
+
+  L'équivalence est exacte et vaut pour tous les patterns : `^(?:p)` matche
+  si et seulement si un match de `p` démarre en 0, et le leftmost-first
+  décide *quel* match est rendu, jamais s'il en existe un à cette position.
+  Pinné par `anchored_lookahead_is_equivalent_to_legacy_find`, qui compare
+  les deux formes sur l'intégralité des patterns `plus` de l'automate.
+
+- **Pré-filtre du lookbehind.** La boucle `k`, elle, n'a pas pu être
+  remplacée par un simple `(?:minus)$` — ce serait un bug :
+  - `(e?)` matche le vide, donc `(?:(e?))$` matcherait **toujours**, là où
+    la boucle exige que le préfixe finisse par `e` ;
+  - dans la boucle, `^` désigne le début de la **sous-chaîne** examinée, pas
+    celui du mot : sur le préfixe `xb`, le `^b` de `(^b|cob|cip)` est trouvé
+    par la boucle, et ne le serait pas par la forme ancrée.
+
+  `(?:minus)$` sert donc de **pré-filtre négatif** : un match couvrant
+  exactement `prefix[k..]` finit nécessairement au bord droit du préfixe, donc
+  si la forme ancrée ne matche pas, aucun `k` ne peut convenir et la boucle
+  est court-circuitée. L'implication ne vaut que dans ce sens — quand le
+  pré-filtre passe, la boucle reste l'arbitre. Appliqué aux 87 patterns
+  éligibles sur 90 ; les 3 portant un `^` ou un `$` gardent la boucle
+  inconditionnelle. Solidité pinnée par
+  `suffix_prefilter_never_rejects_a_match_the_loop_would_find`.
+
+  Le pire cas du lookbehind reste donc O(n) recherches par règle : ce patch
+  l'évite dans le cas courant, il ne le supprime pas.
+
+### Notes
+- Aucun changement d'API : patch. L'oracle 4830 mots reste à 100 %.
+
+---
+
 ## [0.10.0] — 2026-09-19
 
 Version de nettoyage idiomatique : trois passes sur le cœur de la

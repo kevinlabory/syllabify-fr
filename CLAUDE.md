@@ -244,13 +244,21 @@ syllabique).
 ## Dette technique à connaître
 
 - **Complexité résiduelle du lookbehind.** La boucle `k` de
-  `parser::check_context` essaie toutes les positions de départ et fait
-  donc O(n) recherches regex par règle. La passe zero-alloc de 0.10.0 a
-  supprimé les allocations (qui dominaient : −55 % à −73 % au bench, cf.
-  CHANGELOG), **pas** la boucle. Piste ouverte : ancrer les patterns
-  `plus` en `^(?:…)` pour remplacer `find(..).start() == 0` par un test
-  ancré, et réduire la boucle `minus` à un test unique. Ça change les
-  patterns compilés → PR isolée, oracle avant/après obligatoire.
+  `parser::check_context` essaie toutes les positions de départ : O(n)
+  recherches regex par règle dans le pire cas. Deux passes l'ont attaquée
+  sans l'éliminer — 0.10.0 a supprimé les allocations (qui dominaient :
+  −55 % à −73 %), 0.10.1 a ancré le lookahead en `^(?:plus)` et ajouté un
+  pré-filtre `(?:minus)$` qui court-circuite la boucle dans le cas courant.
+  **La boucle subsiste** quand le pré-filtre passe, et pour les 3 patterns
+  qui en sont exclus.
+  Remplacer la boucle par un test unique demanderait de traiter deux
+  obstacles réels, documentés dans les tests de `parser.rs` : un pattern
+  qui matche le vide (`(e?)`) et les `^` internes, qui désignent le début
+  de la sous-chaîne examinée et non celui du mot. Toute tentative doit
+  garder les deux tests d'invariant
+  (`anchored_lookahead_is_equivalent_to_legacy_find`,
+  `suffix_prefilter_never_rejects_a_match_the_loop_would_find`) au vert,
+  en plus de l'oracle.
 - `jni/src/lib.rs` garde `#[allow(deprecated)]` sur `find_class` /
   `new_object_array` / `set_object_array_element` : la migration vers
   `JObjectArray::<T>::new` / `set_element` est un refactor type-generic

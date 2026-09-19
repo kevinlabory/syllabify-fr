@@ -36,12 +36,45 @@ pub struct Phoneme {
     pub step: usize,
 }
 
-// Compile every regex pattern that appears in AUTOMATON exactly once, at first parse.
-// The resulting HashMap is immutable: concurrent reads need no lock.
-fn regex_cache() -> &'static HashMap<&'static str, Regex> {
-    static CACHE: OnceLock<HashMap<&'static str, Regex>> = OnceLock::new();
+/// Le pré-filtre `(?:m)$` du lookbehind n'est valide que si `m` ne contient
+/// ni `^` ni `$`.
+///
+/// La boucle de [`check_context`] applique `m` à des **sous-chaînes** du
+/// préfixe : un `^` y désigne le début de la sous-chaîne, pas celui du mot.
+/// Appliqué au préfixe entier, le même `^` désignerait une autre position, et
+/// le pré-filtre écarterait à tort un cas que la boucle accepte — le `^b` de
+/// `(^b|cob|cip)` sur le préfixe `xb` en est un exemple concret présent dans
+/// `data.rs`. Idem pour `$`.
+///
+/// Le test exclut aussi les `[^…]`, où le `^` n'est qu'une négation
+/// inoffensive : les distinguer demanderait de parser le pattern, pour un
+/// gain nul (`[^aefo]` est le seul concerné).
+fn suffix_prefilter_applies(pattern: &str) -> bool {
+    !pattern.contains('^') && !pattern.contains('$')
+}
+
+/// Les regex de l'automate, compilées une fois sous les formes dont le parser
+/// a besoin. Les maps sont immuables une fois construites : les lectures
+/// concurrentes n'ont besoin d'aucun verrou.
+struct Regexes {
+    /// `^(?:plus)` — le lookahead ne s'intéresse qu'à un match démarrant
+    /// exactement au début du suffixe. Ancrer évite au moteur de balayer tout
+    /// le suffixe à la recherche d'un match plus loin, qu'on rejetterait.
+    start: HashMap<&'static str, Regex>,
+    /// `minus` tel quel — nécessaire pour vérifier qu'un match couvre
+    /// *exactement* une sous-chaîne donnée.
+    raw: HashMap<&'static str, Regex>,
+    /// `(?:minus)$` — pré-filtre négatif de la boucle du lookbehind, pour les
+    /// patterns éligibles (cf. [`suffix_prefilter_applies`]).
+    end: HashMap<&'static str, Regex>,
+}
+
+fn regexes() -> &'static Regexes {
+    static CACHE: OnceLock<Regexes> = OnceLock::new();
     CACHE.get_or_init(|| {
-        let mut map = HashMap::new();
+        let mut start = HashMap::new();
+        let mut raw = HashMap::new();
+        let mut end = HashMap::new();
         for (_, entry) in AUTOMATON {
             for rule in entry.rules {
                 if let RuleKind::Context {
@@ -52,23 +85,26 @@ fn regex_cache() -> &'static HashMap<&'static str, Regex> {
                 } = rule.kind
                 {
                     if has_plus && !plus.is_empty() {
-                        map.entry(plus)
-                            .or_insert_with(|| Regex::new(plus).expect("invalid regex in data.rs"));
+                        start.entry(plus).or_insert_with(|| {
+                            Regex::new(&format!("^(?:{plus})")).expect("invalid regex in data.rs")
+                        });
                     }
                     if has_minus && !minus.is_empty() {
-                        map.entry(minus).or_insert_with(|| {
+                        raw.entry(minus).or_insert_with(|| {
                             Regex::new(minus).expect("invalid regex in data.rs")
                         });
+                        if suffix_prefilter_applies(minus) {
+                            end.entry(minus).or_insert_with(|| {
+                                Regex::new(&format!("(?:{minus})$"))
+                                    .expect("invalid regex in data.rs")
+                            });
+                        }
                     }
                 }
             }
         }
-        map
+        Regexes { start, raw, end }
     })
-}
-
-fn get_regex(pattern: &str) -> Option<&'static Regex> {
-    regex_cache().get(pattern)
 }
 
 // Index char → LetterEntry built once at first parse, replacing a linear scan
@@ -165,12 +201,17 @@ fn check_context(
     word: &Word,
     pos_mot: usize,
 ) -> bool {
+    let cache = regexes();
     let mut found_s = true;
     let mut found_p = true;
 
     if has_plus {
         let suffix = word.slice(pos_mot, word.len());
-        found_s = get_regex(plus).is_some_and(|re| re.find(suffix).is_some_and(|m| m.start() == 0));
+        // `^(?:plus)` matche ⟺ un match de `plus` démarre en 0, c'est-à-dire
+        // exactement ce que testait `find(suffix).start() == 0`. Le
+        // leftmost-first décide *quel* match est rendu, jamais s'il en existe
+        // un en position 0 : l'équivalence tient pour tous les patterns.
+        found_s = cache.start.get(plus).is_some_and(|re| re.is_match(suffix));
     }
 
     if has_minus {
@@ -180,23 +221,38 @@ fn check_context(
             if minus.len() == 1 {
                 // minus == "^" : début du mot vide → la lettre est en position 0
                 found_p = pos_mot == 1;
-            } else if let Some(re) = get_regex(minus) {
+            } else if let Some(re) = cache.raw.get(minus) {
                 // minus == "^..." : le début du mot doit matcher tout le préfixe.
                 // mat.start()/end() sont en OCTETS, comme prefix.len().
                 if let Some(mat) = re.find(prefix) {
                     found_p = mat.start() == 0 && mat.end() == prefix.len();
                 }
             }
-        } else if let Some(re) = get_regex(minus) {
+        } else if let Some(re) = cache.raw.get(minus) {
             // Pattern sans ^ : on cherche une correspondance qui « finit » au bord
             // droit du préfixe. Python : boucle k de pos_mot-2 descendant vers -1,
             // pattern.match(mot, k, pos_mot) → le match doit couvrir [k, pos_mot-1].
-            for k in (0..pos_mot - 1).rev() {
-                let sub = word.slice(k, pos_mot - 1);
-                if let Some(mat) = re.find(sub) {
-                    if mat.start() == 0 && mat.end() == sub.len() {
-                        found_p = true;
-                        break;
+            //
+            // Pré-filtre : un match couvrant exactement `prefix[k..]` est en
+            // particulier un match qui finit au bord droit du préfixe. Si
+            // `(?:minus)$` ne matche pas, aucun `k` ne peut convenir et la
+            // boucle O(n) est inutile. L'implication ne vaut que dans ce
+            // sens — quand le pré-filtre passe, seule la boucle tranche, car
+            // le leftmost-first peut rendre un match plus court que la
+            // sous-chaîne (`(e?)` sur `ae` en est le cas d'école). Un pattern
+            // sans entrée `end` n'est pas éligible : on déroule la boucle.
+            if cache
+                .end
+                .get(minus)
+                .is_none_or(|prefilter| prefilter.is_match(prefix))
+            {
+                for k in (0..pos_mot - 1).rev() {
+                    let sub = word.slice(k, pos_mot - 1);
+                    if let Some(mat) = re.find(sub) {
+                        if mat.start() == 0 && mat.end() == sub.len() {
+                            found_p = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -296,6 +352,126 @@ mod tests {
         assert_eq!(w.slice(5, 5), "");
         assert_eq!(w.slice(0, 5), w.text());
         assert_eq!(Word::new("").len(), 0);
+    }
+
+    /// Corpus de sous-chaînes pour les tests d'équivalence : fragments réels
+    /// de mots français, plus les cas limites qui piègent le leftmost-first
+    /// (`"ae"` pour `(e?)`, `"xb"` pour `(^b|cob|cip)`).
+    const EQUIV_CORPUS: &[&str] = &[
+        "",
+        "a",
+        "e",
+        "s",
+        "x",
+        "b",
+        "ae",
+        "xb",
+        "ent",
+        "ents",
+        "ient",
+        "ment",
+        "ill",
+        "ille",
+        "tion",
+        "oi",
+        "oin",
+        "eau",
+        "eu",
+        "er",
+        "ien",
+        "hier",
+        "chocolat",
+        "famille",
+        "parlent",
+        "prudent",
+        "œuf",
+        "école",
+        "élève",
+        "monsieur",
+        "tranquille",
+        "anticonstitutionnellement",
+    ];
+
+    /// Invariant de l'ancrage (0.10.1) : `^(?:p)` matche **si et seulement si**
+    /// le match leftmost de `p` démarre en 0 — ce que testait l'ancien
+    /// `find(suffix).start() == 0`. Le leftmost-first décide *quel* match est
+    /// rendu, jamais s'il en existe un en position 0, donc l'équivalence vaut
+    /// pour tous les patterns, `$` compris. Vérifié ici exhaustivement sur les
+    /// patterns `plus` réels de l'automate.
+    #[test]
+    fn anchored_lookahead_is_equivalent_to_legacy_find() {
+        for (_, entry) in AUTOMATON {
+            for rule in entry.rules {
+                let RuleKind::Context { plus, has_plus, .. } = rule.kind else {
+                    continue;
+                };
+                if !has_plus || plus.is_empty() {
+                    continue;
+                }
+                let legacy = Regex::new(plus).expect("pattern invalide dans data.rs");
+                let anchored = Regex::new(&format!("^(?:{plus})")).expect("ancrage invalide");
+                for s in EQUIV_CORPUS {
+                    assert_eq!(
+                        anchored.is_match(s),
+                        legacy.find(s).is_some_and(|m| m.start() == 0),
+                        "divergence d'ancrage : pattern={plus:?} input={s:?}"
+                    );
+                }
+            }
+        }
+    }
+
+    /// Solidité du pré-filtre du lookbehind : « la boucle trouve » **doit**
+    /// impliquer « le pré-filtre passe ». L'inverse est permis — le pré-filtre
+    /// est délibérément plus laxiste, la boucle reste l'arbitre. Si cette
+    /// implication tombait, le pré-filtre écarterait des cas valides et
+    /// changerait la syllabation.
+    #[test]
+    fn suffix_prefilter_never_rejects_a_match_the_loop_would_find() {
+        for (_, entry) in AUTOMATON {
+            for rule in entry.rules {
+                let RuleKind::Context {
+                    minus, has_minus, ..
+                } = rule.kind
+                else {
+                    continue;
+                };
+                if !has_minus
+                    || minus.is_empty()
+                    || minus.starts_with('^')
+                    || !suffix_prefilter_applies(minus)
+                {
+                    continue;
+                }
+                let raw = Regex::new(minus).expect("pattern invalide dans data.rs");
+                let prefilter = Regex::new(&format!("(?:{minus})$")).expect("pré-filtre invalide");
+                for s in EQUIV_CORPUS {
+                    let word = Word::new(s);
+                    let n = word.len();
+                    let loop_found = (0..n).rev().any(|k| {
+                        let sub = word.slice(k, n);
+                        raw.find(sub)
+                            .is_some_and(|m| m.start() == 0 && m.end() == sub.len())
+                    });
+                    assert!(
+                        !loop_found || prefilter.is_match(s),
+                        "pré-filtre rejette à tort : pattern={minus:?} input={s:?}"
+                    );
+                }
+            }
+        }
+    }
+
+    /// Les patterns porteurs d'un `^` sont exclus du pré-filtre : dans la
+    /// boucle, `^` désigne le début de la *sous-chaîne*, pas celui du mot.
+    #[test]
+    fn prefilter_excludes_anchor_bearing_patterns() {
+        assert!(!suffix_prefilter_applies("(^b|cob|cip)"));
+        assert!(!suffix_prefilter_applies("(s|^ét|^r)an"));
+        // Négation de classe : inoffensive, mais exclue par prudence.
+        assert!(!suffix_prefilter_applies("[^aefo]"));
+        assert!(suffix_prefilter_applies("oi(n?)"));
+        assert!(suffix_prefilter_applies("(e?)"));
     }
 
     #[test]
