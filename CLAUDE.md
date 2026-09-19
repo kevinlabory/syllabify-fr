@@ -60,9 +60,11 @@ Pipeline en cinq étapes, la fidélité à LC6 est la contrainte de design à ch
    phonèmes vides (`code=""`, `step=1`) qui doivent être **filtrés** en aval
    (NOTES-v6.md Piège 2).
 3. **`decoder.rs` — post-traitements** — `post_process_e` (eu ouvert/fermé),
-   `post_process_o` (o ouvert/fermé), `post_traitement_yod` (v6 : `i + V` →
-   remplace `i` par `j`, **pas** de fusion — NOTES-v6.md §1).
-   `post_traitement_w` est volontairement un no-op (supprimé en v6).
+   `post_process_o` (o ouvert/fermé), `post_process_yod` (v6 : `i + V` →
+   remplace `i` par `j`, **pas** de fusion — NOTES-v6.md §1). Ces trois-là
+   sont les seuls restants : le `post_process_w` de LC6 v5 était devenu un
+   no-op en v6 et a été supprimé en 0.10.0, tout comme le paramètre
+   `SyllableMode` de `post_process_yod`, que la v6 n'utilise plus.
 4. **`homographs.rs`** — `lookup(word, previous_word)` court-circuite
    l'automate pour 16 homographes non homophones (`couvent`, `est`, `fils`,
    `violent`, `excellent`, …). Appelé depuis `decoder::extract_syllables`
