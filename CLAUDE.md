@@ -243,28 +243,47 @@ syllabique).
 
 ## Dette technique à connaître
 
-- **Complexité résiduelle du lookbehind.** La boucle `k` de
-  `parser::check_context` essaie toutes les positions de départ : O(n)
-  recherches regex par règle dans le pire cas. Deux passes l'ont attaquée
-  sans l'éliminer — 0.10.0 a supprimé les allocations (qui dominaient :
-  −55 % à −73 %), 0.10.1 a ancré le lookahead en `^(?:plus)`. **La boucle
-  du lookbehind, elle, est intacte.**
+- **Optimisation regex du parser : piste explorée, mesurée, abandonnée.**
+  Après la passe zero-alloc de 0.10.0 (−55 % à −73 %), le coût restait
+  superlinéaire : rapport **×5,93** entre un mot de 25 lettres et un de 8,
+  contre ×3,12 pour du linéaire. La boucle `k` de `parser::check_context`
+  essaie toutes les positions de départ, soit O(n) recherches regex par
+  règle dans le pire cas.
 
-  Deux pièges pour qui voudrait s'y attaquer, vérifiés sur les patterns
-  réels de `data.rs` :
-  1. La remplacer par `(?:minus)$` serait un **bug** : `(e?)` matche le
-     vide (la forme ancrée matcherait donc toujours), et le `^` de
-     `(^b|cob|cip)` désigne dans la boucle le début de la *sous-chaîne*
-     examinée, pas celui du mot.
-  2. L'utiliser comme simple pré-filtre négatif est correct — et a été
-     implémenté puis **retiré après mesure** : il s'ajoute à la boucle au
-     lieu de la remplacer, ce qui coûte plus qu'il ne rapporte sur les
-     mots courts (+13 % sur `syllabify_text/sentence`). Cf. CHANGELOG
-     0.10.1.
+  Deux optimisations ont été implémentées et mesurées (criterion, macOS
+  arm64, baseline v0.10.0), puis **abandonnées** — ne pas les retenter
+  sans lire ce qui suit :
 
-  Autrement dit : une vraie solution doit *remplacer* la boucle, pas la
-  précéder. Et garder `anchored_lookahead_is_equivalent_to_legacy_find`
-  au vert, en plus de l'oracle.
+  | Variante | `chocolat` (8 l.) | mot de 25 l. | `syllabify_text/sentence` |
+  |---|---|---|---|
+  | Lookahead ancré `^(?:plus)` | **+9,2 %** | −3,8 % | −0,7 % |
+  | … + pré-filtre `(?:minus)$` | **+9,6 %** | −40,0 % | **+13,1 %** |
+
+  Trois enseignements :
+  1. **Ancrer le lookahead coûte ~9 % sur les mots courts**, contre toute
+     intuition. Le moteur `regex` optimise très agressivement les
+     recherches *non ancrées* à préfixe littéral (memchr/Teddy) ; `^(?:…)`
+     semble désactiver ce chemin rapide, et sur des haystacks de quelques
+     caractères cette optimisation pèse plus que le balayage qu'elle
+     évite. L'équivalence sémantique, elle, est exacte : `^(?:p)` matche
+     ssi un match de `p` démarre en 0 — c'est un problème de performance,
+     pas de justesse.
+  2. **Le gain sur les mots longs venait du pré-filtre**, pas de l'ancrage
+     (−40 % contre −3,8 %). Mais il *s'ajoute* à la boucle au lieu de la
+     remplacer : quand il passe, on paie une recherche complète sur le
+     préfixe **puis** la boucle entière. D'où +13 % sur du texte
+     ordinaire — le cas courant de cette bibliothèque.
+  3. **Remplacer purement la boucle par `(?:minus)$` serait un bug.**
+     Vérifié sur les patterns réels : `(e?)` matche le vide (la forme
+     ancrée matcherait donc *toujours*), et le `^` de `(^b|cob|cip)`
+     désigne dans la boucle le début de la **sous-chaîne** examinée, pas
+     celui du mot — sur le préfixe `xb`, la boucle trouve un match, la
+     forme ancrée non.
+
+  Conclusion : **le parser est à son bon compromis depuis 0.10.0.** Une
+  vraie amélioration devrait *remplacer* la boucle du lookbehind sans
+  ancrer le lookahead, et se juger sur `syllabify_text/sentence` — pas sur
+  un mot de 25 lettres, qui n'est pas le cas d'usage.
 - `jni/src/lib.rs` garde `#[allow(deprecated)]` sur `find_class` /
   `new_object_array` / `set_object_array_element` : la migration vers
   `JObjectArray::<T>::new` / `set_element` est un refactor type-generic

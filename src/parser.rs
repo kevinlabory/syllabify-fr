@@ -36,29 +36,12 @@ pub struct Phoneme {
     pub step: usize,
 }
 
-/// Les regex de l'automate, compilées une fois sous les formes dont le parser
-/// a besoin. Les maps sont immuables une fois construites : les lectures
-/// concurrentes n'ont besoin d'aucun verrou.
-struct Regexes {
-    /// `^(?:plus)` — le lookahead ne s'intéresse qu'à un match démarrant
-    /// exactement au début du suffixe. Ancrer évite au moteur de balayer tout
-    /// le suffixe à la recherche d'un match plus loin, qu'on rejetterait.
-    start: HashMap<&'static str, Regex>,
-    /// `minus` tel quel — nécessaire pour vérifier qu'un match couvre
-    /// *exactement* une sous-chaîne donnée.
-    ///
-    /// Pas de forme ancrée ici. Un pré-filtre `(?:minus)$` a été implémenté
-    /// puis retiré : mesuré, il coûtait plus qu'il ne rapportait sur les mots
-    /// courts — le cas courant — parce qu'il s'ajoute à la boucle au lieu de
-    /// la remplacer (cf. CHANGELOG 0.10.1).
-    raw: HashMap<&'static str, Regex>,
-}
-
-fn regexes() -> &'static Regexes {
-    static CACHE: OnceLock<Regexes> = OnceLock::new();
+// Compile every regex pattern that appears in AUTOMATON exactly once, at first parse.
+// The resulting HashMap is immutable: concurrent reads need no lock.
+fn regex_cache() -> &'static HashMap<&'static str, Regex> {
+    static CACHE: OnceLock<HashMap<&'static str, Regex>> = OnceLock::new();
     CACHE.get_or_init(|| {
-        let mut start = HashMap::new();
-        let mut raw = HashMap::new();
+        let mut map = HashMap::new();
         for (_, entry) in AUTOMATON {
             for rule in entry.rules {
                 if let RuleKind::Context {
@@ -69,20 +52,23 @@ fn regexes() -> &'static Regexes {
                 } = rule.kind
                 {
                     if has_plus && !plus.is_empty() {
-                        start.entry(plus).or_insert_with(|| {
-                            Regex::new(&format!("^(?:{plus})")).expect("invalid regex in data.rs")
-                        });
+                        map.entry(plus)
+                            .or_insert_with(|| Regex::new(plus).expect("invalid regex in data.rs"));
                     }
                     if has_minus && !minus.is_empty() {
-                        raw.entry(minus).or_insert_with(|| {
+                        map.entry(minus).or_insert_with(|| {
                             Regex::new(minus).expect("invalid regex in data.rs")
                         });
                     }
                 }
             }
         }
-        Regexes { start, raw }
+        map
     })
+}
+
+fn get_regex(pattern: &str) -> Option<&'static Regex> {
+    regex_cache().get(pattern)
 }
 
 // Index char → LetterEntry built once at first parse, replacing a linear scan
@@ -179,17 +165,12 @@ fn check_context(
     word: &Word,
     pos_mot: usize,
 ) -> bool {
-    let cache = regexes();
     let mut found_s = true;
     let mut found_p = true;
 
     if has_plus {
         let suffix = word.slice(pos_mot, word.len());
-        // `^(?:plus)` matche ⟺ un match de `plus` démarre en 0, c'est-à-dire
-        // exactement ce que testait `find(suffix).start() == 0`. Le
-        // leftmost-first décide *quel* match est rendu, jamais s'il en existe
-        // un en position 0 : l'équivalence tient pour tous les patterns.
-        found_s = cache.start.get(plus).is_some_and(|re| re.is_match(suffix));
+        found_s = get_regex(plus).is_some_and(|re| re.find(suffix).is_some_and(|m| m.start() == 0));
     }
 
     if has_minus {
@@ -199,18 +180,17 @@ fn check_context(
             if minus.len() == 1 {
                 // minus == "^" : début du mot vide → la lettre est en position 0
                 found_p = pos_mot == 1;
-            } else if let Some(re) = cache.raw.get(minus) {
+            } else if let Some(re) = get_regex(minus) {
                 // minus == "^..." : le début du mot doit matcher tout le préfixe.
                 // mat.start()/end() sont en OCTETS, comme prefix.len().
                 if let Some(mat) = re.find(prefix) {
                     found_p = mat.start() == 0 && mat.end() == prefix.len();
                 }
             }
-        } else if let Some(re) = cache.raw.get(minus) {
+        } else if let Some(re) = get_regex(minus) {
             // Pattern sans ^ : on cherche une correspondance qui « finit » au bord
             // droit du préfixe. Python : boucle k de pos_mot-2 descendant vers -1,
             // pattern.match(mot, k, pos_mot) → le match doit couvrir [k, pos_mot-1].
-            //
             for k in (0..pos_mot - 1).rev() {
                 let sub = word.slice(k, pos_mot - 1);
                 if let Some(mat) = re.find(sub) {
@@ -316,73 +296,6 @@ mod tests {
         assert_eq!(w.slice(5, 5), "");
         assert_eq!(w.slice(0, 5), w.text());
         assert_eq!(Word::new("").len(), 0);
-    }
-
-    /// Corpus de sous-chaînes pour les tests d'équivalence : fragments réels
-    /// de mots français, plus les cas limites qui piègent le leftmost-first
-    /// (`"ae"` pour `(e?)`, `"xb"` pour `(^b|cob|cip)`).
-    const EQUIV_CORPUS: &[&str] = &[
-        "",
-        "a",
-        "e",
-        "s",
-        "x",
-        "b",
-        "ae",
-        "xb",
-        "ent",
-        "ents",
-        "ient",
-        "ment",
-        "ill",
-        "ille",
-        "tion",
-        "oi",
-        "oin",
-        "eau",
-        "eu",
-        "er",
-        "ien",
-        "hier",
-        "chocolat",
-        "famille",
-        "parlent",
-        "prudent",
-        "œuf",
-        "école",
-        "élève",
-        "monsieur",
-        "tranquille",
-        "anticonstitutionnellement",
-    ];
-
-    /// Invariant de l'ancrage (0.10.1) : `^(?:p)` matche **si et seulement si**
-    /// le match leftmost de `p` démarre en 0 — ce que testait l'ancien
-    /// `find(suffix).start() == 0`. Le leftmost-first décide *quel* match est
-    /// rendu, jamais s'il en existe un en position 0, donc l'équivalence vaut
-    /// pour tous les patterns, `$` compris. Vérifié ici exhaustivement sur les
-    /// patterns `plus` réels de l'automate.
-    #[test]
-    fn anchored_lookahead_is_equivalent_to_legacy_find() {
-        for (_, entry) in AUTOMATON {
-            for rule in entry.rules {
-                let RuleKind::Context { plus, has_plus, .. } = rule.kind else {
-                    continue;
-                };
-                if !has_plus || plus.is_empty() {
-                    continue;
-                }
-                let legacy = Regex::new(plus).expect("pattern invalide dans data.rs");
-                let anchored = Regex::new(&format!("^(?:{plus})")).expect("ancrage invalide");
-                for s in EQUIV_CORPUS {
-                    assert_eq!(
-                        anchored.is_match(s),
-                        legacy.find(s).is_some_and(|m| m.start() == 0),
-                        "divergence d'ancrage : pattern={plus:?} input={s:?}"
-                    );
-                }
-            }
-        }
     }
 
     #[test]

@@ -6,48 +6,6 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [0.10.1] — 2026-09-19
-
-### Performance
-- **Lookahead ancré.** `check_context` testait le lookahead par
-  `find(suffix).start() == 0` : le moteur balayait tout le suffixe à la
-  recherche d'un match, pour le rejeter ensuite s'il ne démarrait pas en 0.
-  Les patterns sont désormais compilés en `^(?:plus)` et testés par
-  `is_match`. C'est le chemin de loin le plus emprunté — **233 des 249
-  règles contextuelles** ont un lookahead.
-
-  L'équivalence est exacte et vaut pour tous les patterns, `$` compris :
-  `^(?:p)` matche si et seulement si un match de `p` démarre en 0, et le
-  leftmost-first décide *quel* match est rendu, jamais s'il en existe un à
-  cette position. Pinné par
-  `anchored_lookahead_is_equivalent_to_legacy_find`, qui compare les deux
-  formes sur l'intégralité des patterns `plus` de l'automate.
-
-### Notes
-- **Un pré-filtre de lookbehind a été implémenté, mesuré, puis retiré.**
-  L'idée : `(?:minus)$` comme filtre négatif devant la boucle `k` — un
-  match couvrant exactement `prefix[k..]` finit nécessairement au bord
-  droit du préfixe, donc si la forme ancrée ne matche pas, aucun `k` ne
-  convient.
-
-  Sémantiquement correct (l'implication ne vaut que dans ce sens, la
-  boucle restait l'arbitre), mais **plus coûteux qu'utile** : il s'ajoute
-  à la boucle au lieu de la remplacer, et sur un mot court la boucle ne
-  fait que deux ou trois tours. Mesuré avec le pré-filtre :
-  `syllabify_text/sentence` **+13 %**, `syllables/chocolat` **+10 %** —
-  contre −40 % sur un mot de 25 lettres. Le cas courant de cette
-  bibliothèque étant du texte ordinaire, le compromis était mauvais.
-
-  À noter pour toute reprise : remplacer purement la boucle par
-  `(?:minus)$` serait un **bug**, et `data.rs` fournit les deux
-  contre-exemples — `(e?)` matche le vide (donc la forme ancrée matcherait
-  toujours), et le `^` de `(^b|cob|cip)` désigne dans la boucle le début
-  de la *sous-chaîne* examinée, pas celui du mot.
-
-- Aucun changement d'API : patch. L'oracle 4830 mots reste à 100 %.
-
----
-
 ## [0.10.0] — 2026-09-19
 
 Version de nettoyage idiomatique : trois passes sur le cœur de la
