@@ -29,6 +29,7 @@
 //! ```
 
 use crate::decoder::TextChunk;
+use crate::escape;
 use crate::{liaison_possible, syllabify_text, syllables};
 use std::fmt::Write as _;
 
@@ -64,7 +65,7 @@ pub fn render_html(text: &str) -> String {
                 if !s.chars().all(char::is_whitespace) {
                     previous_word_raw = None;
                 }
-                out.push_str(&escape(s));
+                out.push_str(&escape::html(s));
             }
             TextChunk::Word(sylls) => {
                 let word_raw: String = sylls.concat();
@@ -93,7 +94,7 @@ fn render_word_spans(sylls: &[String]) -> String {
     let mut s = String::from(r#"<span class="word">"#);
     for (i, syl) in sylls.iter().enumerate() {
         let class = if i % 2 == 0 { "syl syl-a" } else { "syl syl-b" };
-        let _ = write!(s, r#"<span class="{class}">{}</span>"#, escape(syl));
+        let _ = write!(s, r#"<span class="{class}">{}</span>"#, escape::html(syl));
     }
     s.push_str("</span>");
     s
@@ -122,21 +123,6 @@ fn liaison_consonant_for(prev: &str) -> &'static str {
         'g' => "k",
         _ => "z",
     }
-}
-
-fn escape(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    for c in s.chars() {
-        match c {
-            '&' => out.push_str("&amp;"),
-            '<' => out.push_str("&lt;"),
-            '>' => out.push_str("&gt;"),
-            '"' => out.push_str("&quot;"),
-            '\'' => out.push_str("&#39;"),
-            _ => out.push(c),
-        }
-    }
-    out
 }
 
 #[cfg(test)]

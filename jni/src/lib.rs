@@ -4,7 +4,7 @@ use jni::objects::{JClass, JObjectArray, JString};
 use jni::sys::{jobjectArray, jstring};
 use jni::{jni_str, Env, EnvUnowned};
 use serde_json::{json, Value};
-use syllabify_fr::letters::{match_letters, presets, render_letters_html, LetterRule, RenderMode};
+use syllabify_fr::letters::{match_letters, presets, render_letters_html, RenderMode};
 use syllabify_fr::{phonemes, render_html, render_word_html, syllabify_text, syllables, TextChunk};
 
 // --- JSON helpers via serde_json (RFC 8259-conforme par construction) ---
@@ -162,22 +162,6 @@ pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_renderHtml<'local
     .resolve::<SilentDefault>()
 }
 
-fn preset_rules(name: &str) -> Vec<LetterRule> {
-    match name {
-        "bdpq" => presets::bdpq(),
-        "mnu" => presets::mnu(),
-        "pir-pri" | "pir_pri" => presets::pir_pri(),
-        _ => Vec::new(),
-    }
-}
-
-fn parse_mode(mode: &str) -> RenderMode {
-    match mode {
-        "classes" => RenderMode::Classes,
-        _ => RenderMode::Inline,
-    }
-}
-
 /// `SyllabifyFr.highlightLetters(word, preset, mode)` → HTML `String`
 ///
 /// `preset` accepts `"bdpq"`, `"mnu"`, or `"pir-pri"`.
@@ -199,9 +183,10 @@ pub extern "system" fn Java_com_dyscolor_syllabify_SyllabifyFr_highlightLetters<
         let mode_str = mode
             .try_to_string(env)
             .unwrap_or_else(|_| "inline".to_string());
-        let rules = preset_rules(&preset);
+        let rules = presets::by_name(&preset).unwrap_or_default();
         let spans = match_letters(&word, &rules);
-        let html = render_letters_html(&word, &spans, &rules, parse_mode(&mode_str));
+        let mode = RenderMode::from_name(&mode_str).unwrap_or_default();
+        let html = render_letters_html(&word, &spans, &rules, mode);
         Ok(env.new_string(html)?.into_raw())
     })
     .resolve::<SilentDefault>()
