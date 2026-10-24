@@ -3,7 +3,7 @@
 //!
 //! - Minuscules
 //! - Apostrophes (`'`, `´`, `'`) → `@` (marqueur de liaison élidée)
-//! - Suppression des `\r`
+//! - `\r` traité comme ponctuation (un caractère de sortie par caractère d'entrée)
 //! - Tirets `-` et underscores `_` préservés (transparents au parser, comme LC6)
 //! - Autres caractères non significatifs → espace
 
@@ -16,23 +16,31 @@ fn est_significatif(c: char) -> bool {
     )
 }
 
-/// Nettoie le texte pour analyse.
-pub fn clean(text: &str, substitute: char) -> String {
-    let mut out = String::with_capacity(text.len());
-    for ch in text.chars() {
-        if ch == '\r' {
-            continue;
-        }
-        for lower in ch.to_lowercase() {
-            let replaced = match lower {
-                '\'' | '´' | '\u{2019}' => '@',
-                c if est_significatif(c) => c,
-                _ => substitute,
-            };
-            out.push(replaced);
-        }
+/// Normalise un caractère déjà passé en minuscules.
+fn normalize(lower: char, substitute: char) -> char {
+    match lower {
+        '\'' | '´' | '\u{2019}' => '@',
+        c if est_significatif(c) => c,
+        _ => substitute,
     }
-    out
+}
+
+/// Nettoie le texte pour analyse.
+///
+/// Garantit **un caractère de sortie par caractère d'entrée** : les indices du
+/// résultat restent valides dans `text`. `decoder::extract_syllables` en a
+/// besoin pour redécouper le texte d'origine aux positions trouvées dans le
+/// texte nettoyé. Pour cela, `\r` devient `substitute` (il était supprimé
+/// auparavant) et seul le premier caractère de `to_lowercase` est gardé
+/// (`İ` donne `i`, pas `i` + U+0307).
+pub fn clean(text: &str, substitute: char) -> String {
+    text.chars()
+        .map(|ch| {
+            // Invariant : `to_lowercase` rend au moins un caractère ; on garde le premier.
+            let lower = ch.to_lowercase().next().unwrap_or(ch);
+            normalize(lower, substitute)
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -56,8 +64,15 @@ mod tests {
     }
 
     #[test]
-    fn retour_chariot_supprime() {
-        assert_eq!(clean("chat\r\nchien", ' '), "chat chien");
+    fn garde_un_caractere_par_caractere() {
+        for t in ["chat\r\nchien", ",o~İ@", "ÉCOLE İstanbul"] {
+            assert_eq!(clean(t, ' ').chars().count(), t.chars().count());
+        }
+    }
+
+    #[test]
+    fn retour_chariot_devient_espace() {
+        assert_eq!(clean("chat\r\nchien", ' '), "chat  chien");
     }
 
     #[test]

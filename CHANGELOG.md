@@ -6,6 +6,34 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.10.1] — 2026-10-24
+
+Correctif d'un panic dans `syllabify_text`, trouvé par le fuzzer. Aucune
+rupture d'API, aucun changement de syllabification sur l'oracle 4830 mots.
+
+**Si vous utilisez `syllabify_text` (ou `render_html`, et les fonctions de
+texte des bindings) sur des entrées non maîtrisées, mettez à jour** : un
+texte contenant un retour chariot (`\r`, donc tout texte au format Windows
+`\r\n`) ou un caractère dont la minuscule fait plusieurs caractères (comme
+`İ`, U+0130) pouvait provoquer un panic, ou un découpage décalé du texte
+d'origine. `syllables` et `phonemes` (un mot à la fois) n'étaient pas
+concernés.
+
+### Fixed
+- `syllabify_text` : le texte nettoyé n'avait pas forcément la même
+  longueur en caractères que le texte d'origine, alors que les positions
+  trouvées dans l'un servaient à redécouper l'autre. `cleaner::clean`
+  garantit désormais un caractère de sortie par caractère d'entrée :
+  `\r` est traité comme une ponctuation (il devient un séparateur au lieu
+  d'être supprimé) et seul le premier caractère de la minuscule est gardé
+  (`İ` → `i`). Tests de non-régression avec l'entrée exacte du fuzzer.
+
+### Notes
+- Tests de `letters.rs` adaptés au nouveau lint clippy `assert_is_empty`
+  (Rust 1.99).
+
+---
+
 ## [0.10.0] — 2026-09-19
 
 Version de nettoyage idiomatique : trois passes sur le cœur de la
