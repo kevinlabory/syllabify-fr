@@ -3,7 +3,7 @@
 //!
 //! - Minuscules
 //! - Apostrophes (`'`, `´`, `'`) → `@` (marqueur de liaison élidée)
-//! - Suppression des `\r`
+//! - `\r` traité comme ponctuation (un caractère de sortie par caractère d'entrée)
 //! - Tirets `-` et underscores `_` préservés (transparents au parser, comme LC6)
 //! - Autres caractères non significatifs → espace
 
@@ -26,24 +26,14 @@ fn normalize(lower: char, substitute: char) -> char {
 }
 
 /// Nettoie le texte pour analyse.
-pub fn clean(text: &str, substitute: char) -> String {
-    let mut out = String::with_capacity(text.len());
-    for ch in text.chars() {
-        if ch == '\r' {
-            continue;
-        }
-        out.extend(ch.to_lowercase().map(|l| normalize(l, substitute)));
-    }
-    out
-}
-
-/// Comme [`clean`], mais garantit **un caractère de sortie par caractère
-/// d'entrée** : les indices du résultat restent valides dans `text`.
 ///
-/// `clean` ne le garantit pas (`\r` supprimé, `İ` → `i̇` en deux caractères) ;
-/// `decoder::extract_syllables` a besoin de cet alignement pour redécouper le
-/// texte d'origine aux positions trouvées dans le texte nettoyé.
-pub fn clean_aligned(text: &str, substitute: char) -> String {
+/// Garantit **un caractère de sortie par caractère d'entrée** : les indices du
+/// résultat restent valides dans `text`. `decoder::extract_syllables` en a
+/// besoin pour redécouper le texte d'origine aux positions trouvées dans le
+/// texte nettoyé. Pour cela, `\r` devient `substitute` (il était supprimé
+/// auparavant) et seul le premier caractère de `to_lowercase` est gardé
+/// (`İ` donne `i`, pas `i` + U+0307).
+pub fn clean(text: &str, substitute: char) -> String {
     text.chars()
         .map(|ch| {
             // Invariant : `to_lowercase` rend au moins un caractère ; on garde le premier.
@@ -74,15 +64,15 @@ mod tests {
     }
 
     #[test]
-    fn clean_aligned_garde_un_caractere_par_caractere() {
+    fn garde_un_caractere_par_caractere() {
         for t in ["chat\r\nchien", ",o~İ@", "ÉCOLE İstanbul"] {
-            assert_eq!(clean_aligned(t, ' ').chars().count(), t.chars().count());
+            assert_eq!(clean(t, ' ').chars().count(), t.chars().count());
         }
     }
 
     #[test]
-    fn retour_chariot_supprime() {
-        assert_eq!(clean("chat\r\nchien", ' '), "chat chien");
+    fn retour_chariot_devient_espace() {
+        assert_eq!(clean("chat\r\nchien", ' '), "chat  chien");
     }
 
     #[test]
