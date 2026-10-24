@@ -20,7 +20,7 @@ d'origine. `syllables` et `phonemes` (un mot à la fois) n'étaient pas
 concernés.
 
 ### Fixed
-- `syllabify_text` : le texte nettoyé n'avait plus forcément la même
+- `syllabify_text` : le texte nettoyé n'avait pas forcément la même
   longueur en caractères que le texte d'origine, alors que les positions
   trouvées dans l'un servaient à redécouper l'autre. `cleaner::clean`
   garantit désormais un caractère de sortie par caractère d'entrée :
