@@ -82,3 +82,14 @@ fn chars_outside_automaton_are_dropped() {
     // `naïveté` est intégralement préservé : `["na", "ï", "ve", "té"]`).
     assert_eq!(syllables("müesli"), vec!["mes", "li"]);
 }
+
+#[test]
+fn syllabify_text_survives_chars_whose_lowercase_changes_length() {
+    // Régression trouvée par le fuzzer (CI du 2026-10-24) : `İ` (U+0130) se
+    // met en minuscules en DEUX caractères et `\r` était supprimé par le
+    // nettoyage, ce qui décalait les indices du texte nettoyé par rapport au
+    // texte d'origine → panic « range end index out of range ».
+    for t in [",o~İ@", "İstanbul", "chat\r\nchien", "a\rİ b"] {
+        let _ = syllabify_text(t);
+    }
+}

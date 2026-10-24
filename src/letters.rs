@@ -393,8 +393,8 @@ mod tests {
 
     #[test]
     fn empty_inputs_return_empty() {
-        assert!(match_letters("", &presets::bdpq()).is_empty());
-        assert!(match_letters("abc", &[]).is_empty());
+        assert_eq!(match_letters("", &presets::bdpq()), vec![]);
+        assert_eq!(match_letters("abc", &[]), vec![]);
     }
 
     #[test]

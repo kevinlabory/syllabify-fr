@@ -2,7 +2,7 @@
 //! Décodeur : post-traitements phonologiques et assemblage syllabique.
 //! Port de `decoder.py`.
 
-use crate::cleaner::clean;
+use crate::cleaner::clean_aligned;
 use crate::data::MOTS_OSSE;
 use crate::parser::parse;
 use crate::phoneme::{classify, PhonClass};
@@ -497,7 +497,7 @@ pub fn extract_syllables(
     assemble_mode: AssembleMode,
     syl_mode: SyllableMode,
 ) -> Vec<TextChunk> {
-    let ultext = clean(text, ' ');
+    let ultext = clean_aligned(text, ' ');
     let words: Vec<&str> = ultext.split_whitespace().collect();
     let mut out: Vec<TextChunk> = Vec::new();
     let mut p_text = 0usize;

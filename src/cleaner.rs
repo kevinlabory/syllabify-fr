@@ -16,6 +16,15 @@ fn est_significatif(c: char) -> bool {
     )
 }
 
+/// Normalise un caractère déjà passé en minuscules.
+fn normalize(lower: char, substitute: char) -> char {
+    match lower {
+        '\'' | '´' | '\u{2019}' => '@',
+        c if est_significatif(c) => c,
+        _ => substitute,
+    }
+}
+
 /// Nettoie le texte pour analyse.
 pub fn clean(text: &str, substitute: char) -> String {
     let mut out = String::with_capacity(text.len());
@@ -23,16 +32,25 @@ pub fn clean(text: &str, substitute: char) -> String {
         if ch == '\r' {
             continue;
         }
-        for lower in ch.to_lowercase() {
-            let replaced = match lower {
-                '\'' | '´' | '\u{2019}' => '@',
-                c if est_significatif(c) => c,
-                _ => substitute,
-            };
-            out.push(replaced);
-        }
+        out.extend(ch.to_lowercase().map(|l| normalize(l, substitute)));
     }
     out
+}
+
+/// Comme [`clean`], mais garantit **un caractère de sortie par caractère
+/// d'entrée** : les indices du résultat restent valides dans `text`.
+///
+/// `clean` ne le garantit pas (`\r` supprimé, `İ` → `i̇` en deux caractères) ;
+/// `decoder::extract_syllables` a besoin de cet alignement pour redécouper le
+/// texte d'origine aux positions trouvées dans le texte nettoyé.
+pub fn clean_aligned(text: &str, substitute: char) -> String {
+    text.chars()
+        .map(|ch| {
+            // Invariant : `to_lowercase` rend au moins un caractère ; on garde le premier.
+            let lower = ch.to_lowercase().next().unwrap_or(ch);
+            normalize(lower, substitute)
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -53,6 +71,13 @@ mod tests {
     #[test]
     fn ponctuation_devient_espace() {
         assert_eq!(clean("chat, chien.", ' '), "chat  chien ");
+    }
+
+    #[test]
+    fn clean_aligned_garde_un_caractere_par_caractere() {
+        for t in ["chat\r\nchien", ",o~İ@", "ÉCOLE İstanbul"] {
+            assert_eq!(clean_aligned(t, ' ').chars().count(), t.chars().count());
+        }
     }
 
     #[test]
